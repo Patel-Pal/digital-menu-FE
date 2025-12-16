@@ -1,0 +1,198 @@
+import type { Category, MenuItem, Shop, AnalyticsData, DashboardStats } from '@/types';
+
+export const mockCategories: Category[] = [
+  { id: '1', name: 'Popular', icon: '🔥', order: 0 },
+  { id: '2', name: 'Starters', icon: '🥗', order: 1 },
+  { id: '3', name: 'Main Course', icon: '🍛', order: 2 },
+  { id: '4', name: 'Pizza', icon: '🍕', order: 3 },
+  { id: '5', name: 'Burgers', icon: '🍔', order: 4 },
+  { id: '6', name: 'Desserts', icon: '🍰', order: 5 },
+  { id: '7', name: 'Beverages', icon: '🥤', order: 6 },
+];
+
+export const mockMenuItems: MenuItem[] = [
+  {
+    id: '1',
+    name: 'Crispy Chicken Wings',
+    description: 'Golden fried chicken wings with our signature spicy sauce',
+    price: 12.99,
+    categoryId: '2',
+    available: true,
+    popular: true,
+    spicy: true,
+  },
+  {
+    id: '2',
+    name: 'Garden Fresh Salad',
+    description: 'Mixed greens with cherry tomatoes, cucumber, and balsamic vinaigrette',
+    price: 8.99,
+    categoryId: '2',
+    available: true,
+    vegetarian: true,
+  },
+  {
+    id: '3',
+    name: 'Butter Chicken',
+    description: 'Tender chicken in rich tomato-based curry with aromatic spices',
+    price: 16.99,
+    categoryId: '3',
+    available: true,
+    popular: true,
+  },
+  {
+    id: '4',
+    name: 'Grilled Salmon',
+    description: 'Fresh Atlantic salmon with lemon herb butter and seasonal vegetables',
+    price: 24.99,
+    categoryId: '3',
+    available: true,
+  },
+  {
+    id: '5',
+    name: 'Margherita Pizza',
+    description: 'Classic pizza with fresh mozzarella, tomatoes, and basil',
+    price: 14.99,
+    categoryId: '4',
+    available: true,
+    vegetarian: true,
+    popular: true,
+  },
+  {
+    id: '6',
+    name: 'Pepperoni Pizza',
+    description: 'Loaded with premium pepperoni and melted cheese',
+    price: 16.99,
+    categoryId: '4',
+    available: true,
+  },
+  {
+    id: '7',
+    name: 'Classic Cheeseburger',
+    description: 'Angus beef patty with cheddar, lettuce, tomato, and special sauce',
+    price: 13.99,
+    categoryId: '5',
+    available: true,
+    popular: true,
+  },
+  {
+    id: '8',
+    name: 'Veggie Burger',
+    description: 'House-made plant-based patty with all the fixings',
+    price: 12.99,
+    categoryId: '5',
+    available: true,
+    vegetarian: true,
+  },
+  {
+    id: '9',
+    name: 'Chocolate Lava Cake',
+    description: 'Warm chocolate cake with molten center, served with vanilla ice cream',
+    price: 9.99,
+    categoryId: '6',
+    available: true,
+    vegetarian: true,
+    popular: true,
+  },
+  {
+    id: '10',
+    name: 'Fresh Lemonade',
+    description: 'Freshly squeezed lemons with a hint of mint',
+    price: 4.99,
+    categoryId: '7',
+    available: true,
+    vegetarian: true,
+  },
+  {
+    id: '11',
+    name: 'Iced Coffee',
+    description: 'Cold brew coffee served over ice with optional milk',
+    price: 5.99,
+    categoryId: '7',
+    available: true,
+    vegetarian: true,
+  },
+  {
+    id: '12',
+    name: 'Tiramisu',
+    description: 'Classic Italian dessert with layers of coffee-soaked ladyfingers',
+    price: 8.99,
+    categoryId: '6',
+    available: false,
+    vegetarian: true,
+  },
+];
+
+export const mockShops: Shop[] = [
+  {
+    id: '1',
+    name: 'The Rustic Kitchen',
+    description: 'Farm-to-table dining experience',
+    address: '123 Main St, Downtown',
+    phone: '+1 234 567 8900',
+    email: 'hello@rustickitchen.com',
+    isActive: true,
+    subscription: 'premium',
+    createdAt: '2024-01-15',
+    qrScans: 1234,
+  },
+  {
+    id: '2',
+    name: 'Spice Garden',
+    description: 'Authentic Indian cuisine',
+    address: '456 Oak Ave, Midtown',
+    phone: '+1 234 567 8901',
+    email: 'info@spicegarden.com',
+    isActive: true,
+    subscription: 'basic',
+    createdAt: '2024-02-20',
+    qrScans: 856,
+  },
+  {
+    id: '3',
+    name: 'Pizza Paradise',
+    description: 'Artisan pizzas and Italian favorites',
+    address: '789 Elm St, Uptown',
+    phone: '+1 234 567 8902',
+    email: 'order@pizzaparadise.com',
+    isActive: true,
+    subscription: 'premium',
+    createdAt: '2024-03-10',
+    qrScans: 2341,
+  },
+  {
+    id: '4',
+    name: 'Café Luna',
+    description: 'Cozy coffee shop and bakery',
+    address: '321 Pine Rd, Suburbs',
+    phone: '+1 234 567 8903',
+    email: 'hello@cafeluna.com',
+    isActive: false,
+    subscription: 'free',
+    createdAt: '2024-04-05',
+    qrScans: 128,
+  },
+];
+
+export const mockAnalytics: AnalyticsData[] = [
+  { date: '2024-01-01', scans: 45, views: 120, uniqueVisitors: 38 },
+  { date: '2024-01-02', scans: 52, views: 145, uniqueVisitors: 44 },
+  { date: '2024-01-03', scans: 38, views: 98, uniqueVisitors: 32 },
+  { date: '2024-01-04', scans: 67, views: 189, uniqueVisitors: 56 },
+  { date: '2024-01-05', scans: 89, views: 234, uniqueVisitors: 72 },
+  { date: '2024-01-06', scans: 124, views: 312, uniqueVisitors: 98 },
+  { date: '2024-01-07', scans: 98, views: 267, uniqueVisitors: 84 },
+];
+
+export const mockDashboardStats: DashboardStats = {
+  totalScans: 12543,
+  totalViews: 45678,
+  activeMenus: 156,
+  popularItems: mockMenuItems.filter(item => item.popular),
+  recentActivity: mockAnalytics,
+};
+
+export const getPopularItems = () => mockMenuItems.filter(item => item.popular);
+export const getItemsByCategory = (categoryId: string) => 
+  categoryId === '1' 
+    ? mockMenuItems.filter(item => item.popular)
+    : mockMenuItems.filter(item => item.categoryId === categoryId);
