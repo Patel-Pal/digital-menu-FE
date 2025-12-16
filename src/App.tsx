@@ -17,6 +17,10 @@ import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
 
 // Admin Pages
 import { AdminDashboard } from "@/pages/admin/AdminDashboard";
+import { AdminShopsPage } from "@/pages/admin/AdminShopsPage";
+import { AdminSubscriptionsPage } from "@/pages/admin/AdminSubscriptionsPage";
+import { AdminAnalyticsPage } from "@/pages/admin/AdminAnalyticsPage";
+import { AdminContentPage } from "@/pages/admin/AdminContentPage";
 
 // Shopkeeper Pages
 import { ShopkeeperDashboard } from "@/pages/shopkeeper/ShopkeeperDashboard";
@@ -52,6 +56,10 @@ const App = () => (
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
+            <Route path="shops" element={<AdminShopsPage />} />
+            <Route path="subscriptions" element={<AdminSubscriptionsPage />} />
+            <Route path="analytics" element={<AdminAnalyticsPage />} />
+            <Route path="content" element={<AdminContentPage />} />
           </Route>
 
           {/* Shopkeeper Routes */}
