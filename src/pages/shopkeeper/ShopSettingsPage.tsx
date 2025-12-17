@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Store, Phone, Mail, MapPin, Save, Check, Palette } from "lucide-react";
+import { Store, Phone, Mail, MapPin, Save, Check, Palette, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMenuTheme, menuThemes, MenuTheme } from "@/contexts/ThemeContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { toast } from "sonner";
 
 export function ShopSettingsPage() {
-  const { menuTheme, setMenuTheme } = useMenuTheme();
+  const { menuTheme, setMenuTheme, appMode } = useMenuTheme();
   
   const [profileData, setProfileData] = useState({
     shopName: "The Rustic Kitchen",
@@ -23,7 +24,6 @@ export function ShopSettingsPage() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSaving(false);
     toast.success("Profile saved successfully!");
@@ -46,7 +46,37 @@ export function ShopSettingsPage() {
         <p className="text-muted-foreground">Manage your shop profile and preferences</p>
       </motion.div>
 
-      {/* Theme Selection */}
+      {/* App Theme (Dark/Light) */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+      >
+        <Card variant="elevated">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                  {appMode === "dark" ? (
+                    <Moon className="h-5 w-5 text-primary" />
+                  ) : (
+                    <Sun className="h-5 w-5 text-primary" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold">App Theme</p>
+                  <p className="text-sm text-muted-foreground">
+                    {appMode === "dark" ? "Dark mode" : "Light mode"}
+                  </p>
+                </div>
+              </div>
+              <ThemeToggle size="md" />
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Menu Theme Selection */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -185,18 +215,6 @@ export function ShopSettingsPage() {
                 value={profileData.email}
                 onChange={(e) =>
                   setProfileData({ ...profileData, email: e.target.value })
-                }
-              />
-            </div>
-
-            {/* Website */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Website (Optional)</label>
-              <Input
-                placeholder="www.yourshop.com"
-                value={profileData.website}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, website: e.target.value })
                 }
               />
             </div>
