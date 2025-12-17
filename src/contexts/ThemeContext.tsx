@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 export type MenuTheme = "coral" | "ocean" | "forest" | "sunset" | "midnight" | "lavender";
+export type AppMode = "light" | "dark";
 
 interface ThemeConfig {
   name: string;
@@ -52,6 +53,9 @@ interface ThemeContextType {
   menuTheme: MenuTheme;
   setMenuTheme: (theme: MenuTheme) => void;
   getThemeStyles: () => { primary: string; accent: string };
+  appMode: AppMode;
+  setAppMode: (mode: AppMode) => void;
+  toggleAppMode: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -60,6 +64,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [menuTheme, setMenuTheme] = useState<MenuTheme>(() => {
     const saved = localStorage.getItem("menuTheme");
     return (saved as MenuTheme) || "coral";
+  });
+
+  const [appMode, setAppMode] = useState<AppMode>(() => {
+    const saved = localStorage.getItem("appMode");
+    if (saved) return saved as AppMode;
+    // Check system preference
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      return "dark";
+    }
+    return "light";
   });
 
   useEffect(() => {
@@ -71,10 +85,25 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.style.setProperty("--menu-accent", theme.accent);
   }, [menuTheme]);
 
+  useEffect(() => {
+    localStorage.setItem("appMode", appMode);
+    
+    // Apply dark/light mode
+    if (appMode === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [appMode]);
+
+  const toggleAppMode = () => {
+    setAppMode((prev) => (prev === "light" ? "dark" : "light"));
+  };
+
   const getThemeStyles = () => menuThemes[menuTheme];
 
   return (
-    <ThemeContext.Provider value={{ menuTheme, setMenuTheme, getThemeStyles }}>
+    <ThemeContext.Provider value={{ menuTheme, setMenuTheme, getThemeStyles, appMode, setAppMode, toggleAppMode }}>
       {children}
     </ThemeContext.Provider>
   );

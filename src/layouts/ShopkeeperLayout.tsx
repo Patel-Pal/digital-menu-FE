@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/BottomNav";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { LayoutDashboard, UtensilsCrossed, QrCode, BarChart3, Settings } from "lucide-react";
 import type { NavItem } from "@/types";
 
@@ -14,7 +15,6 @@ const navItems: NavItem[] = [
 export function ShopkeeperLayout() {
   const location = useLocation();
 
-  // Get page title based on route
   const getPageTitle = () => {
     switch (location.pathname) {
       case "/shop":
@@ -46,8 +46,8 @@ export function ShopkeeperLayout() {
               <p className="text-xs text-muted-foreground">The Rustic Kitchen</p>
             </div>
           </div>
-          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-            <span className="text-xs font-medium">JD</span>
+          <div className="flex items-center gap-3">
+            <ThemeToggle size="sm" />
           </div>
         </div>
       </header>
