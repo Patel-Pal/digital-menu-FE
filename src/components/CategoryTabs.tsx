@@ -7,9 +7,10 @@ interface CategoryTabsProps {
   categories: Category[];
   activeCategory: string;
   onSelect: (categoryId: string) => void;
+  themeColor?: string;
 }
 
-export function CategoryTabs({ categories, activeCategory, onSelect }: CategoryTabsProps) {
+export function CategoryTabs({ categories, activeCategory, onSelect, themeColor }: CategoryTabsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
 
@@ -44,7 +45,8 @@ export function CategoryTabs({ categories, activeCategory, onSelect }: CategoryT
             {isActive && (
               <motion.div
                 layoutId="activeCategory"
-                className="absolute inset-0 rounded-full bg-primary"
+                className="absolute inset-0 rounded-full"
+                style={{ backgroundColor: themeColor ? `hsl(${themeColor})` : "hsl(var(--primary))" }}
                 transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
               />
             )}
