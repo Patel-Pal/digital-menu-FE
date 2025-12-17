@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/BottomNav";
-import { LayoutDashboard, UtensilsCrossed, QrCode, BarChart3, CreditCard } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, QrCode, BarChart3, Settings } from "lucide-react";
 import type { NavItem } from "@/types";
 
 const navItems: NavItem[] = [
@@ -8,7 +8,7 @@ const navItems: NavItem[] = [
   { title: "Menu", href: "/shop/menu", icon: UtensilsCrossed },
   { title: "QR Code", href: "/shop/qr", icon: QrCode },
   { title: "Analytics", href: "/shop/analytics", icon: BarChart3 },
-  { title: "Billing", href: "/shop/billing", icon: CreditCard },
+  { title: "Settings", href: "/shop/settings", icon: Settings },
 ];
 
 export function ShopkeeperLayout() {
@@ -25,8 +25,8 @@ export function ShopkeeperLayout() {
         return "QR Code";
       case "/shop/analytics":
         return "Analytics";
-      case "/shop/billing":
-        return "Subscription";
+      case "/shop/settings":
+        return "Settings";
       default:
         return "Digital Menu";
     }

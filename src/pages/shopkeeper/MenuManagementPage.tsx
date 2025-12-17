@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Search, Filter, MoreVertical } from "lucide-react";
+import { Plus, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategoryTabs } from "@/components/CategoryTabs";
 import { MenuItemCard } from "@/components/MenuItemCard";
+import { AddMenuItemForm, MenuItemFormData } from "@/components/AddMenuItemForm";
 import { mockCategories, mockMenuItems } from "@/utils/mockData";
 import type { MenuItem } from "@/types";
+import { toast } from "sonner";
 
 export function MenuManagementPage() {
   const [activeCategory, setActiveCategory] = useState("1");
   const [searchQuery, setSearchQuery] = useState("");
-  const [items, setItems] = useState(mockMenuItems);
+  const [items, setItems] = useState<MenuItem[]>(mockMenuItems);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const filteredItems = items.filter((item) => {
     const matchesCategory =
@@ -30,6 +33,23 @@ export function MenuManagementPage() {
         item.id === itemId ? { ...item, available } : item
       )
     );
+  };
+
+  const handleAddItem = (formData: MenuItemFormData) => {
+    const newItem: MenuItem = {
+      id: `new-${Date.now()}`,
+      name: formData.name,
+      description: formData.description,
+      price: formData.price,
+      categoryId: formData.categoryId,
+      available: formData.available,
+      popular: formData.popular,
+      vegetarian: formData.vegetarian,
+      spicy: formData.spicy,
+      image: formData.image,
+    };
+    setItems((prev) => [newItem, ...prev]);
+    toast.success(`${formData.name} added to menu!`);
   };
 
   return (
@@ -90,12 +110,20 @@ export function MenuManagementPage() {
 
       {/* FAB */}
       <Button
+        onClick={() => setShowAddForm(true)}
         className="fixed bottom-24 right-4 shadow-glow"
         size="icon-lg"
         variant="gradient"
       >
         <Plus className="h-6 w-6" />
       </Button>
+
+      {/* Add Menu Item Form */}
+      <AddMenuItemForm
+        isOpen={showAddForm}
+        onClose={() => setShowAddForm(false)}
+        onSubmit={handleAddItem}
+      />
     </div>
   );
 }

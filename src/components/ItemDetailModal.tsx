@@ -9,12 +9,15 @@ interface ItemDetailModalProps {
   item: MenuItem | null;
   isOpen: boolean;
   onClose: () => void;
+  themeColor?: string;
 }
 
-export function ItemDetailModal({ item, isOpen, onClose }: ItemDetailModalProps) {
+export function ItemDetailModal({ item, isOpen, onClose, themeColor }: ItemDetailModalProps) {
   const [quantity, setQuantity] = useState(1);
 
   if (!item) return null;
+
+  const primaryColor = themeColor ? `hsl(${themeColor})` : "hsl(var(--primary))";
 
   return (
     <AnimatePresence>
@@ -71,7 +74,7 @@ export function ItemDetailModal({ item, isOpen, onClose }: ItemDetailModalProps)
               <div className="space-y-2">
                 <div className="flex items-start justify-between gap-4">
                   <h2 className="text-xl font-bold">{item.name}</h2>
-                  <span className="text-xl font-bold text-primary">
+                  <span className="text-xl font-bold" style={{ color: primaryColor }}>
                     ${item.price.toFixed(2)}
                   </span>
                 </div>
@@ -130,7 +133,12 @@ export function ItemDetailModal({ item, isOpen, onClose }: ItemDetailModalProps)
               <Button
                 className="w-full"
                 size="xl"
-                variant="gradient"
+                style={{ 
+                  background: themeColor 
+                    ? `linear-gradient(135deg, hsl(${themeColor}), hsl(${themeColor} / 0.8))` 
+                    : undefined 
+                }}
+                variant={themeColor ? undefined : "gradient"}
                 disabled={!item.available}
               >
                 {item.available

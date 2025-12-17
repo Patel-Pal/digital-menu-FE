@@ -6,6 +6,7 @@ import { CategoryTabs } from "@/components/CategoryTabs";
 import { MenuItemCard } from "@/components/MenuItemCard";
 import { ItemDetailModal } from "@/components/ItemDetailModal";
 import { mockCategories, getItemsByCategory } from "@/utils/mockData";
+import { useMenuTheme, menuThemes } from "@/contexts/ThemeContext";
 import type { MenuItem } from "@/types";
 
 export function CustomerMenuPage() {
@@ -13,6 +14,9 @@ export function CustomerMenuPage() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showLangMenu, setShowLangMenu] = useState(false);
+  
+  const { menuTheme } = useMenuTheme();
+  const theme = menuThemes[menuTheme];
 
   const items = getItemsByCategory(activeCategory).filter((item) =>
     searchQuery
@@ -23,10 +27,15 @@ export function CustomerMenuPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Shop Header */}
+      {/* Shop Header with Dynamic Theme */}
       <header className="relative overflow-hidden">
-        {/* Banner */}
-        <div className="h-40 bg-gradient-to-br from-primary/20 via-accent/10 to-secondary">
+        {/* Banner - uses dynamic theme colors */}
+        <div 
+          className="h-40"
+          style={{
+            background: `linear-gradient(135deg, hsl(${theme.primary} / 0.2), hsl(${theme.accent} / 0.1), hsl(var(--secondary)))`
+          }}
+        >
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
         </div>
 
@@ -37,7 +46,10 @@ export function CustomerMenuPage() {
             animate={{ opacity: 1, y: 0 }}
             className="flex items-end gap-4"
           >
-            <div className="h-24 w-24 flex-shrink-0 rounded-2xl bg-card shadow-lg flex items-center justify-center text-4xl border-4 border-background">
+            <div 
+              className="h-24 w-24 flex-shrink-0 rounded-2xl shadow-lg flex items-center justify-center text-4xl border-4 border-background"
+              style={{ backgroundColor: `hsl(${theme.primary} / 0.1)` }}
+            >
               🍳
             </div>
             <div className="flex-1 pb-1">
@@ -90,11 +102,12 @@ export function CustomerMenuPage() {
         </div>
       </div>
 
-      {/* Category Tabs */}
+      {/* Category Tabs with Dynamic Theme */}
       <CategoryTabs
         categories={mockCategories}
         activeCategory={activeCategory}
         onSelect={setActiveCategory}
+        themeColor={theme.primary}
       />
 
       {/* Menu Items */}
@@ -110,6 +123,7 @@ export function CustomerMenuPage() {
               <MenuItemCard
                 item={item}
                 onClick={() => setSelectedItem(item)}
+                themeColor={theme.primary}
               />
             </motion.div>
           ))
@@ -130,6 +144,7 @@ export function CustomerMenuPage() {
         item={selectedItem}
         isOpen={!!selectedItem}
         onClose={() => setSelectedItem(null)}
+        themeColor={theme.primary}
       />
     </div>
   );

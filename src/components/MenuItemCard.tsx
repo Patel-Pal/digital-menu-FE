@@ -10,9 +10,10 @@ interface MenuItemCardProps {
   onClick?: () => void;
   showToggle?: boolean;
   onToggle?: (available: boolean) => void;
+  themeColor?: string;
 }
 
-export function MenuItemCard({ item, onClick, showToggle, onToggle }: MenuItemCardProps) {
+export function MenuItemCard({ item, onClick, showToggle, onToggle, themeColor }: MenuItemCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -66,7 +67,10 @@ export function MenuItemCard({ item, onClick, showToggle, onToggle }: MenuItemCa
             </div>
 
             <div className="flex items-center justify-between mt-2">
-              <span className="text-lg font-bold text-primary">
+              <span 
+                className="text-lg font-bold"
+                style={{ color: themeColor ? `hsl(${themeColor})` : "hsl(var(--primary))" }}
+              >
                 ${item.price.toFixed(2)}
               </span>
               {showToggle && (
