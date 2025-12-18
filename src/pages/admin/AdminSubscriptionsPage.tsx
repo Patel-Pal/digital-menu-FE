@@ -31,7 +31,7 @@ export function AdminSubscriptionsPage() {
       <Card variant="elevated">
         <CardHeader><CardTitle>Plan Distribution</CardTitle></CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Premium</span>
@@ -73,25 +73,27 @@ export function AdminSubscriptionsPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="flex items-center justify-between p-3 rounded-xl bg-muted/50"
+              className="p-3 rounded-xl bg-muted/50"
             >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center font-bold text-primary">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center font-bold text-primary">
                   {sub.shop.charAt(0)}
                 </div>
-                <div>
-                  <p className="font-medium">{sub.shop}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium truncate">{sub.shop}</p>
+                    <span className="font-bold shrink-0">${sub.amount.toFixed(2)}</span>
+                  </div>
                   <p className="text-sm text-muted-foreground">Next billing: {sub.nextBilling}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant={sub.plan === "premium" ? "default" : sub.plan === "basic" ? "secondary" : "outline"}>
+                      {sub.plan}
+                    </Badge>
+                    <Badge variant={sub.status === "active" ? "success" : "destructive"}>
+                      {sub.status}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge variant={sub.plan === "premium" ? "default" : sub.plan === "basic" ? "secondary" : "outline"}>
-                  {sub.plan}
-                </Badge>
-                <span className="font-bold">${sub.amount.toFixed(2)}</span>
-                <Badge variant={sub.status === "active" ? "success" : "destructive"}>
-                  {sub.status}
-                </Badge>
               </div>
             </motion.div>
           ))}
