@@ -31,6 +31,7 @@ import { ShopkeeperAnalyticsPage } from "@/pages/shopkeeper/ShopkeeperAnalyticsP
 import { ShopkeeperBillingPage } from "@/pages/shopkeeper/ShopkeeperBillingPage";
 import { ShopSettingsPage } from "@/pages/shopkeeper/ShopSettingsPage";
 import { ShopDetailsFormPage } from "@/pages/shopkeeper/ShopDetailsFormPage";
+import { ShopAboutFormPage } from "@/pages/shopkeeper/ShopAboutFormPage";
 
 // Customer Pages
 import { CustomerMenuPage } from "@/pages/customer/CustomerMenuPage";
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="billing" element={<ShopkeeperBillingPage />} />
               <Route path="settings" element={<ShopSettingsPage />} />
               <Route path="details" element={<ShopDetailsFormPage />} />
+              <Route path="about" element={<ShopAboutFormPage />} />
             </Route>
 
             <Route element={<CustomerLayout />}>

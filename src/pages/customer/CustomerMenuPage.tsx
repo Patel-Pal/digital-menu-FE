@@ -7,6 +7,7 @@ import { MenuItemCard } from "@/components/MenuItemCard";
 import { ItemDetailModal } from "@/components/ItemDetailModal";
 import { AboutDigitalMenu } from "@/components/AboutDigitalMenu";
 import { AboutShop } from "@/components/AboutShop";
+import { CustomerRating } from "@/components/CustomerRating";
 import { mockCategories, getItemsByCategory, mockShops } from "@/utils/mockData";
 import { useMenuTheme, menuThemes } from "@/contexts/ThemeContext";
 import type { MenuItem } from "@/types";
@@ -188,6 +189,7 @@ export function CustomerMenuPage() {
       ) : (
         <div className="divide-y divide-border">
           <AboutShop shop={shop} themeColor={theme.primary} />
+          <CustomerRating themeColor={theme.primary} shopName={shop.name} />
           <AboutDigitalMenu themeColor={theme.primary} />
         </div>
       )}
