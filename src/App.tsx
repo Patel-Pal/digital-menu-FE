@@ -30,6 +30,7 @@ import { QRCodePage } from "@/pages/shopkeeper/QRCodePage";
 import { ShopkeeperAnalyticsPage } from "@/pages/shopkeeper/ShopkeeperAnalyticsPage";
 import { ShopkeeperBillingPage } from "@/pages/shopkeeper/ShopkeeperBillingPage";
 import { ShopSettingsPage } from "@/pages/shopkeeper/ShopSettingsPage";
+import { ShopDetailsFormPage } from "@/pages/shopkeeper/ShopDetailsFormPage";
 
 // Customer Pages
 import { CustomerMenuPage } from "@/pages/customer/CustomerMenuPage";
@@ -69,6 +70,7 @@ const App = () => (
               <Route path="analytics" element={<ShopkeeperAnalyticsPage />} />
               <Route path="billing" element={<ShopkeeperBillingPage />} />
               <Route path="settings" element={<ShopSettingsPage />} />
+              <Route path="details" element={<ShopDetailsFormPage />} />
             </Route>
 
             <Route element={<CustomerLayout />}>
