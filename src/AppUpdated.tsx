@@ -28,7 +28,6 @@ import { AdminContentPage } from "@/pages/admin/AdminContentPage";
 // Shopkeeper Pages
 import { ShopkeeperDashboard } from "@/pages/shopkeeper/ShopkeeperDashboard";
 import { MenuManagementPage } from "@/pages/shopkeeper/MenuManagementPage";
-import { CategoryManagementPage } from "@/pages/shopkeeper/CategoryManagementPage";
 import { QRCodePage } from "@/pages/shopkeeper/QRCodePage";
 import { ShopkeeperAnalyticsPage } from "@/pages/shopkeeper/ShopkeeperAnalyticsPage";
 import { ShopkeeperBillingPage } from "@/pages/shopkeeper/ShopkeeperBillingPage";
@@ -52,15 +51,22 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Default route - Menu page (no login required) */}
               <Route path="/" element={<Navigate to="/menu" replace />} />
 
+              {/* Auth routes */}
               <Route element={<AuthLayout />}>
                 <Route path="/auth/login" element={<LoginPage />} />
                 <Route path="/auth/register" element={<RegisterPage />} />
                 <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
               </Route>
 
-              <Route path="/admin" element={<AdminLayout />}>
+              {/* Protected Admin routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }>
                 <Route index element={<AdminDashboard />} />
                 <Route path="shops" element={<AdminShopsPage />} />
                 <Route path="subscriptions" element={<AdminSubscriptionsPage />} />
@@ -68,10 +74,14 @@ const App = () => (
                 <Route path="content" element={<AdminContentPage />} />
               </Route>
 
-              <Route path="/shop" element={<ShopkeeperLayout />}>
+              {/* Protected Shopkeeper routes */}
+              <Route path="/shop" element={
+                <ProtectedRoute allowedRoles={['shopkeeper']}>
+                  <ShopkeeperLayout />
+                </ProtectedRoute>
+              }>
                 <Route index element={<ShopkeeperDashboard />} />
                 <Route path="menu" element={<MenuManagementPage />} />
-                <Route path="categories" element={<CategoryManagementPage />} />
                 <Route path="qr" element={<QRCodePage />} />
                 <Route path="analytics" element={<ShopkeeperAnalyticsPage />} />
                 <Route path="billing" element={<ShopkeeperBillingPage />} />
@@ -80,6 +90,7 @@ const App = () => (
                 <Route path="about" element={<ShopAboutFormPage />} />
               </Route>
 
+              {/* Public Customer routes (no login required) */}
               <Route element={<CustomerLayout />}>
                 <Route path="/menu" element={<CustomerMenuPage />} />
                 <Route path="/menu/:shopId" element={<CustomerMenuPage />} />

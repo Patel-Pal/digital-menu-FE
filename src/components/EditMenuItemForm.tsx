@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ImagePlus, Leaf, Flame, Star, Plus, Minus, Upload } from "lucide-react";
+import { X, Upload, Leaf, Flame, Star, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,18 +9,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { categoryService, type Category } from "@/services/categoryService";
-import { menuItemService, type CreateMenuItemData } from "@/services/menuItemService";
+import { menuItemService, type MenuItem, type UpdateMenuItemData } from "@/services/menuItemService";
 import { uploadService } from "@/services/uploadService";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-interface AddMenuItemFormProps {
+interface EditMenuItemFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  item: MenuItem;
 }
 
-export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormProps) {
+export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuItemFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [newIngredient, setNewIngredient] = useState("");
@@ -49,9 +50,28 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
     }
   }, [isOpen, shopId]);
 
+  useEffect(() => {
+    if (isOpen && item) {
+      // Populate form with existing item data
+      setFormData({
+        name: item.name,
+        description: item.description || "",
+        price: item.price,
+        categoryId: item.categoryId._id,
+        available: item.available,
+        popular: item.popular,
+        vegetarian: item.vegetarian,
+        spicy: item.spicy,
+        image: item.image || ""
+      });
+      setIngredients(item.ingredients || []);
+      setImagePreview(item.image || "");
+    }
+  }, [isOpen, item]);
+
   const fetchCategories = async () => {
     try {
-      const response = await categoryService.getCategoriesByShop(shopId!);
+      const response = await categoryService.getAllCategoriesForManagement(shopId!);
       setCategories(response.data || []);
     } catch (error) {
       toast.error("Failed to fetch categories");
@@ -96,10 +116,6 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!shopId) {
-      toast.error("Shop ID not found");
-      return;
-    }
 
     setLoading(true);
     try {
@@ -113,41 +129,21 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
         }
       }
 
-      const data: CreateMenuItemData = {
+      const data: UpdateMenuItemData = {
         ...formData,
         image: imageUrl,
-        ingredients,
-        shopId
+        ingredients
       };
       
-      await menuItemService.createMenuItem(data);
-      toast.success("Menu item created successfully");
+      await menuItemService.updateMenuItem(item._id, data);
+      toast.success("Menu item updated successfully");
       onSuccess();
       onClose();
-      resetForm();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to create menu item");
+      toast.error(error.response?.data?.message || "Failed to update menu item");
     } finally {
       setLoading(false);
     }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      description: "",
-      price: 0,
-      categoryId: "",
-      available: true,
-      popular: false,
-      vegetarian: false,
-      spicy: false,
-      image: ""
-    });
-    setIngredients([]);
-    setNewIngredient("");
-    setImageFile(null);
-    setImagePreview("");
   };
 
   if (!isOpen) return null;
@@ -171,7 +167,7 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
           <div className="flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-semibold">Add Menu Item</h2>
+              <h2 className="text-xl font-semibold">Edit Menu Item</h2>
               <Button variant="ghost" size="sm" onClick={onClose}>
                 <X className="h-4 w-4" />
               </Button>
@@ -253,7 +249,7 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
                   </div>
 
                   <div>
-                    <Label>Or Upload Image</Label>
+                    <Label>Or Upload New Image</Label>
                     <div className="flex items-center gap-2">
                       <input
                         type="file"
@@ -266,7 +262,7 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
                         <Button type="button" variant="outline" className="w-full cursor-pointer" asChild>
                           <span>
                             <Upload className="h-4 w-4 mr-2" />
-                            {imageFile ? imageFile.name : "Choose Image"}
+                            {imageFile ? imageFile.name : "Choose New Image"}
                           </span>
                         </Button>
                       </label>
@@ -286,6 +282,7 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
                         onClick={() => {
                           setImageFile(null);
                           setImagePreview("");
+                          setFormData({ ...formData, image: "" });
                         }}
                         className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-destructive/80"
                       >
@@ -394,7 +391,7 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
                 className="flex-1"
                 disabled={loading || uploadingImage || !formData.name || !formData.categoryId}
               >
-                {loading ? "Creating..." : uploadingImage ? "Uploading..." : "Add Item"}
+                {loading ? "Updating..." : uploadingImage ? "Uploading..." : "Update Item"}
               </Button>
             </div>
           </div>

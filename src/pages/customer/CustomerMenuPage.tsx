@@ -1,38 +1,79 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search, Globe, ChevronDown, UtensilsCrossed, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { CategoryTabs } from "@/components/CategoryTabs";
-import { MenuItemCard } from "@/components/MenuItemCard";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { ItemDetailModal } from "@/components/ItemDetailModal";
 import { AboutDigitalMenu } from "@/components/AboutDigitalMenu";
 import { AboutShop } from "@/components/AboutShop";
 import { CustomerRating } from "@/components/CustomerRating";
-import { mockCategories, getItemsByCategory, mockShops } from "@/utils/mockData";
+import { menuItemService, type MenuItem } from "@/services/menuItemService";
+import { categoryService, type Category } from "@/services/categoryService";
 import { useMenuTheme, menuThemes } from "@/contexts/ThemeContext";
-import type { MenuItem } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 type ViewTab = "menu" | "about";
 
 export function CustomerMenuPage() {
-  const [activeCategory, setActiveCategory] = useState("1");
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<ViewTab>("menu");
+  const [loading, setLoading] = useState(true);
   
   const { menuTheme } = useMenuTheme();
   const theme = menuThemes[menuTheme];
+  const { user } = useAuth();
+  
+  // For demo, use current user's shopId or a default
+  const shopId = user?.shopId || "507f1f77bcf86cd799439011";
 
-  // Mock shop data - in real app would come from API/context
-  const shop = mockShops[0];
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const items = getItemsByCategory(activeCategory).filter((item) =>
-    searchQuery
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [menuResponse, categoryResponse] = await Promise.all([
+        menuItemService.getMenuItemsByShop(shopId),
+        categoryService.getCategoriesByShop(shopId)
+      ]);
+      
+      setMenuItems(menuResponse.data || []);
+      setCategories(categoryResponse.data || []);
+      
+      // Set first category as active if available
+      if (categoryResponse.data && categoryResponse.data.length > 0) {
+        setActiveCategory(categoryResponse.data[0]._id);
+      }
+    } catch (error) {
+      console.error("Failed to fetch menu data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredItems = menuItems.filter((item) => {
+    const matchesCategory = activeCategory === "all" || item.categoryId._id === activeCategory;
+    const matchesSearch = searchQuery
       ? item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase())
-      : true
-  );
+        item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    return matchesCategory && matchesSearch && item.isActive;
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -49,158 +90,175 @@ export function CustomerMenuPage() {
         </div>
 
         {/* Shop Info */}
-        <div className="relative -mt-14 px-4 pb-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-end gap-4"
-          >
-            <div 
-              className="h-20 w-20 flex-shrink-0 rounded-2xl shadow-lg flex items-center justify-center text-3xl border-4 border-background"
-              style={{ backgroundColor: `hsl(${theme.primary} / 0.1)` }}
-            >
-              🍳
+        <div className="relative px-4 -mt-8">
+          <div className="bg-card rounded-2xl p-6 shadow-lg border">
+            <div className="flex items-start gap-4">
+              <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center text-2xl font-bold">
+                🍽️
+              </div>
+              <div className="flex-1">
+                <h1 className="text-xl font-bold">Digital Menu Demo</h1>
+                <p className="text-muted-foreground text-sm">Delicious food, great experience</p>
+                <div className="flex items-center gap-4 mt-2">
+                  <span className="text-xs text-muted-foreground">⭐ 4.8 (120 reviews)</span>
+                  <span className="text-xs text-muted-foreground">🕒 30-45 min</span>
+                </div>
+              </div>
             </div>
-            <div className="flex-1 pb-1">
-              <h1 className="text-lg font-bold">{shop.name}</h1>
-              <p className="text-xs text-muted-foreground">{shop.description}</p>
-            </div>
-          </motion.div>
+          </div>
         </div>
       </header>
 
-      {/* View Tabs - Menu / About */}
-      <div className="flex gap-2 px-4 py-3 border-b border-border">
-        <button
-          onClick={() => setActiveTab("menu")}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
-            activeTab === "menu"
-              ? "text-primary-foreground"
-              : "text-muted-foreground bg-muted/50"
-          }`}
-          style={
-            activeTab === "menu"
-              ? { backgroundColor: `hsl(${theme.primary})` }
-              : undefined
-          }
-        >
-          <UtensilsCrossed className="h-4 w-4" />
-          Menu
-        </button>
-        <button
-          onClick={() => setActiveTab("about")}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
-            activeTab === "about"
-              ? "text-primary-foreground"
-              : "text-muted-foreground bg-muted/50"
-          }`}
-          style={
-            activeTab === "about"
-              ? { backgroundColor: `hsl(${theme.primary})` }
-              : undefined
-          }
-        >
-          <Info className="h-4 w-4" />
-          About
-        </button>
+      {/* Navigation Tabs */}
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b px-4 py-3">
+        <div className="flex gap-6">
+          <button
+            onClick={() => setActiveTab("menu")}
+            className={`flex items-center gap-2 pb-2 border-b-2 transition-colors ${
+              activeTab === "menu"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground"
+            }`}
+          >
+            <UtensilsCrossed className="h-4 w-4" />
+            Menu
+          </button>
+          <button
+            onClick={() => setActiveTab("about")}
+            className={`flex items-center gap-2 pb-2 border-b-2 transition-colors ${
+              activeTab === "about"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground"
+            }`}
+          >
+            <Info className="h-4 w-4" />
+            About
+          </button>
+        </div>
       </div>
 
       {activeTab === "menu" ? (
-        <>
-          {/* Search & Language */}
-          <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3">
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search menu..."
-                  icon={<Search className="h-4 w-4" />}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-10"
-                />
-              </div>
-              <div className="relative">
-                <button
-                  onClick={() => setShowLangMenu(!showLangMenu)}
-                  className="flex h-10 items-center gap-1 rounded-xl border-2 border-input bg-background px-3 text-sm font-medium"
-                >
-                  <Globe className="h-4 w-4" />
-                  EN
-                  <ChevronDown className="h-3 w-3" />
-                </button>
-                {showLangMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute right-0 top-12 z-50 rounded-xl border bg-card shadow-lg"
-                  >
-                    {["EN", "ES", "FR", "DE"].map((lang) => (
-                      <button
-                        key={lang}
-                        onClick={() => setShowLangMenu(false)}
-                        className="block w-full px-4 py-2 text-left text-sm hover:bg-muted first:rounded-t-xl last:rounded-b-xl"
-                      >
-                        {lang}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </div>
-            </div>
+        <div className="px-4 py-6 space-y-6">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search menu items..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
 
-          {/* Category Tabs with Dynamic Theme */}
-          <CategoryTabs
-            categories={mockCategories}
-            activeCategory={activeCategory}
-            onSelect={setActiveCategory}
-            themeColor={theme.primary}
-          />
+          {/* Categories */}
+          {categories.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              <button
+                onClick={() => setActiveCategory("all")}
+                className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
+                  activeCategory === "all"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                All Items
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category._id}
+                  onClick={() => setActiveCategory(category._id)}
+                  className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
+                    activeCategory === category._id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  {category.icon} {category.name}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Menu Items */}
-          <div className="px-4 py-4 space-y-3">
-            {items.length > 0 ? (
-              items.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <MenuItemCard
-                    item={item}
-                    onClick={() => setSelectedItem(item)}
-                    themeColor={theme.primary}
-                  />
-                </motion.div>
-              ))
-            ) : (
-              <div className="py-12 text-center">
-                <p className="text-lg font-medium text-muted-foreground">
-                  No items found
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Try a different search term
-                </p>
-              </div>
+          <div className="grid gap-4">
+            {filteredItems.map((item) => (
+              <motion.div
+                key={item._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={() => setSelectedItem(item)}
+                className="cursor-pointer"
+              >
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex gap-4">
+                      <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-2xl">🍽️</span>
+                        )}
+                      </div>
+                      
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-semibold">{item.name}</h3>
+                            {item.description && (
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                {item.description}
+                              </p>
+                            )}
+                            
+                            <div className="flex items-center gap-2 mt-2">
+                              {item.popular && <Badge variant="outline" className="text-xs">Popular</Badge>}
+                              {item.vegetarian && <Badge variant="outline" className="text-xs text-green-600">🌱 Veg</Badge>}
+                              {item.spicy && <Badge variant="outline" className="text-xs text-red-600">🌶️ Spicy</Badge>}
+                            </div>
+                          </div>
+                          
+                          <div className="text-right">
+                            <span className="font-semibold text-lg">${item.price.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+            
+            {filteredItems.length === 0 && (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <h3 className="text-lg font-semibold mb-2">No items found</h3>
+                  <p className="text-muted-foreground">
+                    {searchQuery 
+                      ? "Try adjusting your search terms" 
+                      : "No menu items available in this category"
+                    }
+                  </p>
+                </CardContent>
+              </Card>
             )}
           </div>
-        </>
+        </div>
       ) : (
-        <div className="divide-y divide-border">
-          <AboutShop shop={shop} themeColor={theme.primary} />
-          <CustomerRating themeColor={theme.primary} shopName={shop.name} />
-          <AboutDigitalMenu themeColor={theme.primary} />
+        <div className="px-4 py-6 space-y-6">
+          <AboutShop />
+          <AboutDigitalMenu />
+          <CustomerRating />
         </div>
       )}
 
       {/* Item Detail Modal */}
-      <ItemDetailModal
-        item={selectedItem}
-        isOpen={!!selectedItem}
-        onClose={() => setSelectedItem(null)}
-        themeColor={theme.primary}
-      />
+      {selectedItem && (
+        <ItemDetailModal
+          item={selectedItem}
+          isOpen={!!selectedItem}
+          onClose={() => setSelectedItem(null)}
+        />
+      )}
     </div>
   );
 }

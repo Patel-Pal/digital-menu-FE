@@ -5,17 +5,30 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Demo: navigate to shopkeeper dashboard
-    navigate("/shop");
+    setLoading(true);
+    
+    try {
+      await login(email, password);
+      toast.success("Login successful!");
+      // Navigation will be handled by AuthContext based on user role
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -80,8 +93,14 @@ export function LoginPage() {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" size="lg" variant="gradient">
-            Sign In
+          <Button 
+            type="submit" 
+            className="w-full" 
+            size="lg" 
+            variant="gradient"
+            disabled={loading}
+          >
+            {loading ? "Signing In..." : "Sign In"}
           </Button>
         </form>
 
