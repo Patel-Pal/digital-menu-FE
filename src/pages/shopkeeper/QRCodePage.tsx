@@ -66,6 +66,16 @@ export function QRCodePage() {
       });
     }
   };
+
+  const handleDownload = () => {
+    if (qrRef.current) {
+      const canvas = qrRef.current;
+      const link = document.createElement('a');
+      link.download = 'qr-code.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+  };
   
   useEffect(() => {
     if (qrRef.current && ownerId) {
@@ -113,7 +123,7 @@ export function QRCodePage() {
         transition={{ delay: 0.1 }}
         className="grid grid-cols-2 gap-3"
       >
-        <Button variant="gradient" size="lg" className="h-14">
+        <Button variant="gradient" size="lg" className="h-14" onClick={handleDownload}>
           <Download className="h-5 w-5 mr-2" />
           Download
         </Button>

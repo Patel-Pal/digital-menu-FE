@@ -101,7 +101,26 @@ export function ItemDetailModal({ item, isOpen, onClose, themeColor }: ItemDetai
               </div>
 
               {/* Description */}
-              <p className="text-muted-foreground">{item.description}</p>
+              {item.description && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Description</h3>
+                  <p className="text-muted-foreground">{item.description}</p>
+                </div>
+              )}
+
+              {/* Ingredients */}
+              {item.ingredients && item.ingredients.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Ingredients</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {item.ingredients.map((ingredient, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {ingredient}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Quantity Selector (for demo) */}
               {item.available && (
