@@ -95,7 +95,7 @@ export function LoginPage() {
 
           <Button 
             type="submit" 
-            className="w-full" 
+            className="w-full px-8 py-3" 
             size="lg" 
             variant="gradient"
             disabled={loading}

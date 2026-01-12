@@ -38,6 +38,7 @@ import { ShopAboutFormPage } from "@/pages/shopkeeper/ShopAboutFormPage";
 
 // Customer Pages
 import { CustomerMenuPage } from "@/pages/customer/CustomerMenuPage";
+import { LandingPage } from "@/pages/LandingPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -52,7 +53,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Navigate to="/menu" replace />} />
+              <Route path="/" element={<LandingPage />} />
 
               <Route element={<AuthLayout />}>
                 <Route path="/auth/login" element={<LoginPage />} />
