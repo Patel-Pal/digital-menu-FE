@@ -54,7 +54,8 @@ export function RegisterPage() {
       <CardContent className="pt-4">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Full Name</label>
+            <label className="text-sm font-medium">
+              Name            </label>
             <Input
               type="text"
               placeholder="John Doe"

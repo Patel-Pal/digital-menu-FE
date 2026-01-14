@@ -19,10 +19,35 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { adminService } from "@/services/adminService";
 
 export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [contactInfo, setContactInfo] = useState({
+    email: "support@digitalmenu.com",
+    phone: "+1 (555) 123-4567",
+    address: "123 Tech Street, San Francisco, CA"
+  });
+
+  useEffect(() => {
+    fetchContactInfo();
+  }, []);
+
+  const fetchContactInfo = async () => {
+    try {
+      const response = await adminService.getContactInfo();
+      if (response.data) {
+        setContactInfo({
+          email: response.data.email,
+          phone: response.data.phone,
+          address: response.data.address
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch contact info:", error);
+    }
+  };
 
   const features = [
     {
@@ -314,7 +339,7 @@ export function LandingPage() {
               <CardContent className="p-6 text-center">
                 <Mail className="h-8 w-8 text-primary mx-auto mb-4" />
                 <h3 className="font-semibold mb-2">Email Us</h3>
-                <p className="text-muted-foreground">support@digitalmenu.com</p>
+                <p className="text-muted-foreground">{contactInfo.email}</p>
               </CardContent>
             </Card>
 
@@ -322,7 +347,7 @@ export function LandingPage() {
               <CardContent className="p-6 text-center">
                 <Phone className="h-8 w-8 text-primary mx-auto mb-4" />
                 <h3 className="font-semibold mb-2">Call Us</h3>
-                <p className="text-muted-foreground">+1 (555) 123-4567</p>
+                <p className="text-muted-foreground">{contactInfo.phone}</p>
               </CardContent>
             </Card>
 
@@ -330,7 +355,7 @@ export function LandingPage() {
               <CardContent className="p-6 text-center">
                 <MapPin className="h-8 w-8 text-primary mx-auto mb-4" />
                 <h3 className="font-semibold mb-2">Visit Us</h3>
-                <p className="text-muted-foreground">123 Tech Street, San Francisco, CA</p>
+                <p className="text-muted-foreground">{contactInfo.address}</p>
               </CardContent>
             </Card>
           </div>

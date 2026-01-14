@@ -15,7 +15,7 @@ import { shopService, type Shop } from "@/services/shopService";
 import { useMenuTheme, menuThemes, MenuTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 
-type ViewTab = "menu" | "about";
+type ViewTab = "menu" | "about" | "digital-menu";
 
 export function CustomerMenuPage() {
   const { shopId } = useParams<{ shopId: string }>();
@@ -95,88 +95,48 @@ export function CustomerMenuPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Shop Header with Dynamic Theme */}
-      <header className="relative overflow-hidden">
-        {/* Banner - uses dynamic theme colors */}
-        <div 
-          className="h-36"
-          style={{
-            background: `linear-gradient(135deg, hsl(${theme.primary} / 0.2), hsl(${theme.accent} / 0.1), hsl(var(--secondary)))`
-          }}
-        >
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
-        </div>
-
-        {/* Shop Info */}
-        <div className="relative px-4 -mt-8">
-          <div className="bg-card rounded-2xl p-6 shadow-lg border">
-            <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center text-2xl font-bold">
-                🍽️
-              </div>
-              <div className="flex-1">
-                <h1 className="text-xl font-bold">{shop?.name || "Digital Menu Demo"}</h1>
-                <p className="text-muted-foreground text-sm">{shop?.description || "Delicious food, great experience"}</p>
-                <div className="flex items-center gap-4 mt-2">
-                  <span className="text-xs text-muted-foreground">⭐ {shop?.rating || "4.8"} ({shop?.reviewCount || "120"} reviews)</span>
-                  <span className="text-xs text-muted-foreground">🕒 30-45 min</span>
-                </div>
+      {/* Mobile App Header - Fixed */}
+      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b">
+        {/* Shop Info - Compact Mobile Style */}
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-lg font-bold flex-shrink-0">
+              🍽️
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-bold truncate">{shop?.name || "Digital Menu Demo"}</h1>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>⭐ {shop?.rating || "4.8"}</span>
+                <span>🕒 30-45 min</span>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Navigation Tabs */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b px-4 py-3">
-        <div className="flex gap-6">
-          <button
-            onClick={() => setActiveTab("menu")}
-            className={`flex items-center gap-2 pb-2 border-b-2 transition-colors ${
-              activeTab === "menu"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground"
-            }`}
-          >
-            <UtensilsCrossed className="h-4 w-4" />
-            Menu
-          </button>
-          <button
-            onClick={() => setActiveTab("about")}
-            className={`flex items-center gap-2 pb-2 border-b-2 transition-colors ${
-              activeTab === "about"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground"
-            }`}
-          >
-            <Info className="h-4 w-4" />
-            About
-          </button>
-        </div>
-      </div>
-
-      {activeTab === "menu" ? (
-        <div className="px-4 py-6 space-y-6">
-          {/* Search */}
+      {/* Content Area with Mobile App Spacing */}
+      <main className="pb-6">{activeTab === "menu" ? (
+        <div className="px-4 pt-4 space-y-4">
+          {/* Search - Mobile App Style */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search menu items..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-11 rounded-xl border-0 bg-muted/50"
             />
           </div>
 
-          {/* Categories */}
+          {/* Categories - Horizontal Scroll */}
           {categories.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               <button
                 onClick={() => setActiveCategory("all")}
-                className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all ${
                   activeCategory === "all"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/50 text-muted-foreground"
                 }`}
               >
                 All Items
@@ -185,10 +145,10 @@ export function CustomerMenuPage() {
                 <button
                   key={category._id}
                   onClick={() => setActiveCategory(category._id)}
-                  className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all ${
                     activeCategory === category._id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted/50 text-muted-foreground"
                   }`}
                 >
                   {category.icon} {category.name}
@@ -197,8 +157,8 @@ export function CustomerMenuPage() {
             </div>
           )}
 
-          {/* Menu Items */}
-          <div className="grid gap-4">
+          {/* Menu Items - Mobile App Cards */}
+          <div className="space-y-3">
             {filteredItems.map((item) => (
               <motion.div
                 key={item._id}
@@ -207,21 +167,21 @@ export function CustomerMenuPage() {
                 onClick={() => setSelectedItem(item)}
                 className="cursor-pointer"
               >
-                <Card className="hover:shadow-md transition-shadow">
+                <Card className="border-0 shadow-sm bg-card/50 backdrop-blur-sm">
                   <CardContent className="p-4">
                     <div className="flex gap-4">
-                      <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+                      <div className="w-16 h-16 rounded-xl bg-muted/50 flex items-center justify-center overflow-hidden flex-shrink-0">
                         {item.image ? (
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-xl" />
                         ) : (
-                          <span className="text-2xl">🍽️</span>
+                          <span className="text-xl">🍽️</span>
                         )}
                       </div>
                       
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-semibold">{item.name}</h3>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold truncate">{item.name}</h3>
                             {item.description && (
                               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                 {item.description}
@@ -229,14 +189,14 @@ export function CustomerMenuPage() {
                             )}
                             
                             <div className="flex items-center gap-2 mt-2">
-                              {item.popular && <Badge variant="outline" className="text-xs">Popular</Badge>}
-                              {item.vegetarian && <Badge variant="outline" className="text-xs text-green-600">🌱 Veg</Badge>}
-                              {item.spicy && <Badge variant="outline" className="text-xs text-red-600">🌶️ Spicy</Badge>}
+                              {item.popular && <Badge variant="outline" className="text-xs h-5">Popular</Badge>}
+                              {item.vegetarian && <Badge variant="outline" className="text-xs h-5 text-green-600">🌱</Badge>}
+                              {item.spicy && <Badge variant="outline" className="text-xs h-5 text-red-600">🌶️</Badge>}
                             </div>
                           </div>
                           
-                          <div className="text-right">
-                            <span className="font-semibold text-lg">${item.price.toFixed(2)}</span>
+                          <div className="text-right ml-2">
+                            <span className="font-bold text-lg">${item.price.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
@@ -247,10 +207,13 @@ export function CustomerMenuPage() {
             ))}
             
             {filteredItems.length === 0 && (
-              <Card>
-                <CardContent className="p-12 text-center">
+              <Card className="border-0 shadow-sm bg-card/50">
+                <CardContent className="p-8 text-center">
+                  <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                    <UtensilsCrossed className="h-8 w-8 text-muted-foreground" />
+                  </div>
                   <h3 className="text-lg font-semibold mb-2">No items found</h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {searchQuery 
                       ? "Try adjusting your search terms" 
                       : "No menu items available in this category"
@@ -261,13 +224,145 @@ export function CustomerMenuPage() {
             )}
           </div>
         </div>
+      ) : activeTab === "about" ? (
+        <div className="px-4 pt-4 space-y-4">
+          <Card className="border-0 shadow-sm bg-card/50 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <AboutShop shop={shop} themeColor={theme.primary} />
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-sm bg-card/50 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <CustomerRating />
+            </CardContent>
+          </Card>
+        </div>
       ) : (
-        <div className="px-4 py-6 space-y-6">
-          <AboutShop shop={shop} themeColor={theme.primary} />
-          <AboutDigitalMenu />
-          <CustomerRating />
+        <div className="px-4 pt-4">
+          <Card className="border-0 shadow-sm bg-card/50 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="max-w-4xl mx-auto">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl md:text-2xl font-bold mb-2">Transform Your Restaurant</h2>
+                  <p className="text-sm text-muted-foreground">Join thousands of restaurants using our digital menu platform</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-background/50">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      📊
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1 text-sm">Boost Revenue</h3>
+                      <p className="text-xs text-muted-foreground">Increase orders by 35% with instant menu access and real-time updates</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-background/50">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      💰
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1 text-sm">Cut Costs</h3>
+                      <p className="text-xs text-muted-foreground">Save on printing costs and reduce staff workload with contactless ordering</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-background/50">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      📱
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1 text-sm">QR Code Magic</h3>
+                      <p className="text-xs text-muted-foreground">Customers scan once and access your full menu instantly on any device</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-background/50">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      📈
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1 text-sm">Smart Analytics</h3>
+                      <p className="text-xs text-muted-foreground">Track menu views, popular items, and customer behavior to optimize sales</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-background/50">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      🎨
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1 text-sm">Brand Your Way</h3>
+                      <p className="text-xs text-muted-foreground">Customize themes, colors, and layout to match your restaurant's identity</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-background/50">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      ⚡
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1 text-sm">Instant Updates</h3>
+                      <p className="text-xs text-muted-foreground">Change prices, add specials, or update availability in real-time</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 p-4 bg-primary/5 rounded-xl text-center">
+                  <h3 className="font-semibold mb-2 text-sm">Ready to Go Digital?</h3>
+                  <p className="text-xs text-muted-foreground mb-3">Start with our free plan and upgrade as you grow</p>
+                  <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                    <span>✓ Free Plan Available</span>
+                    <span>✓ No Setup Fees</span>
+                    <span>✓ 24/7 Support</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
+      </main>
+
+      {/* Bottom Navigation - Mobile App Style */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-t">
+        <div className="flex">
+          <button
+            onClick={() => setActiveTab("menu")}
+            className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all ${
+              activeTab === "menu"
+                ? "text-primary"
+                : "text-muted-foreground"
+            }`}
+          >
+            <UtensilsCrossed className="h-5 w-5 mb-1" />
+            <span className="text-xs font-medium">Menu</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("about")}
+            className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all ${
+              activeTab === "about"
+                ? "text-primary"
+                : "text-muted-foreground"
+            }`}
+          >
+            <Info className="h-5 w-5 mb-1" />
+            <span className="text-xs font-medium">About</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("digital-menu")}
+            className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all ${
+              activeTab === "digital-menu"
+                ? "text-primary"
+                : "text-muted-foreground"
+            }`}
+          >
+            <Globe className="h-5 w-5 mb-1" />
+            <span className="text-xs font-medium">Digital</span>
+          </button>
+        </div>
+      </div>
 
       {/* Item Detail Modal */}
       {selectedItem && (

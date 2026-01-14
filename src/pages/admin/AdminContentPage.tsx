@@ -1,15 +1,23 @@
+import { useState } from "react";
 import { FileText, Image, Globe, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LandingPageManagement } from "@/components/LandingPageManagement";
 
 const contentSections = [
-  { title: "Landing Page", description: "Edit homepage content and hero section", icon: Globe, items: 5 },
+  { title: "Landing Page", description: "Edit homepage content and contact information", icon: Globe, items: 5 },
   { title: "Blog Posts", description: "Manage blog articles and news", icon: FileText, items: 12 },
   { title: "Media Library", description: "Upload and manage images", icon: Image, items: 48 },
   { title: "Settings", description: "Site-wide configuration", icon: Settings, items: 8 },
 ];
 
 export function AdminContentPage() {
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
+
+  if (selectedSection === "Landing Page") {
+    return <LandingPageManagement onBack={() => setSelectedSection(null)} />;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -31,7 +39,11 @@ export function AdminContentPage() {
                   <p className="text-xs text-muted-foreground mt-2">{section.items} items</p>
                 </div>
               </div>
-              <Button variant="outline" className="w-full mt-4">
+              <Button 
+                variant="outline" 
+                className="w-full mt-4"
+                onClick={() => setSelectedSection(section.title)}
+              >
                 Manage
               </Button>
             </CardContent>
