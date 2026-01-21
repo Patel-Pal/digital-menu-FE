@@ -93,17 +93,16 @@ export function CustomerRating({ themeColor, shopName }: CustomerRatingProps) {
             key={star}
             type="button"
             whileTap={interactive ? { scale: 0.9 } : {}}
-            className={interactive ? "cursor-pointer" : "cursor-default"}
+            className={`${interactive ? 'cursor-pointer' : 'cursor-default'} transition-all`}
             onClick={() => interactive && onSelect?.(star)}
             onMouseEnter={() => interactive && onHover?.(star)}
             onMouseLeave={() => interactive && onHover?.(0)}
-            disabled={!interactive}
           >
             <Star
               className={`${sizeClasses[size]} transition-colors`}
               style={{
-                fill: star <= value ? `hsl(${themeColor})` : "transparent",
-                color: star <= value ? `hsl(${themeColor})` : "hsl(var(--muted-foreground))",
+                fill: star <= value ? `hsl(var(--primary))` : "transparent",
+                color: star <= value ? `hsl(var(--primary))` : "hsl(var(--muted-foreground))",
               }}
             />
           </motion.button>
@@ -121,7 +120,7 @@ export function CustomerRating({ themeColor, shopName }: CustomerRatingProps) {
       {/* Rating Summary */}
       <div
         className="rounded-2xl p-4"
-        style={{ backgroundColor: `hsl(${themeColor} / 0.08)` }}
+        style={{ backgroundColor: `hsl(var(--primary) / 0.08)` }}
       >
         <div className="flex items-center gap-4">
           <div className="text-center">
@@ -137,14 +136,14 @@ export function CustomerRating({ themeColor, shopName }: CustomerRatingProps) {
               return (
                 <div key={stars} className="flex items-center gap-2 text-xs">
                   <span className="w-3">{stars}</span>
-                  <Star className="h-3 w-3" style={{ color: `hsl(${themeColor})` }} />
+                  <Star className="h-3 w-3" style={{ color: `hsl(var(--primary))` }} />
                   <div className="flex-1 h-2 rounded-full bg-background overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${percentage}%` }}
                       transition={{ delay: 0.3, duration: 0.5 }}
                       className="h-full rounded-full"
-                      style={{ backgroundColor: `hsl(${themeColor})` }}
+                      style={{ backgroundColor: `hsl(var(--primary))` }}
                     />
                   </div>
                   <span className="w-8 text-muted-foreground">{percentage}%</span>
@@ -166,11 +165,7 @@ export function CustomerRating({ themeColor, shopName }: CustomerRatingProps) {
           >
             <Button
               onClick={() => setShowForm(true)}
-              className="w-full"
-              style={{
-                backgroundColor: `hsl(${themeColor})`,
-                color: "white",
-              }}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <MessageSquare className="h-4 w-4 mr-2" />
               Write a Review
@@ -234,13 +229,9 @@ export function CustomerRating({ themeColor, shopName }: CustomerRatingProps) {
                 Cancel
               </Button>
               <Button
-                className="flex-1"
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={handleSubmit}
                 disabled={isSubmitting || rating === 0}
-                style={{
-                  backgroundColor: `hsl(${themeColor})`,
-                  color: "white",
-                }}
               >
                 {isSubmitting ? (
                   "Submitting..."
@@ -273,12 +264,10 @@ export function CustomerRating({ themeColor, shopName }: CustomerRatingProps) {
             >
               <div className="flex items-start gap-3">
                 <div
-                  className="h-9 w-9 rounded-full flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `hsl(${themeColor} / 0.1)` }}
+                  className="h-9 w-9 rounded-full flex items-center justify-center shrink-0 bg-primary/10"
                 >
                   <User
-                    className="h-4 w-4"
-                    style={{ color: `hsl(${themeColor})` }}
+                    className="h-4 w-4 text-primary"
                   />
                 </div>
                 <div className="flex-1 min-w-0">

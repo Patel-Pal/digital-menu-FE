@@ -148,7 +148,7 @@ export function ShopkeeperDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">${item.price.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">₹{item.price.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center gap-1 text-warning">
                     <Star className="h-4 w-4 fill-current" />

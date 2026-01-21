@@ -162,7 +162,7 @@ export function QRCodePage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <Card variant="elevated">
+        {/* <Card variant="elevated">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">QR Code Options</CardTitle>
           </CardHeader>
@@ -180,7 +180,7 @@ export function QRCodePage() {
               Get Embeddable Link
             </Button>
           </CardContent>
-        </Card>
+        </Card> */}
       </motion.div>
 
       {/* Tips */}

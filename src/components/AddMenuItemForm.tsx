@@ -207,7 +207,7 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
                   </div>
 
                   <div>
-                    <Label htmlFor="price">Price ($) *</Label>
+                    <Label htmlFor="price">Price (₹) *</Label>
                     <Input
                       id="price"
                       type="number"

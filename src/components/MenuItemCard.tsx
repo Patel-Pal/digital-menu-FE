@@ -71,7 +71,7 @@ export function MenuItemCard({ item, onClick, showToggle, onToggle, themeColor }
                 className="text-lg font-bold"
                 style={{ color: themeColor ? `hsl(${themeColor})` : "hsl(var(--primary))" }}
               >
-                ${item.price.toFixed(2)}
+                ₹{item.price.toFixed(2)}
               </span>
               {showToggle && (
                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>

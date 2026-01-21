@@ -101,7 +101,7 @@ export function ShopkeeperBillingPage() {
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-bold">
-                    ${plan.price.toFixed(2)}
+                    ₹{plan.price.toFixed(2)}
                   </span>
                   <span className="text-sm text-muted-foreground">
                     /{plan.period}

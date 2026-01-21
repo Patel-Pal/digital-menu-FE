@@ -84,7 +84,7 @@ export function ItemDetailModal({ item, isOpen, onClose, themeColor }: ItemDetai
                 <div className="flex items-start justify-between gap-4">
                   <h2 className="text-xl font-bold">{item.name}</h2>
                   <span className="text-xl font-bold" style={{ color: primaryColor }}>
-                    ${item.price.toFixed(2)}
+                    ₹{item.price.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -166,7 +166,7 @@ export function ItemDetailModal({ item, isOpen, onClose, themeColor }: ItemDetai
                 onClick={handleAddToCart}
               >
                 {item.isActive
-                  ? `Add to Cart • $${(item.price * quantity).toFixed(2)}`
+                  ? `Add to Cart • ₹${(item.price * quantity).toFixed(2)}`
                   : "Currently Unavailable"}
               </Button>
             </div>
