@@ -40,7 +40,7 @@ import { ShopAboutFormPage } from "@/pages/shopkeeper/ShopAboutFormPage";
 
 // Customer Pages
 import { CustomerMenuPage } from "@/pages/customer/CustomerMenuPage";
-import { LandingPage } from "@/pages/LandingPage";
+import { LandingPage } from "@/pages/LandingPageEnhanced";
 
 import NotFound from "./pages/NotFound";
 

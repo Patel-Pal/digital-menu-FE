@@ -82,21 +82,21 @@ export function LandingPage() {
   const pricing = [
     {
       name: "Free",
-      price: "₹0",
+      price: "$0",
       period: "/month",
       features: ["Up to 10 menu items", "Basic QR code", "1 theme", "Basic analytics"],
       popular: false
     },
     {
       name: "Basic",
-      price: "₹9",
+      price: "$9",
       period: "/month",
       features: ["Up to 50 menu items", "Custom QR codes", "All themes", "Advanced analytics", "Image uploads"],
       popular: true
     },
     {
       name: "Premium",
-      price: "₹19",
+      price: "$19",
       period: "/month",
       features: ["Unlimited menu items", "Priority support", "Custom branding", "Advanced features", "API access"],
       popular: false
@@ -190,9 +190,9 @@ export function LandingPage() {
                   Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              {/* <Button size="lg" variant="outline" className="text-lg px-8 py-3">
+              <Button size="lg" variant="outline" className="text-lg px-8 py-3">
                 View Demo
-              </Button> */}
+              </Button>
             </div>
           </motion.div>
         </div>
