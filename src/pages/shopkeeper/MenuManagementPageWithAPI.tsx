@@ -150,7 +150,7 @@ export function MenuManagementPageWithAPI() {
                       {item.description}
                     </p>
                     <p className="font-semibold text-primary">
-                      ${item.price.toFixed(2)}
+                      ₹{item.price.toFixed(2)}
                     </p>
                   </div>
 

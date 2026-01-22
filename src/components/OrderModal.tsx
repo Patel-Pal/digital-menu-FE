@@ -132,7 +132,7 @@ export function OrderModal({ isOpen, onClose, shopId }: OrderModalProps) {
                     
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-white text-sm leading-tight mb-1">{item.menuItem.name}</h4>
-                      <p className="text-xs text-slate-400 mb-3">${item.menuItem.price.toFixed(2)} each</p>
+                      <p className="text-xs text-slate-400 mb-3">₹{item.menuItem.price.toFixed(2)} each</p>
                       
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 bg-slate-700/50 rounded-full p-0.5">
@@ -177,7 +177,7 @@ export function OrderModal({ isOpen, onClose, shopId }: OrderModalProps) {
           {/* Total */}
           <div className="flex justify-between items-center bg-slate-800/50 rounded-xl p-3 border border-slate-700/30">
             <span className="text-base font-medium text-slate-300">Total</span>
-            <span className="text-xl font-bold text-white">${getTotalAmount().toFixed(2)}</span>
+            <span className="text-xl font-bold text-white">₹{getTotalAmount().toFixed(2)}</span>
           </div>
 
           {/* Actions */}

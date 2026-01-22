@@ -24,14 +24,16 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState, useEffect } from "react";
 import { adminService } from "@/services/adminService";
+import { ContactPopup } from "@/components/ContactPopup";
 import { Simple3DQR, Simple3DPhone } from "@/components/3d/Simple3D";
 
 export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [contactPopupOpen, setContactPopupOpen] = useState(false);
   const [contactInfo, setContactInfo] = useState({
-    email: "support@digitalmenu.com",
-    phone: "+1 (555) 123-4567",
-    address: "123 Tech Street, San Francisco, CA"
+    email: "patelpal.93130@gmail.com",
+    phone: "+91 9313080291",
+    address: "Segvi Peshvai Rood , Valsad"
   });
 
   useEffect(() => {
@@ -95,21 +97,21 @@ export function LandingPage() {
   const pricing = [
     {
       name: "Free",
-      price: "$0",
+      price: "₹0",
       period: "/month",
       features: ["Up to 10 menu items", "Basic QR code", "1 theme", "Basic analytics"],
       popular: false
     },
     {
       name: "Basic",
-      price: "$9",
+      price: "₹599",
       period: "/month",
       features: ["Up to 50 menu items", "Custom QR codes", "All themes", "Advanced analytics", "Image uploads"],
       popular: true
     },
     {
       name: "Premium",
-      price: "$19",
+      price: "₹1199",
       period: "/month",
       features: ["Unlimited menu items", "Priority support", "Custom branding", "Advanced features", "API access"],
       popular: false
@@ -119,7 +121,7 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-background/95 backdrop-blur-md border-b z-50">
+      <nav className="fixed top-0 w-full bg-background/80 backdrop-blur-lg border-b border-white/10 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <motion.div 
@@ -144,11 +146,12 @@ export function LandingPage() {
               <Link to="/auth/login">
                 <Button variant="outline">Login</Button>
               </Link>
-              <Link to="/auth/register">
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                  Get Started
-                </Button>
-              </Link>
+              <Button 
+                onClick={() => setContactPopupOpen(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                Get Started
+              </Button>
             </div>
 
             {/* Mobile menu button */}
@@ -179,9 +182,12 @@ export function LandingPage() {
                 <Link to="/auth/login" className="flex-1">
                   <Button variant="outline" className="w-full">Login</Button>
                 </Link>
-                <Link to="/auth/register" className="flex-1">
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600">Get Started</Button>
-                </Link>
+                <Button 
+                  onClick={() => setContactPopupOpen(true)}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600"
+                >
+                  Get Started
+                </Button>
               </div>
             </motion.div>
           )}
@@ -235,23 +241,25 @@ export function LandingPage() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/auth/register">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button size="lg" className="text-lg px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                      Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </motion.div>
-                </Link>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-2">
-                    View Demo
+                  <Button 
+                    size="lg" 
+                    onClick={() => setContactPopupOpen(true)}
+                    className="text-lg px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
+                    Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {/* <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-2">
+                    View Demo
+                  </Button> */}
                 </motion.div>
               </div>
               
@@ -496,11 +504,6 @@ export function LandingPage() {
       </section>
       {/* About Section */}
       <section id="about" className="py-16 px-4 bg-muted/30 relative overflow-hidden">
-        {/* 3D Background Elements */}
-        <div className="absolute top-10 left-10 w-40 h-40 opacity-10">
-          <Simple3DQR />
-        </div>
-        
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div
@@ -580,16 +583,18 @@ export function LandingPage() {
                   Join thousands of restaurants already using Digital Menu to enhance their customer experience
                 </p>
                 
-                <Link to="/auth/register">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button 
+                    size="lg" 
+                    onClick={() => setContactPopupOpen(true)}
+                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                   >
-                    <Button size="lg" className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                      Create Your Menu Now
-                    </Button>
-                  </motion.div>
-                </Link>
+                    Create Your Menu Now
+                  </Button>
+                </motion.div>
                 
                 {/* Floating particles */}
                 <motion.div
@@ -766,6 +771,12 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
+      
+      <ContactPopup 
+        isOpen={contactPopupOpen} 
+        onClose={() => setContactPopupOpen(false)}
+        contactInfo={contactInfo}
+      />
     </div>
   );
 }

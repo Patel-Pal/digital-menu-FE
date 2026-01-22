@@ -150,7 +150,7 @@ export function AdminSubscriptionsPage() {
                         <p className="font-medium truncate">{shop.name}</p>
                         <p className="text-sm text-muted-foreground">{shop.ownerId?.name} • {shop.ownerId?.email}</p>
                       </div>
-                      <span className="font-bold shrink-0">${price.toFixed(2)}/mo</span>
+                      <span className="font-bold shrink-0">₹{price.toFixed(2)}/mo</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Created: {new Date(shop.createdAt).toLocaleDateString()}
