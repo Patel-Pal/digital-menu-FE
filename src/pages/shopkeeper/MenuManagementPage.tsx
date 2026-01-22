@@ -173,7 +173,7 @@ export function MenuManagementPage() {
                         )}
                         
                         <div className="flex items-center gap-4 mt-2">
-                          <span className="font-semibold text-lg">${item.price.toFixed(2)}</span>
+                          <span className="font-semibold text-lg">₹{item.price.toFixed(2)}</span>
                           <span className="text-sm text-muted-foreground">
                             {item.categoryId.icon} {item.categoryId.name}
                           </span>

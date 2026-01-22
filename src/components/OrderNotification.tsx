@@ -132,11 +132,11 @@ export function OrderNotification({ order, isOpen, onClose, onOrderUpdate }: Ord
                     <div>
                       <p className="font-medium text-sm">{item.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        ${item.price.toFixed(2)} × {item.quantity}
+                        ₹{item.price.toFixed(2)} × {item.quantity}
                       </p>
                     </div>
                     <span className="font-medium">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ₹{(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 </CardContent>
@@ -148,7 +148,7 @@ export function OrderNotification({ order, isOpen, onClose, onOrderUpdate }: Ord
           <div className="border-t pt-3">
             <div className="flex justify-between items-center text-lg font-semibold">
               <span>Total:</span>
-              <span>${order.totalAmount.toFixed(2)}</span>
+              <span>₹{order.totalAmount.toFixed(2)}</span>
             </div>
           </div>
 

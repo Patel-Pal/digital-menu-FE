@@ -88,7 +88,7 @@ export function OrderStatus({ shopId }: OrderStatusProps) {
       updateTimer();
       const interval = setInterval(updateTimer, 1000);
       return () => clearInterval(interval);
-    }, [order.updatedAt, order.estimatedReadyTime, order.status]);
+    }, [order._id, order.status, order.estimatedReadyTime]);
 
     if (order.status !== 'approved' || !order.estimatedReadyTime) return null;
 
@@ -153,7 +153,7 @@ export function OrderStatus({ shopId }: OrderStatusProps) {
                   Table {order.tableNumber} • {formatTime(order.createdAt)}
                 </p>
               </div>
-              <span className="font-bold text-lg">${order.totalAmount.toFixed(2)}</span>
+              <span className="font-bold text-lg">₹{order.totalAmount.toFixed(2)}</span>
             </div>
 
             {order.status === 'approved' && order.estimatedReadyTime && (
@@ -173,7 +173,7 @@ export function OrderStatus({ shopId }: OrderStatusProps) {
               {order.items.map((item, index) => (
                 <div key={index} className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{item.quantity}× {item.name}</span>
-                  <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-medium">₹{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>

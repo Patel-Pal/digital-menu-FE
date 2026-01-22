@@ -12,12 +12,13 @@ import { AboutShop } from "@/components/AboutShop";
 import { CustomerRating } from "@/components/CustomerRating";
 import { OrderModal } from "@/components/OrderModal";
 import { OrderStatus } from "@/components/OrderStatus";
-import { menuItemService, type MenuItem } from "@/services/menuItemService";
+import { menuItemService } from "@/services/menuItemService";
 import { categoryService, type Category } from "@/services/categoryService";
 import { shopService, type Shop } from "@/services/shopService";
 import { useMenuTheme, menuThemes, MenuTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrder } from "@/contexts/OrderContext";
+import { type MenuItem } from "@/types";
 import { toast } from "sonner";
 
 type ViewTab = "menu" | "orders" | "about" | "digital-menu";
@@ -194,7 +195,7 @@ export function CustomerMenuPage() {
                       <div className="flex-1 p-2">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold leading-tight">{item.name}</h3>
-                          <span className="font-bold text-primary ml-2">${item.price.toFixed(2)}</span>
+                          <span className="font-bold text-primary ml-2">₹{item.price.toFixed(2)}</span>
                         </div>
                         
                         {item.description && (
@@ -260,7 +261,7 @@ export function CustomerMenuPage() {
           </Card>
           <Card className="border-0 shadow-sm bg-card rounded-xl">
             <CardContent className="p-6">
-              <CustomerRating />
+              <CustomerRating themeColor={""} shopName={""} />
             </CardContent>
           </Card>
         </div>

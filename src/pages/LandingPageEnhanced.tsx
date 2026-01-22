@@ -97,21 +97,21 @@ export function LandingPage() {
   const pricing = [
     {
       name: "Free",
-      price: "$0",
+      price: "₹0",
       period: "/month",
       features: ["Up to 10 menu items", "Basic QR code", "1 theme", "Basic analytics"],
       popular: false
     },
     {
       name: "Basic",
-      price: "$9",
+      price: "₹599",
       period: "/month",
       features: ["Up to 50 menu items", "Custom QR codes", "All themes", "Advanced analytics", "Image uploads"],
       popular: true
     },
     {
       name: "Premium",
-      price: "$19",
+      price: "₹1199",
       period: "/month",
       features: ["Unlimited menu items", "Priority support", "Custom branding", "Advanced features", "API access"],
       popular: false
@@ -257,9 +257,9 @@ export function LandingPage() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-2">
+                  {/* <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-2">
                     View Demo
-                  </Button>
+                  </Button> */}
                 </motion.div>
               </div>
               
