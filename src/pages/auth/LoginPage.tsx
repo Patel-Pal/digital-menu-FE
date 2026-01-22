@@ -32,121 +32,88 @@ export function LoginPage() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <Card variant="elevated" className="border-0 shadow-xl">
-        <CardHeader className="text-center pb-2">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent text-2xl font-bold text-primary-foreground shadow-glow"
-          >
-            DM
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-            <CardDescription>Sign in to manage your digital menu</CardDescription>
-          </motion.div>
-        </CardHeader>
+    <Card variant="elevated" className="border-0 shadow-xl">
+      <CardHeader className="text-center pb-2">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent text-2xl font-bold text-primary-foreground shadow-glow"
+        >
+          DM
+        </motion.div>
+        <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+        <CardDescription>Sign in to manage your digital menu</CardDescription>
+      </CardHeader>
 
-        <CardContent className="pt-4">
-          <motion.form 
-            onSubmit={handleSubmit} 
-            className="space-y-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <motion.div 
-              className="space-y-2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5, duration: 0.4 }}
-            >
-              <label className="text-sm font-medium">Email</label>
+      <CardContent className="pt-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Email</label>
+            <Input
+              type="email"
+              placeholder="you@example.com"
+              icon={<Mail className="h-4 w-4" />}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Password</label>
+              <Link
+                to="/auth/forgot-password"
+                className="text-xs text-primary hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <div className="relative">
               <Input
-                type="email"
-                placeholder="you@example.com"
-                icon={<Mail className="h-4 w-4" />}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                icon={<Lock className="h-4 w-4" />}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
-            </motion.div>
-
-            <motion.div 
-              className="space-y-2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6, duration: 0.4 }}
-            >
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Password</label>
-                <Link
-                  to="/auth/forgot-password"
-                  className="text-xs text-primary hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  icon={<Lock className="h-4 w-4" />}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7, duration: 0.4 }}
-            >
-              <Button 
-                type="submit" 
-                className="w-full px-8 py-3" 
-                size="lg" 
-                variant="gradient"
-                disabled={loading}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
-                {loading ? "Signing In..." : "Sign In"}
-              </Button>
-            </motion.div>
-          </motion.form>
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full px-8 py-3" 
+            size="lg" 
+            variant="gradient"
+            disabled={loading}
+          >
+            {loading ? "Signing In..." : "Sign In"}
+          </Button>
+        </form>
 
         <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
+          {/* <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-xs">
+          </div> */}
+          {/* <div className="relative flex justify-center text-xs">
             <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-          </div>
+          </div> */}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        {/* <div className="grid grid-cols-2 gap-3">
           <Button variant="outline" className="w-full">
             <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
               <path
@@ -174,15 +141,17 @@ export function LoginPage() {
             </svg>
             GitHub
           </Button>
-        </div>
+        </div> */}
       </CardContent>
 
-      <CardFooter className="justify-center">
+      {/* <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
           Don't have an account?{" "}
           <Link to="/auth/register" className="text-primary font-medium hover:underline">
             Sign up
           </Link>
         </p>
-      </CardFooter>
+      </CardFooter> */}
     </Card>
+  );
+}
