@@ -33,7 +33,7 @@ import { CategoryManagementPage } from "@/pages/shopkeeper/CategoryManagementPag
 import { QRCodePage } from "@/pages/shopkeeper/QRCodePage";
 import { OrdersManagementPage } from "@/pages/shopkeeper/OrdersManagementPage";
 import { ShopkeeperAnalyticsPage } from "@/pages/shopkeeper/ShopkeeperAnalyticsPage";
-import { ShopkeeperBillingPage } from "@/pages/shopkeeper/ShopkeeperBillingPage";
+import { BillingManagementPage } from "@/pages/shopkeeper/BillingManagementPage";
 import { ShopSettingsPage } from "@/pages/shopkeeper/ShopSettingsPage";
 import { ShopDetailsFormPage } from "@/pages/shopkeeper/ShopDetailsFormPage";
 import { ShopAboutFormPage } from "@/pages/shopkeeper/ShopAboutFormPage";
@@ -79,7 +79,7 @@ const App = () => (
                 <Route path="qr" element={<QRCodePage />} />
                 <Route path="orders" element={<OrdersManagementPage />} />
                 <Route path="analytics" element={<ShopkeeperAnalyticsPage />} />
-                <Route path="billing" element={<ShopkeeperBillingPage />} />
+                <Route path="billing" element={<BillingManagementPage />} />
                 <Route path="settings" element={<ShopSettingsPage />} />
                 <Route path="details" element={<ShopDetailsFormPage />} />
                 <Route path="about" element={<ShopAboutFormPage />} />
