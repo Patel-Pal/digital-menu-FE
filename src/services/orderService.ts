@@ -19,6 +19,7 @@ export interface Order {
   items: OrderItem[];
   totalAmount: number;
   status: 'pending' | 'approved' | 'rejected' | 'completed';
+  billingStatus?: 'unbilled' | 'billed';
   estimatedReadyTime?: number;
   rejectionReason?: string;
   createdAt: string;

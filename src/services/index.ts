@@ -4,3 +4,4 @@ export * from './categoryService';
 export * from './menuItemService';
 export * from './uploadService';
 export * from './shopService';
+export * from './billingService';

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, CheckCircle, XCircle, Timer } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Timer, UtensilsCrossed } from 'lucide-react';
 import { Order } from '@/services/orderService';
 import { orderService } from '@/services/orderService';
 import { useOrder } from '@/contexts/OrderContext';
 
-interface OrderStatusProps {
+interface UnbilledOrdersProps {
   shopId: string;
 }
 
@@ -16,15 +16,20 @@ export function UnbilledOrders({ shopId }: UnbilledOrdersProps) {
   const { deviceId } = useOrder();
 
   useEffect(() => {
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 30000);
+    fetchUnbilledOrders();
+    const interval = setInterval(fetchUnbilledOrders, 30000);
     return () => clearInterval(interval);
   }, [deviceId, shopId]);
 
-  const fetchOrders = async () => {
+  const fetchUnbilledOrders = async () => {
     try {
       const response = await orderService.getCustomerOrders(deviceId, shopId);
-      setOrders(response.data || []);
+      // Filter only unbilled orders
+      const unbilledOrders = (response.data || []).filter(
+        (order: Order) => 
+          !order.billingStatus || order.billingStatus === 'unbilled'
+      );
+      setOrders(unbilledOrders);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
     } finally {
@@ -127,9 +132,9 @@ export function UnbilledOrders({ shopId }: UnbilledOrdersProps) {
     return (
       <Card className="border-0 shadow-sm bg-card rounded-xl">
         <CardContent className="p-8 text-center">
-          <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-          <h3 className="font-semibold mb-1">No recent orders</h3>
-          <p className="text-sm text-muted-foreground">Your orders will appear here</p>
+          <UtensilsCrossed className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+          <h3 className="font-semibold mb-1">No pending orders</h3>
+          <p className="text-sm text-muted-foreground">Place an order to see it here</p>
         </CardContent>
       </Card>
     );
