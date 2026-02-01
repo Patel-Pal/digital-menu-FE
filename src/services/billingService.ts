@@ -64,6 +64,16 @@ class BillingService {
     return response.data;
   }
 
+  async getBillingAnalytics(shopId: string, period: 'daily' | 'weekly' | 'monthly' = 'daily', days = 30) {
+    const params = new URLSearchParams({ 
+      period, 
+      days: days.toString() 
+    });
+    
+    const response = await api.get(`/billing/analytics/${shopId}?${params}`);
+    return response.data;
+  }
+
   async getBill(billId: string) {
     const response = await api.get(`/billing/${billId}`);
     return response.data;

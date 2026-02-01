@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { QrCode, Eye, TrendingUp, Star, ArrowRight, Plus } from "lucide-react";
+import { QrCode, Eye, TrendingUp, Star, ArrowRight, Plus, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
