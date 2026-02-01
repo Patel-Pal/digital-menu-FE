@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Receipt, CreditCard, Smartphone, Banknote, DollarSign } from 'lucide-react';
+import { Receipt } from 'lucide-react';
 import { Bill, billingService } from '@/services/billingService';
 import { useOrder } from '@/contexts/OrderContext';
 import { toast } from 'sonner';
@@ -19,7 +19,6 @@ interface BillGenerationModalProps {
 export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: BillGenerationModalProps) {
   const [generatedBill, setGeneratedBill] = useState<Bill | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const { deviceId, customerName, clearCart } = useOrder();
 
   const handleGenerateBill = async () => {
@@ -34,8 +33,7 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
         customerName: customerName.trim(),
         deviceId,
         shopId,
-        tableNumber,
-        paymentMethod: 'cash'
+        tableNumber
       });
 
       setGeneratedBill(response.data);
@@ -48,25 +46,12 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
     }
   };
 
-  const handlePayment = async (paymentMethod: 'cash' | 'card' | 'upi' | 'online') => {
-    if (!generatedBill) return;
-
-    setIsProcessingPayment(true);
-    try {
-      await billingService.updatePaymentStatus(generatedBill._id, {
-        paymentStatus: 'paid',
-        paymentMethod
-      });
-
-      toast.success('Payment processed successfully!');
-      clearCart(); // Clear the cart after successful payment
+  const handleBillGenerated = () => {
+    if (generatedBill) {
+      clearCart(); // Clear the cart after bill generation
+      toast.success('Bill generated! Please proceed to payment counter.');
       onClose();
       setGeneratedBill(null);
-    } catch (error: any) {
-      console.error('Payment error:', error);
-      toast.error(error.response?.data?.message || 'Payment failed');
-    } finally {
-      setIsProcessingPayment(false);
     }
   };
 
@@ -188,76 +173,36 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
               {/* Payment Status */}
               <div className="flex items-center justify-center gap-2">
                 <Badge 
-                  variant={generatedBill.paymentStatus === 'paid' ? 'default' : 'secondary'}
+                  variant="secondary"
                   className="text-xs"
                 >
-                  {generatedBill.paymentStatus.toUpperCase()}
+                  PENDING PAYMENT
                 </Badge>
               </div>
 
-              {/* Payment Methods */}
-              {generatedBill.paymentStatus === 'pending' && (
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-center">Choose Payment Method</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => handlePayment('cash')}
-                      disabled={isProcessingPayment}
-                      className="flex items-center gap-2"
-                    >
-                      <Banknote className="h-4 w-4" />
-                      Cash
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handlePayment('card')}
-                      disabled={isProcessingPayment}
-                      className="flex items-center gap-2"
-                    >
-                      <CreditCard className="h-4 w-4" />
-                      Card
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handlePayment('upi')}
-                      disabled={isProcessingPayment}
-                      className="flex items-center gap-2"
-                    >
-                      <Smartphone className="h-4 w-4" />
-                      UPI
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handlePayment('online')}
-                      disabled={isProcessingPayment}
-                      className="flex items-center gap-2"
-                    >
-                      <DollarSign className="h-4 w-4" />
-                      Online
-                    </Button>
-                  </div>
+              {/* Payment Instructions */}
+              <div className="text-center space-y-3 p-4 bg-muted/50 rounded-lg">
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto">
+                  <Receipt className="h-6 w-6 text-blue-600" />
                 </div>
-              )}
-
-              {generatedBill.paymentStatus === 'paid' && (
-                <div className="text-center space-y-2">
-                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                    ✓
-                  </div>
-                  <p className="text-green-600 font-medium">Payment Successful!</p>
-                  <p className="text-sm text-muted-foreground">
-                    Paid via {generatedBill.paymentMethod.toUpperCase()}
+                <div>
+                  <h4 className="font-semibold text-lg mb-2">Bill Generated Successfully!</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Please proceed to the payment counter with your bill number
                   </p>
+                  <div className="bg-primary/10 p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Bill Number</p>
+                    <p className="font-mono font-bold text-lg">{generatedBill.billNumber}</p>
+                  </div>
                 </div>
-              )}
+              </div>
 
               <Button 
-                onClick={onClose} 
-                variant="outline" 
+                onClick={handleBillGenerated} 
                 className="w-full"
+                size="lg"
               >
-                Close
+                Continue
               </Button>
             </div>
           )}

@@ -29,13 +29,14 @@ interface BillDetailModalProps {
 
 export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDetailModalProps) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(bill.paymentMethod);
 
   const handlePaymentStatusUpdate = async (status: 'paid' | 'failed') => {
     setIsUpdating(true);
     try {
       await billingService.updatePaymentStatus(bill._id, {
         paymentStatus: status,
-        paymentMethod: bill.paymentMethod
+        paymentMethod: selectedPaymentMethod
       });
       
       toast.success(`Payment marked as ${status}`);
@@ -45,6 +46,25 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
       toast.error(error.response?.data?.message || 'Failed to update payment status');
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handlePaymentMethodUpdate = async (method: 'cash' | 'card' | 'upi' | 'online') => {
+    setSelectedPaymentMethod(method);
+    if (bill.paymentStatus === 'pending') {
+      setIsUpdating(true);
+      try {
+        await billingService.updatePaymentStatus(bill._id, {
+          paymentStatus: 'pending',
+          paymentMethod: method
+        });
+        onBillUpdate();
+      } catch (error: any) {
+        console.error('Update payment method error:', error);
+        toast.error('Failed to update payment method');
+      } finally {
+        setIsUpdating(false);
+      }
     }
   };
 
@@ -199,25 +219,113 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
 
           {/* Actions */}
           {bill.paymentStatus === 'pending' && (
-            <div className="flex gap-2">
-              <Button
-                onClick={() => handlePaymentStatusUpdate('paid')}
-                disabled={isUpdating}
-                className="flex-1 bg-green-600 hover:bg-green-700"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Mark as Paid
-              </Button>
-              <Button
-                onClick={() => handlePaymentStatusUpdate('failed')}
-                disabled={isUpdating}
-                variant="destructive"
-                className="flex-1"
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Mark as Failed
-              </Button>
+            <div className="space-y-4">
+              {/* Payment Method Selection */}
+              <Card className="border-0 bg-blue-50">
+                <CardContent className="p-4">
+                  <h4 className="font-semibold mb-3 text-center">Select Payment Method</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant={selectedPaymentMethod === 'cash' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handlePaymentMethodUpdate('cash')}
+                      disabled={isUpdating}
+                      className="flex items-center gap-2"
+                    >
+                      <Banknote className="h-4 w-4" />
+                      Cash
+                    </Button>
+                    <Button
+                      variant={selectedPaymentMethod === 'card' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handlePaymentMethodUpdate('card')}
+                      disabled={isUpdating}
+                      className="flex items-center gap-2"
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      Card
+                    </Button>
+                    <Button
+                      variant={selectedPaymentMethod === 'upi' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handlePaymentMethodUpdate('upi')}
+                      disabled={isUpdating}
+                      className="flex items-center gap-2"
+                    >
+                      <Smartphone className="h-4 w-4" />
+                      UPI
+                    </Button>
+                    <Button
+                      variant={selectedPaymentMethod === 'online' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handlePaymentMethodUpdate('online')}
+                      disabled={isUpdating}
+                      className="flex items-center gap-2"
+                    >
+                      <DollarSign className="h-4 w-4" />
+                      Online
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Payment Action Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handlePaymentStatusUpdate('paid')}
+                  disabled={isUpdating}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  {isUpdating ? 'Processing...' : 'Mark as Paid'}
+                </Button>
+                <Button
+                  onClick={() => handlePaymentStatusUpdate('failed')}
+                  disabled={isUpdating}
+                  variant="destructive"
+                  className="flex-1"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Mark as Failed
+                </Button>
+              </div>
             </div>
+          )}
+
+          {bill.paymentStatus === 'paid' && (
+            <Card className="border-0 bg-green-50">
+              <CardContent className="p-4 text-center">
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                </div>
+                <p className="text-green-600 font-medium mb-1">Payment Completed</p>
+                <p className="text-sm text-muted-foreground">
+                  Paid via {bill.paymentMethod.toUpperCase()}
+                  {bill.paidAt && ` on ${formatDate(bill.paidAt)}`}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {bill.paymentStatus === 'failed' && (
+            <Card className="border-0 bg-red-50">
+              <CardContent className="p-4 text-center">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
+                  <XCircle className="h-6 w-6 text-red-600" />
+                </div>
+                <p className="text-red-600 font-medium mb-3">Payment Failed</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePaymentStatusUpdate('paid')}
+                  disabled={isUpdating}
+                  className="border-green-200 text-green-700 hover:bg-green-50"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Retry Payment
+                </Button>
+              </CardContent>
+            </Card>
           )}
 
           <Button onClick={onClose} variant="outline" className="w-full">

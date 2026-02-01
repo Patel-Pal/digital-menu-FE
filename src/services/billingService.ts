@@ -32,7 +32,6 @@ export interface GenerateBillData {
   deviceId: string;
   shopId: string;
   tableNumber: string;
-  paymentMethod?: 'cash' | 'card' | 'upi' | 'online';
 }
 
 export interface UpdatePaymentData {

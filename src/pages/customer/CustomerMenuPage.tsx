@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Search, Globe, ChevronDown, UtensilsCrossed, Info, ShoppingCart, Plus, Receipt } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ItemDetailModal } from "@/components/ItemDetailModal";
@@ -11,7 +12,8 @@ import { AboutDigitalMenu } from "@/components/AboutDigitalMenu";
 import { AboutShop } from "@/components/AboutShop";
 import { CustomerRating } from "@/components/CustomerRating";
 import { OrderModal } from "@/components/OrderModal";
-import { OrderStatus } from "@/components/OrderStatus";
+import { CustomerBillHistory } from "@/components/CustomerBillHistory";
+import { UnbilledOrders } from "@/components/UnbilledOrders";
 import { BillGenerationModal } from "@/components/BillGenerationModal";
 import { menuItemService } from "@/services/menuItemService";
 import { categoryService, type Category } from "@/services/categoryService";
@@ -271,7 +273,19 @@ export function CustomerMenuPage() {
             </CardContent>
           </Card>
           
-          <OrderStatus shopId={currentShopId} />
+          {/* Orders and Bills Tabs */}
+          <Tabs defaultValue="bills" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="bills">Bills</TabsTrigger>
+              <TabsTrigger value="orders">Pending Orders</TabsTrigger>
+            </TabsList>
+            <TabsContent value="bills" className="mt-4">
+              <CustomerBillHistory shopId={currentShopId} />
+            </TabsContent>
+            <TabsContent value="orders" className="mt-4">
+              <UnbilledOrders shopId={currentShopId} />
+            </TabsContent>
+          </Tabs>
         </div>
       ) : activeTab === "about" ? (
         <div className="space-y-4">

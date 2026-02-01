@@ -32,6 +32,11 @@ export function BillingManagementPage() {
 
   useEffect(() => {
     fetchBills();
+    // Poll for new bills every 30 seconds
+    const interval = setInterval(() => {
+      fetchBills();
+    }, 30000);
+    return () => clearInterval(interval);
   }, [activeTab]);
 
   const fetchBills = async () => {
@@ -274,13 +279,37 @@ export function BillingManagementPage() {
                               <p className="font-bold text-lg">₹{bill.totalAmount.toFixed(2)}</p>
                               <p className="text-xs text-muted-foreground">{bill.items.length} items</p>
                             </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedBill(bill)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              {bill.paymentStatus === 'pending' && (
+                                <Button
+                                  size="sm"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    try {
+                                      await billingService.updatePaymentStatus(bill._id, {
+                                        paymentStatus: 'paid',
+                                        paymentMethod: bill.paymentMethod
+                                      });
+                                      toast.success('Payment marked as paid');
+                                      fetchBills();
+                                    } catch (error: any) {
+                                      toast.error('Failed to update payment');
+                                    }
+                                  }}
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Pay
+                                </Button>
+                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedBill(bill)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
