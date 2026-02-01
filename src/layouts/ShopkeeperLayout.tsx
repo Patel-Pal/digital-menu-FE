@@ -14,6 +14,7 @@ const navItems: NavItem[] = [
   { title: "Categories", href: "/shop/categories", icon: FolderOpen },
   { title: "Orders", href: "/shop/orders", icon: ShoppingBag },
   { title: "Billing", href: "/shop/billing", icon: Receipt },
+  { title: "Billing Analytics", href: "/shop/billing-analytics", icon: BarChart3 },
   { title: "QR Code", href: "/shop/qr", icon: QrCode },
   { title: "Analytics", href: "/shop/analytics", icon: BarChart3 },
   { title: "Settings", href: "/shop/settings", icon: Settings },
@@ -78,6 +79,8 @@ export function ShopkeeperLayout() {
         return "Orders";
       case "/shop/billing":
         return "Billing";
+      case "/shop/billing-analytics":
+        return "Billing Analytics";
       case "/shop/qr":
         return "QR Code";
       case "/shop/analytics":

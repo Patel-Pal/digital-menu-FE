@@ -34,6 +34,7 @@ import { QRCodePage } from "@/pages/shopkeeper/QRCodePage";
 import { OrdersManagementPage } from "@/pages/shopkeeper/OrdersManagementPage";
 import { ShopkeeperAnalyticsPage } from "@/pages/shopkeeper/ShopkeeperAnalyticsPage";
 import { BillingManagementPage } from "@/pages/shopkeeper/BillingManagementPage";
+import { BillingAnalyticsPage } from "@/pages/shopkeeper/BillingAnalyticsPage";
 import { ShopSettingsPage } from "@/pages/shopkeeper/ShopSettingsPage";
 import { ShopDetailsFormPage } from "@/pages/shopkeeper/ShopDetailsFormPage";
 import { ShopAboutFormPage } from "@/pages/shopkeeper/ShopAboutFormPage";
@@ -80,6 +81,7 @@ const App = () => (
                 <Route path="orders" element={<OrdersManagementPage />} />
                 <Route path="analytics" element={<ShopkeeperAnalyticsPage />} />
                 <Route path="billing" element={<BillingManagementPage />} />
+                <Route path="billing-analytics" element={<BillingAnalyticsPage />} />
                 <Route path="settings" element={<ShopSettingsPage />} />
                 <Route path="details" element={<ShopDetailsFormPage />} />
                 <Route path="about" element={<ShopAboutFormPage />} />
