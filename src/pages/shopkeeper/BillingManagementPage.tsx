@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,7 @@ import {
 import { Bill, billingService } from '@/services/billingService';
 import { BillDetailModal } from '@/components/BillDetailModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { useWebSocket } from '@/hooks/useWebSocket';
 import { toast } from 'sonner';
 
 export function BillingManagementPage() {
@@ -30,13 +31,22 @@ export function BillingManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useAuth();
 
+  const handleWebSocketEvent = useCallback((event: string, data: any) => {
+    if (event === 'payment_received') {
+      toast.success(`Payment received from ${data.customerName} - ₹${data.amount}`);
+      fetchBills(); // Refresh bills list
+    }
+  }, []);
+
+  // WebSocket connection for real-time updates
+  useWebSocket({
+    room: user?.shopId || '',
+    roomType: 'shop',
+    onEvent: handleWebSocketEvent
+  });
+
   useEffect(() => {
     fetchBills();
-    // Poll for new bills every 30 seconds
-    const interval = setInterval(() => {
-      fetchBills();
-    }, 30000);
-    return () => clearInterval(interval);
   }, [activeTab]);
 
   const fetchBills = async () => {

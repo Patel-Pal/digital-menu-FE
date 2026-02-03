@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle, XCircle, Timer, UtensilsCrossed } from 'lucide-react';
 import { Order } from '@/services/orderService';
 import { orderService } from '@/services/orderService';
 import { useOrder } from '@/contexts/OrderContext';
+import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface UnbilledOrdersProps {
   shopId: string;
@@ -15,10 +16,21 @@ export function UnbilledOrders({ shopId }: UnbilledOrdersProps) {
   const [loading, setLoading] = useState(true);
   const { deviceId } = useOrder();
 
+  const handleWebSocketEvent = useCallback((event: string, data: any) => {
+    if (event === 'order_status_updated' || event === 'bill_generated') {
+      fetchUnbilledOrders(); // Refresh unbilled orders
+    }
+  }, []);
+
+  // WebSocket connection for real-time updates
+  useWebSocket({
+    room: deviceId,
+    roomType: 'customer',
+    onEvent: handleWebSocketEvent
+  });
+
   useEffect(() => {
     fetchUnbilledOrders();
-    const interval = setInterval(fetchUnbilledOrders, 30000);
-    return () => clearInterval(interval);
   }, [deviceId, shopId]);
 
   const fetchUnbilledOrders = async () => {

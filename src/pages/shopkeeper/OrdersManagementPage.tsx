@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { Order } from '@/services/orderService';
 import { orderService } from '@/services/orderService';
 import { OrderNotification } from '@/components/OrderNotification';
 import { useAuth } from '@/contexts/AuthContext';
+import { useWebSocket } from '@/hooks/useWebSocket';
 import { toast } from 'sonner';
 
 export function OrdersManagementPage() {
@@ -16,6 +17,20 @@ export function OrdersManagementPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState('pending');
   const { user } = useAuth();
+
+  const handleWebSocketEvent = useCallback((event: string, data: any) => {
+    if (event === 'new_order') {
+      toast.success(`New order from ${data.customerName} - Table ${data.tableNumber}`);
+      fetchOrders();
+    }
+  }, []);
+
+  // WebSocket connection for real-time updates
+  useWebSocket({
+    room: user?.shopId || '',
+    roomType: 'shop',
+    onEvent: handleWebSocketEvent
+  });
 
   useEffect(() => {
     fetchOrders();
