@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Receipt, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { Bill, billingService } from '@/services/billingService';
 import { useOrder } from '@/contexts/OrderContext';
+import { useWebSocket } from '@/hooks/useWebSocket';
 import { Button } from '@/components/ui/button';
 import { BillDetailModal } from './BillDetailModal';
+import { toast } from 'sonner';
 
 interface CustomerBillHistoryProps {
   shopId: string;
@@ -17,13 +19,7 @@ export function CustomerBillHistory({ shopId }: CustomerBillHistoryProps) {
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const { deviceId } = useOrder();
 
-  useEffect(() => {
-    fetchBills();
-    const interval = setInterval(fetchBills, 30000);
-    return () => clearInterval(interval);
-  }, [deviceId, shopId]);
-
-  const fetchBills = async () => {
+  const fetchBills = useCallback(async () => {
     try {
       const response = await billingService.getCustomerBills(deviceId, shopId);
       setBills(response.data || []);
@@ -32,7 +28,26 @@ export function CustomerBillHistory({ shopId }: CustomerBillHistoryProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [deviceId, shopId]);
+
+  const handleWebSocketEvent = useCallback((event: string, data: any) => {
+    console.log('WebSocket event received:', event, data);
+    if (event === 'bill_generated') {
+      toast.success(`Bill generated - ₹${data.totalAmount}`);
+      fetchBills();
+    }
+  }, [fetchBills]);
+
+  // WebSocket connection for real-time updates
+  useWebSocket({
+    room: deviceId,
+    roomType: 'customer',
+    onEvent: handleWebSocketEvent
+  });
+
+  useEffect(() => {
+    fetchBills();
+  }, [deviceId, shopId]);
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('en-US', {
