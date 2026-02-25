@@ -318,10 +318,11 @@ export function ForgotPasswordPage() {
 
           <Button 
             type="submit" 
-            className="w-full" 
+            className="w-full py-3 px-4" 
             size="lg" 
             variant="gradient"
             disabled={loading}
+          
           >
             {loading ? "Sending..." : "Send OTP"}
           </Button>
