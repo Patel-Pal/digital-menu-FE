@@ -5,3 +5,4 @@ export * from './menuItemService';
 export * from './uploadService';
 export * from './shopService';
 export * from './billingService';
+export * from './passwordResetService';
