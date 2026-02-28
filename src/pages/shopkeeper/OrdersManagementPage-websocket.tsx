@@ -16,12 +16,22 @@ export function OrdersManagementPage() {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState('pending');
+  const [counts, setCounts] = useState({
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    completed: 0,
+    all: 0
+  });
   const { user } = useAuth();
 
   const handleWebSocketEvent = useCallback((event: string, data: any) => {
     if (event === 'new_order') {
       toast.success(`New order from ${data.customerName} - Table ${data.tableNumber}`);
       fetchOrders(); // Refresh orders list
+    } else if (event === 'order_status_updated') {
+      // Refresh orders when status changes to update counts
+      fetchOrders();
     }
   }, []);
 
@@ -42,7 +52,20 @@ export function OrdersManagementPage() {
     try {
       const status = activeTab === 'all' ? undefined : activeTab;
       const response = await orderService.getShopOrders(user.shopId, status);
+      
       setOrders(response.data || []);
+      
+      if (response.counts) {
+        setCounts(response.counts);
+      } else {
+        setCounts({
+          pending: 0,
+          approved: 0,
+          rejected: 0,
+          completed: 0,
+          all: 0
+        });
+      }
     } catch (error) {
       console.error('Failed to fetch orders:', error);
       toast.error('Failed to fetch orders');
@@ -95,11 +118,6 @@ export function OrdersManagementPage() {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    if (activeTab === 'all') return true;
-    return order.status === activeTab;
-  });
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -120,15 +138,25 @@ export function OrdersManagementPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="approved">Approved</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="pending" className="relative">
+            Pending {counts.pending > 0 && `(${counts.pending})`}
+          </TabsTrigger>
+          <TabsTrigger value="approved" className="relative">
+            Approved {counts.approved > 0 && `(${counts.approved})`}
+          </TabsTrigger>
+          <TabsTrigger value="rejected" className="relative">
+            Rejected {counts.rejected > 0 && `(${counts.rejected})`}
+          </TabsTrigger>
+          <TabsTrigger value="completed" className="relative">
+            Completed {counts.completed > 0 && `(${counts.completed})`}
+          </TabsTrigger>
+          <TabsTrigger value="all" className="relative">
+            All {counts.all > 0 && `(${counts.all})`}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="space-y-4">
-          {filteredOrders.length === 0 ? (
+          {orders.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <UtensilsCrossed className="h-12 w-12 text-gray-400 mb-4" />
@@ -137,7 +165,7 @@ export function OrdersManagementPage() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {filteredOrders.map((order) => (
+              {orders.map((order) => (
                 <Card key={order._id} className="hover:shadow-md transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`;
 
 export interface OrderItem {
   menuItemId: string;
@@ -24,6 +24,24 @@ export interface Order {
   rejectionReason?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface OrderResponse {
+  success: boolean;
+  data: Order[];
+  counts: {
+    pending: number;
+    approved: number;
+    rejected: number;
+    completed: number;
+    all: number;
+  };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 export interface CreateOrderData {
@@ -55,7 +73,7 @@ class OrderService {
     return response.data;
   }
 
-  async getShopOrders(shopId: string, status?: string, page = 1, limit = 20) {
+  async getShopOrders(shopId: string, status?: string, page = 1, limit = 20): Promise<OrderResponse> {
     const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
     if (status) params.append('status', status);
     
