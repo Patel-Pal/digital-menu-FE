@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ImageCropper } from "@/components/ImageCropper";
 import { useMenuTheme, menuThemes, MenuTheme } from "@/contexts/ThemeContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { shopService, type ShopProfileData } from "@/services/shopService";
@@ -51,6 +52,12 @@ export function ShopSettingsPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
 
+  // Image cropper states
+  const [showLogoCropper, setShowLogoCropper] = useState(false);
+  const [showBannerCropper, setShowBannerCropper] = useState(false);
+  const [tempLogoImage, setTempLogoImage] = useState<string>("");
+  const [tempBannerImage, setTempBannerImage] = useState<string>("");
+
   useEffect(() => {
     fetchShopProfile();
   }, []);
@@ -90,9 +97,16 @@ export function ShopSettingsPage() {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setLogoFile(file);
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Logo file size should be less than 5MB");
+        return;
+      }
+      
       const reader = new FileReader();
-      reader.onload = () => setLogoPreview(reader.result as string);
+      reader.onload = () => {
+        setTempLogoImage(reader.result as string);
+        setShowLogoCropper(true);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -100,11 +114,40 @@ export function ShopSettingsPage() {
   const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setBannerFile(file);
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Banner file size should be less than 5MB");
+        return;
+      }
+      
       const reader = new FileReader();
-      reader.onload = () => setBannerPreview(reader.result as string);
+      reader.onload = () => {
+        setTempBannerImage(reader.result as string);
+        setShowBannerCropper(true);
+      };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleLogoCropComplete = (croppedBlob: Blob) => {
+    const file = new File([croppedBlob], "logo.jpg", { type: "image/jpeg" });
+    setLogoFile(file);
+    
+    const reader = new FileReader();
+    reader.onload = () => setLogoPreview(reader.result as string);
+    reader.readAsDataURL(croppedBlob);
+    
+    toast.success("Logo cropped successfully!");
+  };
+
+  const handleBannerCropComplete = (croppedBlob: Blob) => {
+    const file = new File([croppedBlob], "banner.jpg", { type: "image/jpeg" });
+    setBannerFile(file);
+    
+    const reader = new FileReader();
+    reader.onload = () => setBannerPreview(reader.result as string);
+    reader.readAsDataURL(croppedBlob);
+    
+    toast.success("Banner cropped successfully!");
   };
 
   const uploadImage = async (file: File, setUploading: (loading: boolean) => void) => {
@@ -627,6 +670,7 @@ export function ShopSettingsPage() {
             </div>            {/* Logo Upload */}
             <div>
               <Label>Shop Logo</Label>
+              <p className="text-xs text-muted-foreground mb-2">Recommended: Square image (1:1 ratio), max 5MB</p>
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <input
@@ -640,7 +684,7 @@ export function ShopSettingsPage() {
                     <Button type="button" variant="outline" className="cursor-pointer" asChild>
                       <span>
                         <Upload className="h-4 w-4 mr-2" />
-                        {logoFile ? logoFile.name : "Choose Logo"}
+                        Choose Logo
                       </span>
                     </Button>
                   </label>
@@ -671,6 +715,7 @@ export function ShopSettingsPage() {
             {/* Banner Upload */}
             <div>
               <Label>Shop Banner</Label>
+              <p className="text-xs text-muted-foreground mb-2">Recommended: Wide image (16:9 ratio), max 5MB</p>
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <input
@@ -684,7 +729,7 @@ export function ShopSettingsPage() {
                     <Button type="button" variant="outline" className="cursor-pointer" asChild>
                       <span>
                         <Upload className="h-4 w-4 mr-2" />
-                        {bannerFile ? bannerFile.name : "Choose Banner"}
+                        Choose Banner
                       </span>
                     </Button>
                   </label>
@@ -730,6 +775,27 @@ export function ShopSettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Image Croppers */}
+      <ImageCropper
+        image={tempLogoImage}
+        isOpen={showLogoCropper}
+        onClose={() => setShowLogoCropper(false)}
+        onCropComplete={handleLogoCropComplete}
+        aspectRatio={1}
+        cropShape="rect"
+        title="Crop Logo (1:1 Square)"
+      />
+
+      <ImageCropper
+        image={tempBannerImage}
+        isOpen={showBannerCropper}
+        onClose={() => setShowBannerCropper(false)}
+        onCropComplete={handleBannerCropComplete}
+        aspectRatio={16 / 9}
+        cropShape="rect"
+        title="Crop Banner (16:9 Wide)"
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
@@ -13,9 +13,13 @@ import {
   X,
   LogOut,
   ChevronRight,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -28,21 +32,37 @@ const navItems = [
 
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/auth/login');
+  };
 
   return (
-    <div className="flex min-h-screen bg-muted/30">
+    <TooltipProvider delayDuration={0}>
+      <div className="flex min-h-screen bg-muted/30">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
+      <aside className={cn(
+        "hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 transition-all duration-300",
+        sidebarCollapsed ? "lg:w-16" : "lg:w-64"
+      )}>
         <div className="flex flex-col flex-1 bg-sidebar text-sidebar-foreground">
           {/* Logo */}
-          <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-6">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground font-bold">
-              DM
-            </div>
-            <div>
-              <h1 className="font-bold text-sidebar-primary-foreground">Digital Menu</h1>
-              <p className="text-xs text-sidebar-foreground/60">Admin Portal</p>
+          <div className="flex h-16 items-center border-b border-sidebar-border px-6">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground font-bold flex-shrink-0">
+                DM
+              </div>
+              {!sidebarCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <h1 className="font-bold text-sidebar-primary-foreground">Digital Menu</h1>
+                  <p className="text-xs text-sidebar-foreground/60">Admin Portal</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -51,7 +71,8 @@ export function AdminLayout() {
             {navItems.map((item) => {
               const isActive = location.pathname === item.href || 
                 (item.href !== "/admin" && location.pathname.startsWith(item.href));
-              return (
+              
+              const navLink = (
                 <NavLink
                   key={item.href}
                   to={item.href}
@@ -59,25 +80,96 @@ export function AdminLayout() {
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive
                       ? "bg-sidebar-accent text-sidebar-primary"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    sidebarCollapsed && "justify-center"
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
-                  {item.title}
-                  {isActive && (
-                    <ChevronRight className="ml-auto h-4 w-4" />
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                  {!sidebarCollapsed && (
+                    <>
+                      <span className="flex-1">{item.title}</span>
+                      {isActive && (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </>
                   )}
                 </NavLink>
               );
+
+              return sidebarCollapsed ? (
+                <Tooltip key={item.href}>
+                  <TooltipTrigger asChild>
+                    {navLink}
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="font-medium">
+                    {item.title}
+                  </TooltipContent>
+                </Tooltip>
+              ) : navLink;
             })}
           </nav>
 
           {/* User section */}
-          <div className="border-t border-sidebar-border p-3">
-            <Button variant="ghost" className="w-full justify-start gap-3 text-sidebar-foreground hover:text-sidebar-accent-foreground">
-              <LogOut className="h-5 w-5" />
-              Logout
-            </Button>
+          <div className="border-t border-sidebar-border p-3 space-y-2">
+            {!sidebarCollapsed && (
+              <div className="px-3 text-xs text-sidebar-foreground/60">
+                Signed in as <span className="font-medium text-sidebar-foreground">{user?.name}</span>
+              </div>
+            )}
+            
+            {/* Collapse Toggle Button */}
+            {sidebarCollapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    className="w-full justify-center px-2 text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
+                  >
+                    <PanelLeft className="h-5 w-5 flex-shrink-0" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="font-medium">
+                  Expand sidebar
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Button
+                variant="ghost"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="w-full gap-3 justify-start text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
+              >
+                <PanelLeftClose className="h-5 w-5 flex-shrink-0" />
+                <span>Collapse</span>
+              </Button>
+            )}
+            
+            {/* Logout Button */}
+            {sidebarCollapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleLogout}
+                    className="w-full justify-center px-2 text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <LogOut className="h-5 w-5 flex-shrink-0" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="font-medium">
+                  Logout
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Button 
+                variant="ghost" 
+                onClick={handleLogout}
+                className="w-full gap-3 justify-start text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-destructive/10 hover:text-destructive"
+              >
+                <LogOut className="h-5 w-5 flex-shrink-0" />
+                Logout
+              </Button>
+            )}
           </div>
         </div>
       </aside>
@@ -111,7 +203,7 @@ export function AdminLayout() {
                   <X className="h-5 w-5" />
                 </Button>
               </div>
-              <nav className="space-y-1 px-3 py-4">
+              <nav className="flex-1 space-y-1 px-3 py-4">
                 {navItems.map((item) => {
                   const isActive = location.pathname === item.href;
                   return (
@@ -132,13 +224,31 @@ export function AdminLayout() {
                   );
                 })}
               </nav>
+              
+              {/* Mobile User section */}
+              <div className="border-t border-sidebar-border p-3 space-y-2">
+                <div className="px-3 text-xs text-sidebar-foreground/60">
+                  Signed in as <span className="font-medium text-sidebar-foreground">{user?.name}</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  onClick={handleLogout}
+                  className="w-full justify-start gap-3 text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <LogOut className="h-5 w-5" />
+                  Logout
+                </Button>
+              </div>
             </motion.aside>
           </>
         )}
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className="flex-1 lg:pl-64">
+      <div className={cn(
+        "flex-1 transition-all duration-300",
+        sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
+      )}>
         {/* Top Header */}
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/95 backdrop-blur-md px-4 lg:px-6">
           <Button
@@ -164,5 +274,6 @@ export function AdminLayout() {
         </main>
       </div>
     </div>
+    </TooltipProvider>
   );
 }

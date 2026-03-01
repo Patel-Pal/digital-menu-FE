@@ -49,8 +49,30 @@ export function CustomerMenuPage() {
   const currentShopId = shopId || user?.shopId || "";
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (currentShopId) {
+      fetchData();
+    }
+  }, [currentShopId]);
+
+  // Separate effect for tracking scans - ALWAYS track on first load
+  useEffect(() => {
+    if (currentShopId) {
+      const scanKey = `scan_tracked_${currentShopId}`;
+      const hasTrackedScan = sessionStorage.getItem(scanKey);
+      
+      // Only track if not already tracked in this session
+      if (!hasTrackedScan) {
+        shopService.incrementScan(currentShopId)
+          .then((response) => {
+            sessionStorage.setItem(scanKey, Date.now().toString());
+            console.log('✅ Scan tracked:', response.data?.scans);
+          })
+          .catch(err => {
+            console.error('❌ Failed to track scan:', err.message);
+          });
+      }
+    }
+  }, [currentShopId]);
 
   const fetchData = async () => {
     try {

@@ -1,7 +1,13 @@
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { LayoutDashboard, UtensilsCrossed, FolderOpen, QrCode, BarChart3, Settings, Menu, X, LogOut, ShoppingBag, Receipt } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, FolderOpen, QrCode, BarChart3, Settings, Menu, X, LogOut, ShoppingBag, Receipt, ChevronRight, PanelLeftClose, PanelLeft, Store, Phone, Mail, MapPin, Edit2, User, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { shopService, type Shop } from "@/services/shopService";
@@ -24,6 +30,8 @@ export function ShopkeeperLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showShopProfile, setShowShopProfile] = useState(false);
   const [shop, setShop] = useState<Shop | null>(null);
   const { logout, user } = useAuth();
 
@@ -94,118 +102,418 @@ export function ShopkeeperLayout() {
 
   return (
     <AnalyticsProvider>
-      <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center justify-between p-6 border-b">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold overflow-hidden">
+      <TooltipProvider delayDuration={0}>
+        <div className="flex min-h-screen bg-muted/30">
+        {/* Desktop Sidebar */}
+        <aside className={cn(
+          "hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 transition-all duration-300",
+          sidebarCollapsed ? "lg:w-16" : "lg:w-64"
+        )}>
+          <div className="flex flex-col flex-1 bg-sidebar text-sidebar-foreground">
+            {/* Logo - Clickable */}
+            <div className="flex h-16 items-center border-b border-sidebar-border px-6">
+              <button
+                onClick={() => setShowShopProfile(true)}
+                className="flex items-center gap-3 min-w-0 flex-1 hover:bg-sidebar-accent/50 rounded-lg px-2 py-1 -mx-2 transition-colors"
+                title={sidebarCollapsed ? "View Shop Profile" : undefined}
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground font-bold overflow-hidden flex-shrink-0">
+                  {shop?.logo ? (
+                    <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
+                  ) : (
+                    shop?.name?.charAt(0).toUpperCase() || "D"
+                  )}
+                </div>
+                {!sidebarCollapsed && (
+                  <div className="flex-1 min-w-0 text-left">
+                    <h1 className="font-bold text-sidebar-primary-foreground truncate">{shop?.name || "Digital Menu"}</h1>
+                    <p className="text-xs text-sidebar-foreground/60 truncate">Shopkeeper Portal</p>
+                  </div>
+                )}
+              </button>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 space-y-1 px-3 py-4">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+                
+                const navLink = (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-primary"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      sidebarCollapsed && "justify-center"
+                    )}
+                  >
+                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    {!sidebarCollapsed && (
+                      <>
+                        <span className="flex-1">{item.title}</span>
+                        {isActive && (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </>
+                    )}
+                  </Link>
+                );
+
+                return sidebarCollapsed ? (
+                  <Tooltip key={item.href}>
+                    <TooltipTrigger asChild>
+                      {navLink}
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="font-medium">
+                      {item.title}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : navLink;
+              })}
+            </nav>
+
+            {/* User section */}
+            <div className="border-t border-sidebar-border p-3 space-y-2">
+              {!sidebarCollapsed && (
+                <div className="px-3 text-xs text-sidebar-foreground/60">
+                  Signed in as <span className="font-medium text-sidebar-foreground">{user?.name}</span>
+                </div>
+              )}
+              
+              {/* Collapse Toggle Button */}
+              {sidebarCollapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                      className="w-full justify-center px-2 text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
+                    >
+                      <PanelLeft className="h-5 w-5 flex-shrink-0" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="font-medium">
+                    Expand sidebar
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Button
+                  variant="ghost"
+                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                  className="w-full gap-3 justify-start text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
+                >
+                  <PanelLeftClose className="h-5 w-5 flex-shrink-0" />
+                  <span>Collapse</span>
+                </Button>
+              )}
+              
+              {/* Logout Button */}
+              {sidebarCollapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      onClick={handleLogout}
+                      className="w-full justify-center px-2 text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <LogOut className="h-5 w-5 flex-shrink-0" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="font-medium">
+                    Logout
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Button 
+                  variant="ghost" 
+                  onClick={handleLogout}
+                  className="w-full gap-3 justify-start text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <LogOut className="h-5 w-5 flex-shrink-0" />
+                  Logout
+                </Button>
+              )}
+            </div>
+          </div>
+        </aside>
+
+        {/* Mobile Sidebar */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSidebarOpen(false)}
+                className="fixed inset-0 z-40 bg-foreground/40 backdrop-blur-sm lg:hidden"
+              />
+              <motion.aside
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground lg:hidden"
+              >
+                <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+                  <button
+                    onClick={() => {
+                      setSidebarOpen(false);
+                      setShowShopProfile(true);
+                    }}
+                    className="flex items-center gap-3 hover:bg-sidebar-accent/50 rounded-lg px-2 py-1 -mx-2 transition-colors"
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground font-bold overflow-hidden">
+                      {shop?.logo ? (
+                        <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
+                      ) : (
+                        shop?.name?.charAt(0).toUpperCase() || "D"
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-bold text-sidebar-primary-foreground">{shop?.name || "Digital Menu"}</span>
+                      <p className="text-xs text-sidebar-foreground/60">Shopkeeper Portal</p>
+                    </div>
+                  </button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => setSidebarOpen(false)}>
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+                <nav className="flex-1 space-y-1 px-3 py-4">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-primary"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent"
+                        )}
+                      >
+                        <Icon className="h-5 w-5" />
+                        {item.title}
+                        {isActive && (
+                          <ChevronRight className="ml-auto h-4 w-4" />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </nav>
+                
+                {/* Mobile User section */}
+                <div className="border-t border-sidebar-border p-3 space-y-2">
+                  <div className="px-3 text-xs text-sidebar-foreground/60">
+                    Signed in as <span className="font-medium text-sidebar-foreground">{user?.name}</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleLogout}
+                    className="w-full justify-start gap-3 text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    Logout
+                  </Button>
+                </div>
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Main Content */}
+        <div className={cn(
+          "flex-1 transition-all duration-300",
+          sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
+        )}>
+          {/* Top Header */}
+          <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/95 backdrop-blur-md px-4 lg:px-6">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
+            <div className="flex-1" />
+            <div className="flex items-center gap-4">
+              <ThemeToggle size="sm" />
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold overflow-hidden">
                 {shop?.logo ? (
                   <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
                 ) : (
-                  shop?.name?.charAt(0).toUpperCase() || "D"
+                  shop?.name?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || "S"
                 )}
               </div>
-              <div>
-                <h1 className="font-semibold">{shop?.name || "Digital Menu"}</h1>
-                <p className="text-xs text-muted-foreground capitalize">{shop?.type || "Restaurant"}</p>
-              </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          </header>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.href;
-              
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.title}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Footer */}
-          <div className="p-4 border-t space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Theme</span>
-              <ThemeToggle size="sm" />
-            </div>
-            
-            {/* User Info & Logout */}
-            <div className="space-y-2">
-              <div className="text-xs text-muted-foreground">
-                Signed in as <span className="font-medium">{user?.name}</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-destructive/10 hover:text-destructive"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
-          </div>
+          {/* Page Content */}
+          <main className="p-4 lg:p-6">
+            <Outlet />
+          </main>
         </div>
       </div>
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {/* Shop Profile Dialog */}
+      <Dialog open={showShopProfile} onOpenChange={setShowShopProfile}>
+        <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden [&>button]:hidden">
+          {/* Custom Close Button */}
+          <button
+            onClick={() => setShowShopProfile(false)}
+            className="absolute right-4 top-4 z-50 rounded-full p-2 bg-black/50 hover:bg-black/70 text-white transition-all hover:scale-110"
+          >
+            <X className="h-4 w-4" />
+          </button>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-background border-b px-4 py-3 lg:px-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="lg:hidden"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <Menu className="h-4 w-4" />
-              </Button>
-              <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
+          {/* Header with banner background */}
+          <div className="relative h-36 overflow-visible">
+            {/* Banner Image or Gradient Fallback */}
+            {shop?.banner ? (
+              <>
+                <img 
+                  src={shop.banner} 
+                  alt="Shop Banner" 
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                {/* Overlay for better text readability */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" />
+              </>
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-accent" />
+            )}
+            
+            <DialogHeader className="relative z-10 p-4">
+              <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
+                <Store className="h-5 w-5" />
+                Shop Profile
+              </DialogTitle>
+            </DialogHeader>
+            
+            {/* Shop Logo - Fully visible with overlap */}
+            <div className="absolute -bottom-10 left-5 z-20">
+              <div className="w-28 h-28 rounded-2xl bg-background shadow-2xl border-4 border-background overflow-hidden ring-2 ring-primary/20">
+                {shop?.logo ? (
+                  <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                    <Store className="h-12 w-12 text-primary" />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </header>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-auto">
-          <Outlet />
-        </main>
-      </div>
-    </div>
+          {/* Content */}
+          <div className="px-5 pt-12 pb-5 space-y-4">
+            {/* Shop Name and Type */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-xl font-bold">{shop?.name || user?.name}</h2>
+                <Badge variant="secondary" className="capitalize text-xs">
+                  <Building2 className="h-3 w-3 mr-1" />
+                  {shop?.type || "Restaurant"}
+                </Badge>
+              </div>
+              {shop?.description && (
+                <p className="text-muted-foreground text-xs leading-relaxed mt-1">
+                  {shop.description}
+                </p>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Shop Information */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wide">
+                Shop Information
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {/* Phone */}
+                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Phone className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground font-medium">Phone</p>
+                    <p className="text-xs font-semibold truncate">{shop?.phone || "Not set"}</p>
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <MapPin className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground font-medium">Address</p>
+                    <p className="text-xs font-semibold truncate">{shop?.address || "Not set"}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Personal Information */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wide">
+                Personal Information
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {/* Owner Name */}
+                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                    <User className="h-4 w-4 text-accent" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground font-medium">Owner Name</p>
+                    <p className="text-xs font-semibold truncate">{user?.name}</p>
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                    <Mail className="h-4 w-4 text-accent" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground font-medium">Email</p>
+                    <p className="text-xs font-semibold truncate">{user?.email}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <div className="pt-3">
+              <Button 
+                onClick={() => {
+                  setShowShopProfile(false);
+                  navigate('/shop/settings');
+                }}
+                className="w-full gap-2 h-10"
+              >
+                <Edit2 className="h-4 w-4" />
+                Edit Profile
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      </TooltipProvider>
     </AnalyticsProvider>
   );
 }
