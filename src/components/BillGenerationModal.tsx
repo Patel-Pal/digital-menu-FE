@@ -65,34 +65,25 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
     });
   };
 
-  const getPaymentIcon = (method: string) => {
-    switch (method) {
-      case 'card': return <CreditCard className="h-4 w-4" />;
-      case 'upi': return <Smartphone className="h-4 w-4" />;
-      case 'online': return <DollarSign className="h-4 w-4" />;
-      default: return <Banknote className="h-4 w-4" />;
-    }
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md max-h-[85vh] overflow-y-auto rounded-2xl p-4 sm:p-6 mx-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Receipt className="h-5 w-5" />
             {generatedBill ? 'Bill Generated' : 'Generate Bill'}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {!generatedBill ? (
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <Receipt className="h-8 w-8 text-primary" />
+            <div className="text-center space-y-3 sm:space-y-4 py-2">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                <Receipt className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2">Ready to Generate Bill?</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <h3 className="text-base sm:text-lg font-semibold mb-1.5">Ready to Generate Bill?</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   This will consolidate all your completed orders into a single bill.
                 </p>
               </div>
@@ -106,17 +97,17 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Bill Header */}
               <Card className="border-0 bg-muted/30">
-                <CardContent className="p-4">
-                  <div className="text-center space-y-2">
-                    <h3 className="font-bold text-lg">BILL</h3>
-                    <p className="text-sm text-muted-foreground">#{generatedBill.billNumber}</p>
+                <CardContent className="p-3 sm:p-4">
+                  <div className="text-center space-y-1">
+                    <h3 className="font-bold text-base sm:text-lg">BILL</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">#{generatedBill.billNumber}</p>
                     <p className="text-xs text-muted-foreground">{formatDate(generatedBill.createdAt)}</p>
                   </div>
-                  <Separator className="my-3" />
-                  <div className="space-y-1 text-sm">
+                  <Separator className="my-2.5" />
+                  <div className="space-y-1 text-xs sm:text-sm">
                     <div className="flex justify-between">
                       <span>Customer:</span>
                       <span className="font-medium">{generatedBill.customerName}</span>
@@ -131,18 +122,18 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
 
               {/* Bill Items */}
               <Card className="border-0 bg-muted/20">
-                <CardContent className="p-4">
-                  <h4 className="font-semibold mb-3">Items</h4>
+                <CardContent className="p-3 sm:p-4">
+                  <h4 className="font-semibold mb-2 text-sm sm:text-base">Items</h4>
                   <div className="space-y-2">
                     {generatedBill.items.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center text-sm">
-                        <div className="flex-1">
-                          <p className="font-medium">{item.name}</p>
+                      <div key={index} className="flex justify-between items-center text-xs sm:text-sm">
+                        <div className="flex-1 min-w-0 mr-2">
+                          <p className="font-medium truncate">{item.name}</p>
                           <p className="text-muted-foreground">
                             ₹{item.price.toFixed(2)} × {item.quantity}
                           </p>
                         </div>
-                        <span className="font-medium">₹{item.totalPrice.toFixed(2)}</span>
+                        <span className="font-medium flex-shrink-0">₹{item.totalPrice.toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
@@ -151,8 +142,8 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
 
               {/* Bill Summary */}
               <Card className="border-0 bg-muted/30">
-                <CardContent className="p-4">
-                  <div className="space-y-2 text-sm">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="space-y-1.5 text-xs sm:text-sm">
                     <div className="flex justify-between">
                       <span>Subtotal:</span>
                       <span>₹{generatedBill.subtotal.toFixed(2)}</span>
@@ -162,7 +153,7 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
                       <span>₹{generatedBill.taxAmount.toFixed(2)}</span>
                     </div>
                     <Separator />
-                    <div className="flex justify-between font-bold text-lg">
+                    <div className="flex justify-between font-bold text-base sm:text-lg">
                       <span>Total:</span>
                       <span>₹{generatedBill.totalAmount.toFixed(2)}</span>
                     </div>
@@ -171,7 +162,7 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
               </Card>
 
               {/* Payment Status */}
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center">
                 <Badge 
                   variant="secondary"
                   className="text-xs"
@@ -181,18 +172,18 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
               </div>
 
               {/* Payment Instructions */}
-              <div className="text-center space-y-3 p-4 bg-muted/50 rounded-lg">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto">
-                  <Receipt className="h-6 w-6 text-blue-600" />
+              <div className="text-center space-y-2.5 p-3 sm:p-4 bg-muted/50 rounded-lg">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto">
+                  <Receipt className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-lg mb-2">Bill Generated Successfully!</h4>
-                  <p className="text-sm text-muted-foreground mb-3">
+                  <h4 className="font-semibold text-sm sm:text-lg mb-1">Bill Generated Successfully!</h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                     Please proceed to the payment counter with your bill number
                   </p>
-                  <div className="bg-primary/10 p-3 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">Bill Number</p>
-                    <p className="font-mono font-bold text-lg">{generatedBill.billNumber}</p>
+                  <div className="bg-primary/10 p-2.5 sm:p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-0.5">Bill Number</p>
+                    <p className="font-mono font-bold text-base sm:text-lg">{generatedBill.billNumber}</p>
                   </div>
                 </div>
               </div>

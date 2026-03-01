@@ -278,15 +278,15 @@ export function CustomerMenuPage() {
         <div className="space-y-4">
           {/* Generate Bill Button */}
           <Card className="border-0 shadow-sm bg-card rounded-xl">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1">
                   <h3 className="font-semibold mb-1">Ready to Pay?</h3>
                   <p className="text-sm text-muted-foreground">Generate bill for all completed orders</p>
                 </div>
                 <Button
                   onClick={() => setShowBillModal(true)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 px-5 py-2.5"
                 >
                   <Receipt className="h-4 w-4" />
                   Generate Bill
