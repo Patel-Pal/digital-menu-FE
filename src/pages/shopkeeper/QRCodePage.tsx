@@ -11,12 +11,13 @@ import QRCode from "qrcode";
 
 export function QRCodePage() {
   const { user } = useAuth();
-  const { analytics } = useAnalytics();
+  const { analytics, refreshAnalytics } = useAnalytics();
   const qrRef = useRef<HTMLCanvasElement>(null);
   const [ownerId, setOwnerId] = useState<string>("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Generate menu URL using ownerId from shops table
-  const menuUrl = ownerId ? `${window.location.origin}/menu/${ownerId}` : "";
+  // Generate menu URL using ownerId from shops table with QR tracking parameter
+  const menuUrl = ownerId ? `${window.location.origin}/menu/${ownerId}?source=qr` : "";
   
   useEffect(() => {
     const fetchShopData = async () => {
@@ -32,6 +33,12 @@ export function QRCodePage() {
       fetchShopData();
     }
   }, [user]);
+
+  const handleRefreshStats = async () => {
+    setIsRefreshing(true);
+    await refreshAnalytics();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   const handleShare = async () => {
     if (navigator.share && menuUrl) {
@@ -138,22 +145,36 @@ export function QRCodePage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="grid grid-cols-2 gap-3"
       >
-        <StatCard
-          title="Total Scans"
-          value={analytics.totalScans.toLocaleString()}
-          change={analytics.scansChange}
-          changeType="positive"
-          icon={<Smartphone className="h-5 w-5" />}
-        />
-        <StatCard
-          title="Menu Views"
-          value={analytics.menuViews.toLocaleString()}
-          change={analytics.viewsChange}
-          changeType="positive"
-          icon={<Eye className="h-5 w-5" />}
-        />
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-muted-foreground">Statistics</h3>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleRefreshStats}
+            disabled={isRefreshing}
+            className="h-8 gap-2"
+          >
+            <RefreshCcw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard
+            title="Total Scans"
+            value={analytics.totalScans.toLocaleString()}
+            change={analytics.scansChange}
+            changeType="positive"
+            icon={<Smartphone className="h-5 w-5" />}
+          />
+          <StatCard
+            title="Menu Views"
+            value={analytics.menuViews.toLocaleString()}
+            change={analytics.viewsChange}
+            changeType="positive"
+            icon={<Eye className="h-5 w-5" />}
+          />
+        </div>
       </motion.div>
 
       {/* Options */}
