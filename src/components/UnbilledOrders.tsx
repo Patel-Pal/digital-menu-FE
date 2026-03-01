@@ -6,6 +6,8 @@ import { Order } from '@/services/orderService';
 import { orderService } from '@/services/orderService';
 import { useOrder } from '@/contexts/OrderContext';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { OrderApprovedPopup } from './OrderApprovedPopup';
+import { toast } from 'sonner';
 
 interface UnbilledOrdersProps {
   shopId: string;
@@ -16,9 +18,38 @@ export function UnbilledOrders({ shopId }: UnbilledOrdersProps) {
   const [loading, setLoading] = useState(true);
   const { deviceId } = useOrder();
 
+  // Animated popup state
+  const [approvedPopup, setApprovedPopup] = useState<{
+    isOpen: boolean;
+    orderId: string;
+    estimatedReadyTime: number;
+  }>({ isOpen: false, orderId: '', estimatedReadyTime: 0 });
+
   const handleWebSocketEvent = useCallback((event: string, data: any) => {
-    if (event === 'order_status_updated' || event === 'bill_generated') {
-      fetchUnbilledOrders(); // Refresh unbilled orders
+    if (event === 'order_status_updated') {
+      // Update the order in state immediately
+      setOrders(prev => prev.map(order =>
+        order._id === data.orderId
+          ? { ...order, status: data.status, estimatedReadyTime: data.estimatedReadyTime, rejectionReason: data.rejectionReason }
+          : order
+      ));
+
+      // Show animated popup for approved orders
+      if (data.status === 'approved') {
+        setApprovedPopup({
+          isOpen: true,
+          orderId: data.orderId,
+          estimatedReadyTime: data.estimatedReadyTime || 15
+        });
+      } else if (data.status === 'rejected') {
+        toast.error(`Order rejected: ${data.rejectionReason || 'No reason provided'}`);
+      } else if (data.status === 'completed') {
+        toast.success('Order completed! Ready for pickup 🎉');
+      }
+    }
+
+    if (event === 'bill_generated') {
+      fetchUnbilledOrders(); // Refresh to remove billed orders
     }
   }, []);
 
@@ -197,6 +228,14 @@ export function UnbilledOrders({ shopId }: UnbilledOrdersProps) {
           </CardContent>
         </Card>
       ))}
+
+      {/* Order Approved Animated Popup */}
+      <OrderApprovedPopup
+        isOpen={approvedPopup.isOpen}
+        onClose={() => setApprovedPopup(prev => ({ ...prev, isOpen: false }))}
+        orderId={approvedPopup.orderId}
+        estimatedReadyTime={approvedPopup.estimatedReadyTime}
+      />
     </div>
   );
 }

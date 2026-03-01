@@ -36,6 +36,15 @@ export function CustomerBillHistory({ shopId }: CustomerBillHistoryProps) {
       toast.success(`Bill generated - ₹${data.totalAmount}`);
       fetchBills();
     }
+    if (event === 'payment_received') {
+      toast.success(`Payment confirmed! ₹${data.amount} via ${data.paymentMethod?.toUpperCase()}`);
+      // Update bill status in state immediately
+      setBills(prev => prev.map(bill =>
+        bill._id === data.billId
+          ? { ...bill, paymentStatus: 'paid', paymentMethod: data.paymentMethod, paidAt: new Date().toISOString() }
+          : bill
+      ));
+    }
   }, [fetchBills]);
 
   // WebSocket connection for real-time updates

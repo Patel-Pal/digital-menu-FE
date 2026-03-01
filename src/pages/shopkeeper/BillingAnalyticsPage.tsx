@@ -554,7 +554,7 @@ export function BillingAnalyticsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {paymentMethodData.map((method, index) => (
-                    <div key={method.name} className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-all duration-200">
+                    <div key={method.name} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-all duration-200">
                       <div className="flex items-center gap-2">
                         <div 
                           className="w-4 h-4 rounded-full shadow-sm" 
