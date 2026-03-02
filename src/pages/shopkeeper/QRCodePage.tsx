@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Download, Share2, RefreshCcw, Eye, Smartphone } from "lucide-react";
+import { Download, Share2, RefreshCcw, Eye, Smartphone, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/StatCard";
@@ -107,7 +107,20 @@ export function QRCodePage() {
         transition={{ duration: 0.3 }}
       >
         <Card variant="elevated" className="overflow-hidden">
-          <CardContent className="p-6 flex flex-col items-center">
+          <CardContent className="p-6 flex flex-col items-center relative">
+            {/* View Customer Menu Icon - Top Right */}
+            {ownerId && (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="absolute top-4 right-4 h-10 w-10 rounded-lg hover:bg-primary/10 group"
+                onClick={() => window.open(`/menu/${ownerId}`, '_blank')}
+                title="Open customer menu in new tab"
+              >
+                <ExternalLink className="h-5 w-5 transition-transform group-hover:scale-110" />
+              </Button>
+            )}
+
             {/* QR Code */}
             <div className="relative">
               <canvas ref={qrRef} className="h-56 w-56 rounded-2xl bg-white"></canvas>

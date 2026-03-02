@@ -9,14 +9,9 @@ interface ForgotPasswordPayload {
   email: string;
 }
 
-interface VerifyOtpPayload {
-  email: string;
-  otp: string;
-}
-
 interface ResetPasswordPayload {
+  token: string;
   email: string;
-  otp: string;
   newPassword: string;
   confirmPassword: string;
 }
@@ -61,39 +56,8 @@ export const passwordResetService = {
   },
 
   /**
-   * Verify OTP
-   * @param payload - Email and OTP
-   * @returns Promise with success message
-   */
-  async verifyOtp(payload: VerifyOtpPayload) {
-    try {
-      const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Invalid or expired OTP");
-      }
-
-      return {
-        success: true,
-        message: data.message,
-      };
-    } catch (error) {
-      console.error("Verify OTP error:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Reset password using OTP
-   * @param payload - Reset password payload with email, OTP, and new password
+   * Reset password using token
+   * @param payload - Reset password payload with token, email, and new password
    * @returns Promise with success message
    */
   async resetPassword(payload: ResetPasswordPayload) {
