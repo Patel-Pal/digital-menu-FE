@@ -1,12 +1,20 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, Globe, ChevronDown, UtensilsCrossed, Info, ShoppingCart, Plus, Receipt } from "lucide-react";
+import { Search, Globe, ChevronDown, UtensilsCrossed, Info, ShoppingCart, Plus, Receipt, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ItemDetailModal } from "@/components/ItemDetailModal";
 import { AboutDigitalMenu } from "@/components/AboutDigitalMenu";
 import { AboutShop } from "@/components/AboutShop";
@@ -30,7 +38,7 @@ export function CustomerMenuPage() {
   const { shopId } = useParams<{ shopId: string }>();
   const [shop, setShop] = useState<Shop | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,6 +47,7 @@ export function CustomerMenuPage() {
   const [loading, setLoading] = useState(true);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showBillModal, setShowBillModal] = useState(false);
+  const [menuSectionFilter, setMenuSectionFilter] = useState<string>("all");
   
   const { menuTheme, setMenuTheme } = useMenuTheme();
   const theme = menuThemes[menuTheme];
@@ -77,15 +86,20 @@ export function CustomerMenuPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [shopResponse, menuResponse, categoryResponse] = await Promise.all([
+      const [shopResponse, menuResponse] = await Promise.all([
         shopService.getShopByOwnerId(currentShopId),
-        menuItemService.getMenuItemsByShop(currentShopId),
-        categoryService.getCategoriesByShop(currentShopId)
+        menuItemService.getMenuItemsByShop(currentShopId)
       ]);
       
       setShop(shopResponse.data || null);
-      setMenuItems(menuResponse.data || []);
-      setCategories(categoryResponse.data || []);
+      const items = menuResponse.data || [];
+      setMenuItems(items);
+      
+      // Extract unique categories from menu items
+      const uniqueCategories = Array.from(
+        new Set(items.map((item: any) => item.categoryId?.name || item.category).filter(Boolean))
+      ) as string[];
+      setCategories(uniqueCategories);
       
       // Set shop's theme if available
       if (shopResponse.data?.menuTheme) {
@@ -98,11 +112,6 @@ export function CustomerMenuPage() {
           console.error('Failed to increment view count:', err)
         );
       }
-      
-      // Set first category as active if available
-      if (categoryResponse.data && categoryResponse.data.length > 0) {
-
-      }
     } catch (error) {
       console.error("Failed to fetch menu data:", error);
     } finally {
@@ -111,12 +120,17 @@ export function CustomerMenuPage() {
   };
 
   const filteredItems = menuItems.filter((item) => {
-    const matchesCategory = activeCategory === "all" || item.categoryId._id === activeCategory;
+    const matchesCategory = activeCategory === "all" || item.category === activeCategory;
     const matchesSearch = searchQuery
       ? item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description?.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
-    return matchesCategory && matchesSearch && item.isActive;
+    
+    // Menu section filter using mainCategoryId
+    const matchesMenuSection = menuSectionFilter === "all" || 
+      (item.mainCategoryId && item.mainCategoryId.name === menuSectionFilter);
+    
+    return matchesCategory && matchesSearch && matchesMenuSection && item.isActive;
   });
 
   if (loading) {
@@ -149,15 +163,62 @@ export function CustomerMenuPage() {
 
       <main className="px-4 py-4">{activeTab === "menu" ? (
         <div className="space-y-4">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search menu items..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 rounded-xl"
-            />
+          {/* Search and Filter */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search menu items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 rounded-xl"
+              />
+            </div>
+            
+            {/* Menu Section Filter Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className="h-12 w-12 rounded-xl flex-shrink-0"
+                >
+                  <SlidersHorizontal className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Menu Section</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => setMenuSectionFilter("all")}
+                  className={menuSectionFilter === "all" ? "bg-accent" : ""}
+                >
+                  <span className="mr-2">🍽️</span>
+                  All Items
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setMenuSectionFilter("Starter")}
+                  className={menuSectionFilter === "Starter" ? "bg-accent" : ""}
+                >
+                  <span className="mr-2">🥗</span>
+                  Starter
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setMenuSectionFilter("Main Course")}
+                  className={menuSectionFilter === "Main Course" ? "bg-accent" : ""}
+                >
+                  <span className="mr-2">🍛</span>
+                  Main Course
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setMenuSectionFilter("Dessert")}
+                  className={menuSectionFilter === "Dessert" ? "bg-accent" : ""}
+                >
+                  <span className="mr-2">🍰</span>
+                  Dessert
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Categories */}
@@ -171,19 +232,19 @@ export function CustomerMenuPage() {
                     : "bg-card text-muted-foreground border border-border"
                 }`}
               >
-                All Items
+                All Categories
               </button>
-              {categories.map((category) => (
+              {categories.map((category, index) => (
                 <button
-                  key={category._id}
-                  onClick={() => setActiveCategory(category._id)}
+                  key={index}
+                  onClick={() => setActiveCategory(category)}
                   className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all ${
-                    activeCategory === category._id
+                    activeCategory === category
                       ? "bg-primary text-primary-foreground shadow-md"
                       : "bg-card text-muted-foreground border border-border"
                   }`}
                 >
-                  {category.icon} {category.name}
+                  {category}
                 </button>
               ))}
             </div>

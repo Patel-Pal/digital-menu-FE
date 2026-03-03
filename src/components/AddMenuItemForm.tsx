@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { categoryService, type Category } from "@/services/categoryService";
+import { mainCategoryService, type MainCategory } from "@/services/mainCategoryService";
 import { menuItemService, type CreateMenuItemData } from "@/services/menuItemService";
 import { uploadService } from "@/services/uploadService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,7 +21,7 @@ interface AddMenuItemFormProps {
 }
 
 export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormProps) {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [mainCategories, setMainCategories] = useState<MainCategory[]>([]);
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [newIngredient, setNewIngredient] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,8 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
     name: "",
     description: "",
     price: 0,
-    categoryId: "",
+    category: "",
+    mainCategoryId: "",
     available: true,
     popular: false,
     vegetarian: false,
@@ -45,16 +46,35 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
 
   useEffect(() => {
     if (isOpen && shopId) {
-      fetchCategories();
+      fetchMainCategories();
     }
   }, [isOpen, shopId]);
 
-  const fetchCategories = async () => {
+  // Set default "None of the Above" when categories are loaded
+  useEffect(() => {
+    if (mainCategories.length > 0 && !formData.mainCategoryId) {
+      const noneCategory = mainCategories.find(cat => cat.name === 'None of the Above');
+      if (noneCategory) {
+        setFormData(prev => ({ ...prev, mainCategoryId: noneCategory._id }));
+      }
+    }
+  }, [mainCategories]);
+
+  const fetchMainCategories = async () => {
     try {
-      const response = await categoryService.getCategoriesByShop(shopId!);
-      setCategories(response.data || []);
+      const response = await mainCategoryService.getAllMainCategories();
+      let categories = response.data || [];
+      
+      // Initialize main categories if empty
+      if (categories.length === 0) {
+        await mainCategoryService.initializeMainCategories();
+        const retryResponse = await mainCategoryService.getAllMainCategories();
+        categories = retryResponse.data || [];
+      }
+      
+      setMainCategories(categories);
     } catch (error) {
-      toast.error("Failed to fetch categories");
+      toast.error("Failed to fetch main categories");
     }
   };
 
@@ -137,7 +157,8 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
       name: "",
       description: "",
       price: 0,
-      categoryId: "",
+      category: "",
+      mainCategoryId: "",
       available: true,
       popular: false,
       vegetarian: false,
@@ -221,14 +242,25 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
 
                   <div>
                     <Label htmlFor="category">Category *</Label>
-                    <Select value={formData.categoryId} onValueChange={(value) => setFormData({ ...formData, categoryId: value })}>
+                    <Input
+                      id="category"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      placeholder="e.g., Beverages, Appetizers, Desserts"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="mainCategory">Main Category *</Label>
+                    <Select value={formData.mainCategoryId} onValueChange={(value) => setFormData({ ...formData, mainCategoryId: value })}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
+                        <SelectValue placeholder="Select main category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category._id} value={category._id}>
-                            {category.icon} {category.name}
+                        {mainCategories.map((mainCategory) => (
+                          <SelectItem key={mainCategory._id} value={mainCategory._id}>
+                            {mainCategory.icon} {mainCategory.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -392,7 +424,7 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
               <Button 
                 onClick={handleSubmit} 
                 className="flex-1"
-                disabled={loading || uploadingImage || !formData.name || !formData.categoryId}
+                disabled={loading || uploadingImage || !formData.name || !formData.category || !formData.mainCategoryId}
               >
                 {loading ? "Creating..." : uploadingImage ? "Uploading..." : "Add Item"}
               </Button>

@@ -6,6 +6,7 @@ export interface MenuItem {
   price: number;
   image?: string;
   categoryId: string;
+  mainCategoryId?: string;
   available: boolean;
   popular?: boolean;
   vegetarian?: boolean;

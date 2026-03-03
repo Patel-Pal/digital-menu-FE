@@ -76,7 +76,7 @@ export function MenuManagementPage() {
   };
 
   const filteredItems = menuItems.filter((item) => {
-    const matchesCategory = activeCategory === "all" || item.categoryId._id === activeCategory;
+    const matchesCategory = activeCategory === "all" || item.category === activeCategory;
     const matchesSearch = searchQuery
       ? item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -175,7 +175,7 @@ export function MenuManagementPage() {
                         <div className="flex items-center gap-4 mt-2">
                           <span className="font-semibold text-lg">₹{item.price.toFixed(2)}</span>
                           <span className="text-sm text-muted-foreground">
-                            {item.categoryId.icon} {item.categoryId.name}
+                            {item.category}
                           </span>
                         </div>
                         

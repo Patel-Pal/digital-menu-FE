@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { categoryService, type Category } from "@/services/categoryService";
+import { mainCategoryService, type MainCategory } from "@/services/mainCategoryService";
 import { menuItemService, type MenuItem, type UpdateMenuItemData } from "@/services/menuItemService";
 import { uploadService } from "@/services/uploadService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,7 +22,7 @@ interface EditMenuItemFormProps {
 }
 
 export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuItemFormProps) {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [mainCategories, setMainCategories] = useState<MainCategory[]>([]);
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [newIngredient, setNewIngredient] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,7 +33,8 @@ export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuI
     name: "",
     description: "",
     price: 0,
-    categoryId: "",
+    category: "",
+    mainCategoryId: "",
     available: true,
     popular: false,
     vegetarian: false,
@@ -46,7 +47,7 @@ export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuI
 
   useEffect(() => {
     if (isOpen && shopId) {
-      fetchCategories();
+      fetchMainCategories();
     }
   }, [isOpen, shopId]);
 
@@ -57,7 +58,8 @@ export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuI
         name: item.name,
         description: item.description || "",
         price: item.price,
-        categoryId: item.categoryId._id,
+        category: item.categoryId?.name || "",
+        mainCategoryId: item.mainCategoryId?._id || "",
         available: item.available,
         popular: item.popular,
         vegetarian: item.vegetarian,
@@ -69,12 +71,31 @@ export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuI
     }
   }, [isOpen, item]);
 
-  const fetchCategories = async () => {
+  // Set default "None of the Above" if no mainCategoryId is set
+  useEffect(() => {
+    if (mainCategories.length > 0 && !formData.mainCategoryId) {
+      const noneCategory = mainCategories.find(cat => cat.name === 'None of the Above');
+      if (noneCategory) {
+        setFormData(prev => ({ ...prev, mainCategoryId: noneCategory._id }));
+      }
+    }
+  }, [mainCategories, formData.mainCategoryId]);
+
+  const fetchMainCategories = async () => {
     try {
-      const response = await categoryService.getAllCategoriesForManagement(shopId!);
-      setCategories(response.data || []);
+      const response = await mainCategoryService.getAllMainCategories();
+      let categories = response.data || [];
+      
+      // Initialize main categories if empty
+      if (categories.length === 0) {
+        await mainCategoryService.initializeMainCategories();
+        const retryResponse = await mainCategoryService.getAllMainCategories();
+        categories = retryResponse.data || [];
+      }
+      
+      setMainCategories(categories);
     } catch (error) {
-      toast.error("Failed to fetch categories");
+      toast.error("Failed to fetch main categories");
     }
   };
 
@@ -217,14 +238,25 @@ export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuI
 
                   <div>
                     <Label htmlFor="category">Category *</Label>
-                    <Select value={formData.categoryId} onValueChange={(value) => setFormData({ ...formData, categoryId: value })}>
+                    <Input
+                      id="category"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      placeholder="e.g., Beverages, Appetizers, Desserts"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="mainCategory">Main Category *</Label>
+                    <Select value={formData.mainCategoryId} onValueChange={(value) => setFormData({ ...formData, mainCategoryId: value })}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
+                        <SelectValue placeholder="Select main category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category._id} value={category._id}>
-                            {category.icon} {category.name}
+                        {mainCategories.map((mainCategory) => (
+                          <SelectItem key={mainCategory._id} value={mainCategory._id}>
+                            {mainCategory.icon} {mainCategory.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

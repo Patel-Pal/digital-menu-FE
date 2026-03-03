@@ -6,7 +6,8 @@ interface MenuItem {
   description?: string;
   price: number;
   image?: string;
-  categoryId: {
+  category: string;
+  mainCategoryId?: {
     _id: string;
     name: string;
     icon?: string;
@@ -27,7 +28,8 @@ interface CreateMenuItemData {
   description?: string;
   price: number;
   image?: string;
-  categoryId: string;
+  category: string;
+  mainCategoryId?: string;
   ingredients?: string[];
   available?: boolean;
   popular?: boolean;
@@ -41,7 +43,8 @@ interface UpdateMenuItemData {
   description?: string;
   price?: number;
   image?: string;
-  categoryId?: string;
+  category?: string;
+  mainCategoryId?: string;
   ingredients?: string[];
   available?: boolean;
   popular?: boolean;
