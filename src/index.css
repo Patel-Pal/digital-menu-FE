@@ -284,10 +284,7 @@
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   }
   
-  /* Smooth scrolling */
-  html {
-    scroll-behavior: smooth;
-  }
+  /* Smooth scrolling handled by Lenis */
   
   /* Custom scrollbar */
   ::-webkit-scrollbar {
