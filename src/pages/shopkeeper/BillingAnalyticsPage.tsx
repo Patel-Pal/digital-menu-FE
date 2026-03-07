@@ -188,10 +188,7 @@ export function BillingAnalyticsPage() {
         className="space-y-1"
       >
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Billing Analytics 📊</h1>
-            <p className="text-muted-foreground">Revenue insights and performance metrics</p>
-          </div>
+          <p className="text-muted-foreground">Revenue insights and performance metrics</p>
           <Button
             variant="outline"
             size="sm"

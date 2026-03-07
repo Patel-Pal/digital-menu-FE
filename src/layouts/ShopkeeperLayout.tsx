@@ -369,7 +369,6 @@ export function ShopkeeperLayout() {
             </Button>
             <div className="flex flex-col">
               <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
-              {getBreadcrumbs()}
             </div>
             <div className="flex-1" />
             <div className="flex items-center gap-4">
@@ -387,6 +386,11 @@ export function ShopkeeperLayout() {
           {/* Page Content */}
           <main className="p-4 lg:p-6">
             <ShopSetupGuard>
+              {getBreadcrumbs() && (
+                <div className="mb-3">
+                  {getBreadcrumbs()}
+                </div>
+              )}
               <motion.div
                 key={location.pathname}
                 initial={{ opacity: 0, y: 8 }}

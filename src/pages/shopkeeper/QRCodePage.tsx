@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/StatCard";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { shopService } from "@/services/shopService";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { toast } from "sonner";
 import QRCode from "qrcode";
 
 export function QRCodePage() {
@@ -15,6 +16,7 @@ export function QRCodePage() {
   const qrRef = useRef<HTMLCanvasElement>(null);
   const [ownerId, setOwnerId] = useState<string>("");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [qrColor, setQrColor] = useState<string>("#000000");
   
   // Generate menu URL using ownerId from shops table with QR tracking parameter
   const menuUrl = ownerId ? `${window.location.origin}/menu/${ownerId}?source=qr` : "";
@@ -24,6 +26,9 @@ export function QRCodePage() {
       try {
         const response = await shopService.getShopProfile();
         setOwnerId(response.data?.ownerId || "");
+        if (response.data?.qrColor) {
+          setQrColor(response.data.qrColor);
+        }
       } catch (error) {
         console.error("Failed to fetch shop data:", error);
       }
@@ -33,6 +38,19 @@ export function QRCodePage() {
       fetchShopData();
     }
   }, [user]);
+
+  const saveQrColor = useCallback(async (color: string) => {
+    try {
+      await shopService.createOrUpdateShopProfile({ qrColor: color });
+    } catch (error) {
+      console.error("Failed to save QR color:", error);
+    }
+  }, []);
+
+  const handleColorChange = (color: string) => {
+    setQrColor(color);
+    saveQrColor(color);
+  };
 
   const handleRefreshStats = async () => {
     setIsRefreshing(true);
@@ -91,12 +109,12 @@ export function QRCodePage() {
         width: 224,
         margin: 2,
         color: {
-          dark: '#000000',
+          dark: qrColor,
           light: '#ffffff'
         }
       }).catch(err => console.error('QR Code generation failed:', err));
     }
-  }, [menuUrl, ownerId]);
+  }, [menuUrl, ownerId, qrColor]);
 
   return (
     <div className="space-y-6 p-4">
@@ -132,6 +150,25 @@ export function QRCodePage() {
             <p className="text-xs text-muted-foreground break-all text-center max-w-xs">
               {menuUrl}
             </p>
+
+            {/* QR Color Picker */}
+            <div className="flex items-center gap-3 mt-4">
+              <span className="text-xs text-muted-foreground">QR Color:</span>
+              <div className="flex gap-2">
+                {['#000000', '#1e40af', '#dc2626', '#059669', '#7c3aed', '#d97706'].map(color => (
+                  <button
+                    key={color}
+                    onClick={() => handleColorChange(color)}
+                    className={`w-7 h-7 rounded-full border-2 transition-transform ${qrColor === color ? 'border-primary scale-110' : 'border-transparent'}`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+                <label className="w-7 h-7 rounded-full border-2 border-dashed border-muted-foreground flex items-center justify-center cursor-pointer text-xs text-muted-foreground hover:border-primary transition-colors" title="Custom color">
+                  <span>+</span>
+                  <input type="color" value={qrColor} onChange={e => handleColorChange(e.target.value)} className="sr-only" />
+                </label>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </motion.div>

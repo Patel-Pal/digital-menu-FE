@@ -123,10 +123,7 @@ export function MenuManagementPage() {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Menu Management</h1>
-          <p className="text-muted-foreground">Manage your restaurant menu items</p>
-        </div>
+        <p className="text-muted-foreground">Manage your restaurant menu items</p>
         
         <Button onClick={() => setShowAddForm(true)} className="gap-2">
           <Plus className="h-4 w-4" />

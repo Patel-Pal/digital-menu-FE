@@ -135,10 +135,7 @@ export function CategoryManagementPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Category Management</h1>
-          <p className="text-muted-foreground">Organize your menu items into categories</p>
-        </div>
+        <p className="text-muted-foreground">Organize your menu items into categories</p>
         
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>

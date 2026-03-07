@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { QrCode, Eye, TrendingUp, Star, ArrowRight, Plus, BarChart3 } from "lucide-react";
+import { QrCode, Eye, TrendingUp, Star, ArrowRight, Plus, BarChart3, ShoppingBag, Receipt, UtensilsCrossed, IndianRupee } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,13 +9,22 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { shopService, type Shop } from "@/services/shopService";
 import { menuItemService, type MenuItem } from "@/services/menuItemService";
+import { billingService } from "@/services/billingService";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good Morning";
+  if (hour < 17) return "Good Afternoon";
+  return "Good Evening";
+}
 
 export function ShopkeeperDashboard() {
   const { user } = useAuth();
   const { analytics } = useAnalytics();
   const [shop, setShop] = useState<Shop | null>(null);
   const [popularItems, setPopularItems] = useState<MenuItem[]>([]);
+  const [todayRevenue, setTodayRevenue] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,6 +36,18 @@ export function ShopkeeperDashboard() {
         if (user?.shopId) {
           const menuResponse = await menuItemService.getMenuItemsByShop(user.shopId);
           setPopularItems(menuResponse.data?.slice(0, 3) || []);
+
+          // Fetch today's revenue from paid bills
+          try {
+            const billsResponse = await billingService.getShopBills(user.shopId, 'paid', 1, 100);
+            const today = new Date().toDateString();
+            const todayBills = (billsResponse.data || []).filter(
+              (b: any) => new Date(b.createdAt).toDateString() === today
+            );
+            setTodayRevenue(todayBills.reduce((sum: number, b: any) => sum + b.totalAmount, 0));
+          } catch (e) {
+            // billing may not be available
+          }
         }
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
@@ -46,7 +67,7 @@ export function ShopkeeperDashboard() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-1"
       >
-        <h1 className="text-2xl font-bold">Good Morning, {user?.name}! 👋</h1>
+        <h1 className="text-2xl font-bold">{getGreeting()}, {user?.name}! 👋</h1>
         <p className="text-muted-foreground">Here's how {shop?.name || "your menu"} is performing</p>
       </motion.div>
 
@@ -93,6 +114,41 @@ export function ShopkeeperDashboard() {
           changeType="neutral"
           icon={<TrendingUp className="h-5 w-5" />}
         />
+        <StatCard
+          title="Today's Revenue"
+          value={`₹${todayRevenue.toFixed(2)}`}
+          change="From paid bills today"
+          changeType={todayRevenue > 0 ? "positive" : "neutral"}
+          icon={<IndianRupee className="h-5 w-5" />}
+          className="col-span-2"
+        />
+      </motion.div>
+
+      {/* Quick Actions Row */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="grid grid-cols-3 gap-3"
+      >
+        <Link to="/shop/menu">
+          <Card className="p-3 text-center hover:shadow-md transition-shadow cursor-pointer">
+            <UtensilsCrossed className="h-5 w-5 mx-auto mb-1 text-primary" />
+            <p className="text-xs font-medium">Add Item</p>
+          </Card>
+        </Link>
+        <Link to="/shop/orders">
+          <Card className="p-3 text-center hover:shadow-md transition-shadow cursor-pointer">
+            <ShoppingBag className="h-5 w-5 mx-auto mb-1 text-primary" />
+            <p className="text-xs font-medium">View Orders</p>
+          </Card>
+        </Link>
+        <Link to="/shop/billing">
+          <Card className="p-3 text-center hover:shadow-md transition-shadow cursor-pointer">
+            <Receipt className="h-5 w-5 mx-auto mb-1 text-primary" />
+            <p className="text-xs font-medium">Generate Bill</p>
+          </Card>
+        </Link>
       </motion.div>
 
       {/* Subscription Banner */}

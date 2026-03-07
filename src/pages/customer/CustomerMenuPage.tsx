@@ -25,6 +25,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { type MenuItem } from "@/types";
 import { toast } from "sonner";
 import { PageLoader } from "@/components/PageLoader";
+import { WelcomeSplash } from "@/components/WelcomeSplash";
 
 type ViewTab = "menu" | "orders" | "about" | "digital-menu";
 
@@ -41,11 +42,12 @@ export function CustomerMenuPage() {
   const [loading, setLoading] = useState(true);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showBillModal, setShowBillModal] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
   
   const { menuTheme, setMenuTheme } = useMenuTheme();
   const theme = menuThemes[menuTheme];
   const { user } = useAuth();
-  const { cart, addToCart, getTotalItems } = useOrder();
+  const { cart, addToCart, getTotalItems, getTotalAmount } = useOrder();
   const debouncedSearch = useDebounce(searchQuery, 300);
   
   // For demo, use current user's shopId or a default
@@ -110,6 +112,8 @@ export function CustomerMenuPage() {
       console.error("Failed to fetch menu data:", error);
     } finally {
       setLoading(false);
+      // Keep splash visible for at least 2.5s for the animation to complete
+      setTimeout(() => setShowSplash(false), 2500);
     }
   };
 
@@ -122,12 +126,22 @@ export function CustomerMenuPage() {
     return matchesCategory && matchesSearch && item.isActive;
   });
 
+  const popularItems = menuItems.filter(item => item.popular && item.isActive);
+
+  const getCartQty = (itemId: string) => {
+    const found = cart.find(c => c.menuItem._id === itemId);
+    return found ? found.quantity : 0;
+  };
+
   if (loading) {
-    return <PageLoader message="Loading menu..." fullScreen />;
+    return <WelcomeSplash shopName={shop?.name || "Digital Menu"} shopLogo={shop?.logo} visible />;
   }
 
   return (
     <div className="min-h-screen bg-background pb-20">
+      {/* Welcome Splash Animation */}
+      <WelcomeSplash shopName={shop?.name || "Digital Menu"} shopLogo={shop?.logo} visible={showSplash} />
+
       {/* Mobile Header */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b">
         <div className="px-4 py-4">
@@ -190,6 +204,41 @@ export function CustomerMenuPage() {
 
           {/* Menu Items */}
           <div className="space-y-3">
+            {/* Popular / Chef's Special Section */}
+            {popularItems.length > 0 && activeCategory === "all" && !debouncedSearch && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5">🔥 Popular Items</h3>
+                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+                  {popularItems.map((item) => (
+                    <div
+                      key={`popular-${item._id}`}
+                      onClick={() => setSelectedItem(item)}
+                      className="flex-shrink-0 w-36 cursor-pointer"
+                    >
+                      <Card className="border-0 shadow-sm bg-card rounded-xl overflow-hidden">
+                        <CardContent className="p-0">
+                          <div className="relative w-full h-24 bg-muted flex items-center justify-center">
+                            {item.image ? (
+                              <img src={item.image} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
+                            ) : (
+                              <span className="text-3xl">🍽️</span>
+                            )}
+                            {getCartQty(item._id) > 0 && (
+                              <span className="absolute top-1 right-1 h-5 w-5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">{getCartQty(item._id)}</span>
+                            )}
+                          </div>
+                          <div className="p-2">
+                            <p className="text-xs font-semibold truncate">{item.name}</p>
+                            <p className="text-xs font-bold text-primary">₹{item.price.toFixed(2)}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {filteredItems.map((item) => (
               <motion.div
                 key={item._id}
@@ -239,7 +288,7 @@ export function CustomerMenuPage() {
                           
                           <Button
                             size="sm"
-                            className="h-8 w-8 p-0 rounded-full shadow-md"
+                            className="h-8 w-8 p-0 rounded-full shadow-md relative"
                             onClick={(e) => {
                               e.stopPropagation();
                               addToCart(item);
@@ -249,6 +298,11 @@ export function CustomerMenuPage() {
                             }}
                           >
                             <Plus className="h-4 w-4" />
+                            {getCartQty(item._id) > 0 && (
+                              <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-background">
+                                {getCartQty(item._id)}
+                              </span>
+                            )}
                           </Button>
                         </div>
                       </div>
@@ -367,6 +421,23 @@ export function CustomerMenuPage() {
         </Card>
       )}
       </main>
+
+      {/* Sticky Cart Summary Bar */}
+      {getTotalItems() > 0 && activeTab === "menu" && (
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="fixed bottom-14 left-0 right-0 z-30 px-3 pb-1"
+        >
+          <button
+            onClick={() => setShowOrderModal(true)}
+            className="w-full flex items-center justify-between bg-primary text-primary-foreground rounded-xl px-4 py-3 shadow-lg"
+          >
+            <span className="text-sm font-medium">{getTotalItems()} item{getTotalItems() > 1 ? 's' : ''}</span>
+            <span className="text-sm font-bold">₹{getTotalAmount().toFixed(2)} — View Cart</span>
+          </button>
+        </motion.div>
+      )}
 
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-t safe-area-pb">

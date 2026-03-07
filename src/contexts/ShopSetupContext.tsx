@@ -31,10 +31,12 @@ export function ShopSetupProvider({ children }: { children: ReactNode }) {
 
   const fetchShop = async () => {
     if (!user || user.role !== "shopkeeper") {
-      setIsLoading(false);
+      // Don't set isLoading to false if user hasn't loaded yet
+      if (user) setIsLoading(false);
       return;
     }
     try {
+      setIsLoading(true);
       const response = await shopService.getShopProfile();
       setShop(response.data || null);
     } catch {

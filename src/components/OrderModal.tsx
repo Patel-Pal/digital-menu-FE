@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Minus, Plus, X } from 'lucide-react';
+import { Minus, Plus, X, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useOrder } from '@/contexts/OrderContext';
 import { orderService } from '@/services/orderService';
 import { toast } from 'sonner';
@@ -20,6 +21,7 @@ export function OrderModal({ isOpen, onClose, shopId }: OrderModalProps) {
   const [tableNumber, setTableNumber] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSubmitOrder = async () => {
     if (!customerName.trim()) {
@@ -54,11 +56,15 @@ export function OrderModal({ isOpen, onClose, shopId }: OrderModalProps) {
 
       await orderService.createOrder(orderData);
       
-      toast.success('Order placed successfully! Please wait for confirmation.');
-      clearCart();
-      onClose();
-      setTableNumber('');
-      setOrderNotes('');
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        clearCart();
+        onClose();
+        setTableNumber('');
+        setOrderNotes('');
+        toast.success('Order placed successfully!');
+      }, 2000);
     } catch (error: any) {
       console.error('Order submission error:', error);
       toast.error(error.response?.data?.message || 'Failed to place order');
@@ -70,6 +76,42 @@ export function OrderModal({ isOpen, onClose, shopId }: OrderModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] max-w-md h-[95vh] max-h-[650px] p-0 gap-0 bg-slate-900 border-slate-700 shadow-2xl">
+        {/* Order Success Animation */}
+        <AnimatePresence>
+          {showSuccess && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-sm rounded-lg"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", damping: 12, stiffness: 200, delay: 0.1 }}
+              >
+                <CheckCircle2 className="h-20 w-20 text-emerald-400" />
+              </motion.div>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-4 text-xl font-bold text-white"
+              >
+                Order Placed!
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="text-sm text-slate-400 mt-1"
+              >
+                Please wait for confirmation
+              </motion.p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <DialogHeader className="px-4 py-3 border-b border-slate-700/50 bg-gradient-to-r from-slate-800 to-slate-900">
           <DialogTitle className="text-lg font-semibold text-white">Place Your Order</DialogTitle>
         </DialogHeader>

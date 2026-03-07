@@ -292,7 +292,6 @@ export function ShopSettingsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-1"
       >
-        <h1 className="text-3xl font-bold">Shop Settings</h1>
         <p className="text-muted-foreground">Manage your shop profile and preferences</p>
       </motion.div>
 

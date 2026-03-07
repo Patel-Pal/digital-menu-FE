@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Clock, CheckCircle, XCircle, RefreshCw, UtensilsCrossed, Eye, ChefHat, StickyNote, Timer } from 'lucide-react';
 import { Order, orderService } from '@/services/orderService';
 import { OrderNotification } from '@/components/OrderNotification';
@@ -16,22 +17,41 @@ import { SkeletonCard } from '@/components/SkeletonCard';
 export function OrdersManagementPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tabLoading, setTabLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState('pending');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [counts, setCounts] = useState({
     pending: 0, approved: 0, rejected: 0, completed: 0, all: 0
   });
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const { user } = useAuth();
+
+  const playNotificationSound = useCallback(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(587, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.15); // G5
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {}
+  }, []);
 
   const handleWebSocketEvent = useCallback((event: string, data: any) => {
     if (event === 'new_order') {
+      playNotificationSound();
       toast.success(`New order from ${data.customerName} - Table ${data.tableNumber}`);
       fetchOrders();
     } else if (event === 'order_status_updated') {
       fetchOrders();
     }
-  }, []);
+  }, [playNotificationSound]);
 
   useWebSocket({
     room: user?.shopId || '',
@@ -40,13 +60,14 @@ export function OrdersManagementPage() {
   });
 
   useEffect(() => {
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 30000);
+    fetchOrders(true);
+    const interval = setInterval(() => fetchOrders(false), 30000);
     return () => clearInterval(interval);
   }, [activeTab]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (isTabSwitch = false) => {
     if (!user?.shopId) return;
+    if (isTabSwitch) setTabLoading(true);
     try {
       const status = activeTab === 'all' ? undefined : activeTab;
       const response = await orderService.getShopOrders(user.shopId, status);
@@ -57,12 +78,48 @@ export function OrdersManagementPage() {
       toast.error('Failed to fetch orders');
     } finally {
       setLoading(false);
+      setTabLoading(false);
     }
   };
 
   const handleOrderUpdate = () => {
     fetchOrders();
     setSelectedOrder(null);
+    setSelectedOrders(new Set());
+  };
+
+  const toggleSelectOrder = (orderId: string) => {
+    setSelectedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedOrders.size === orders.length) {
+      setSelectedOrders(new Set());
+    } else {
+      setSelectedOrders(new Set(orders.map(o => o._id)));
+    }
+  };
+
+  const handleBulkAction = async (status: 'approved' | 'rejected' | 'completed') => {
+    if (selectedOrders.size === 0) return;
+    try {
+      await Promise.all(
+        Array.from(selectedOrders).map(id =>
+          orderService.updateOrderStatus(id, { status })
+        )
+      );
+      toast.success(`${selectedOrders.size} orders ${status}`);
+      setSelectedOrders(new Set());
+      fetchOrders();
+    } catch (error: any) {
+      toast.error('Some orders failed to update');
+      fetchOrders();
+    }
   };
 
   const formatTime = (dateString: string) => {
@@ -103,8 +160,8 @@ export function OrdersManagementPage() {
     <TooltipProvider delayDuration={0}>
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Orders</h1>
-          <Button onClick={fetchOrders} variant="outline" size="sm">
+          <div />
+          <Button onClick={() => fetchOrders(false)} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -120,6 +177,38 @@ export function OrdersManagementPage() {
           </TabsList>
 
           <TabsContent value={activeTab}>
+            {/* Tab Loading */}
+            {tabLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              </div>
+            ) : (
+            <>
+            {/* Bulk Actions Bar */}
+            {selectedOrders.size > 0 && (
+              <div className="flex items-center gap-3 mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                <span className="text-sm font-medium">{selectedOrders.size} selected</span>
+                {activeTab === 'pending' && (
+                  <>
+                    <Button size="sm" className="h-7 text-xs" onClick={() => handleBulkAction('approved')}>
+                      <CheckCircle className="h-3 w-3 mr-1" /> Approve All
+                    </Button>
+                    <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => handleBulkAction('rejected')}>
+                      <XCircle className="h-3 w-3 mr-1" /> Reject All
+                    </Button>
+                  </>
+                )}
+                {activeTab === 'approved' && (
+                  <Button size="sm" className="h-7 text-xs" onClick={() => handleBulkAction('completed')}>
+                    <CheckCircle className="h-3 w-3 mr-1" /> Complete All
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" className="h-7 text-xs ml-auto" onClick={() => setSelectedOrders(new Set())}>
+                  Clear
+                </Button>
+              </div>
+            )}
+
             {orders.length === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="p-10 text-center">
@@ -136,6 +225,12 @@ export function OrdersManagementPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50">
+                        <TableHead className="w-[40px]">
+                          <Checkbox
+                            checked={orders.length > 0 && selectedOrders.size === orders.length}
+                            onCheckedChange={toggleSelectAll}
+                          />
+                        </TableHead>
                         <TableHead className="w-[100px]">Order ID</TableHead>
                         <TableHead>Customer</TableHead>
                         <TableHead className="w-[80px] text-center">Table</TableHead>
@@ -151,9 +246,15 @@ export function OrdersManagementPage() {
                         <>
                           <TableRow
                             key={order._id}
-                            className={`cursor-pointer ${expandedOrder === order._id ? 'bg-muted/30' : ''} ${order.status === 'pending' ? 'bg-amber-500/5' : ''}`}
+                            className={`cursor-pointer ${expandedOrder === order._id ? 'bg-muted/30' : ''} ${order.status === 'pending' ? 'bg-amber-500/5' : ''} ${selectedOrders.has(order._id) ? 'bg-primary/5' : ''}`}
                             onClick={() => setExpandedOrder(expandedOrder === order._id ? null : order._id)}
                           >
+                            <TableCell onClick={e => e.stopPropagation()}>
+                              <Checkbox
+                                checked={selectedOrders.has(order._id)}
+                                onCheckedChange={() => toggleSelectOrder(order._id)}
+                              />
+                            </TableCell>
                             <TableCell className="font-mono font-bold text-sm">
                               #{order._id.slice(-6)}
                             </TableCell>
@@ -243,7 +344,7 @@ export function OrdersManagementPage() {
                           {/* Expanded Row */}
                           {expandedOrder === order._id && (
                             <TableRow key={`${order._id}-detail`} className="bg-muted/20 hover:bg-muted/20">
-                              <TableCell colSpan={8} className="p-0">
+                              <TableCell colSpan={9} className="p-0">
                                 <div className="px-6 py-4 space-y-3">
                                   {/* Items Detail */}
                                   <div className="rounded-lg border border-border/50 overflow-hidden">
@@ -320,6 +421,8 @@ export function OrdersManagementPage() {
                   </Table>
                 </CardContent>
               </Card>
+            )}
+            </>
             )}
           </TabsContent>
         </Tabs>

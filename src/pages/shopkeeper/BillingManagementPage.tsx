@@ -15,7 +15,8 @@ import {
   XCircle,
   Calendar,
   User,
-  Hash
+  Hash,
+  Download
 } from 'lucide-react';
 import { Bill, billingService } from '@/services/billingService';
 import { BillDetailModal } from '@/components/BillDetailModal';
@@ -26,6 +27,7 @@ import { toast } from 'sonner';
 export function BillingManagementPage() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tabLoading, setTabLoading] = useState(false);
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,11 +48,12 @@ export function BillingManagementPage() {
   });
 
   useEffect(() => {
-    fetchBills();
+    fetchBills(true);
   }, [activeTab]);
 
-  const fetchBills = async () => {
+  const fetchBills = async (isTabSwitch = false) => {
     if (!user?.shopId) return;
+    if (isTabSwitch) setTabLoading(true);
 
     try {
       const status = activeTab === 'all' ? undefined : activeTab;
@@ -61,6 +64,7 @@ export function BillingManagementPage() {
       toast.error('Failed to fetch bills');
     } finally {
       setLoading(false);
+      setTabLoading(false);
     }
   };
 
@@ -128,6 +132,28 @@ export function BillingManagementPage() {
     .filter(b => b.paymentStatus === 'paid')
     .reduce((sum, b) => sum + b.totalAmount, 0);
 
+  const exportToCSV = () => {
+    const headers = ['Bill Number', 'Customer', 'Table', 'Amount', 'Status', 'Payment Method', 'Date'];
+    const rows = filteredBills.map(b => [
+      b.billNumber,
+      b.customerName,
+      b.tableNumber,
+      b.totalAmount.toFixed(2),
+      b.paymentStatus,
+      b.paymentMethod || '',
+      new Date(b.createdAt).toLocaleString()
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bills-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Bills exported to CSV');
+  };
+
   if (loading) {
     return (
       <div className="p-6">
@@ -148,13 +174,18 @@ export function BillingManagementPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Billing Management</h1>
           <p className="text-muted-foreground">Manage customer bills and payments</p>
         </div>
-        <Button onClick={fetchBills} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={exportToCSV} variant="outline" size="sm" disabled={filteredBills.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button onClick={() => fetchBills(false)} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -242,7 +273,11 @@ export function BillingManagementPage() {
             </TabsList>
 
             <TabsContent value={activeTab} className="mt-4">
-              {filteredBills.length === 0 ? (
+              {tabLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                </div>
+              ) : filteredBills.length === 0 ? (
                 <div className="text-center py-8">
                   <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No bills found</h3>

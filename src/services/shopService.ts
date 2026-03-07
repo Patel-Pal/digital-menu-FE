@@ -17,6 +17,7 @@ interface Shop {
   createdAt: string;
   updatedAt: string;
   menuTheme: string;
+  qrColor?: string;
   rating?: number;
   reviewCount?: number;
 }
@@ -29,6 +30,7 @@ interface ShopProfileData {
   phone?: string;
   menuTheme?: string;
   type?: string;
+  qrColor?: string;
 }
 
 export const shopService = {
