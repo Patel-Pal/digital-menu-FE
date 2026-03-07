@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { adminService } from "@/services/adminService";
 import { toast } from "sonner";
+import { PageLoader } from "@/components/PageLoader";
 
 export function AdminAnalyticsPage() {
   const [analytics, setAnalytics] = useState<any>(null);
@@ -80,11 +81,7 @@ export function AdminAnalyticsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <PageLoader message="Loading analytics..." />;
   }
 
   const totalScans = analytics?.dailyData?.reduce((sum: number, day: any) => sum + day.totalScans, 0) || 0;

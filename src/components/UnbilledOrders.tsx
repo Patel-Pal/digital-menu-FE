@@ -7,6 +7,7 @@ import { orderService } from '@/services/orderService';
 import { useOrder } from '@/contexts/OrderContext';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { OrderApprovedPopup } from './OrderApprovedPopup';
+import { OrderTimeline } from './OrderTimeline';
 import { toast } from 'sonner';
 
 interface UnbilledOrdersProps {
@@ -209,6 +210,15 @@ export function UnbilledOrders({ shopId }: UnbilledOrdersProps) {
                 <CountdownTimer order={order} />
               </div>
             )}
+
+            {/* Order Status Timeline */}
+            <div className="mb-3 py-2">
+              <OrderTimeline
+                status={order.status}
+                createdAt={order.createdAt}
+                estimatedReadyTime={order.estimatedReadyTime}
+              />
+            </div>
 
             {order.status === 'rejected' && order.rejectionReason && (
               <div className="mb-3 p-3 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">

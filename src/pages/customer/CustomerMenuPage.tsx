@@ -21,8 +21,10 @@ import { shopService, type Shop } from "@/services/shopService";
 import { useMenuTheme, menuThemes, MenuTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrder } from "@/contexts/OrderContext";
+import { useDebounce } from "@/hooks/useDebounce";
 import { type MenuItem } from "@/types";
 import { toast } from "sonner";
+import { PageLoader } from "@/components/PageLoader";
 
 type ViewTab = "menu" | "orders" | "about" | "digital-menu";
 
@@ -44,6 +46,7 @@ export function CustomerMenuPage() {
   const theme = menuThemes[menuTheme];
   const { user } = useAuth();
   const { cart, addToCart, getTotalItems } = useOrder();
+  const debouncedSearch = useDebounce(searchQuery, 300);
   
   // For demo, use current user's shopId or a default
   const currentShopId = shopId || user?.shopId || "";
@@ -112,19 +115,15 @@ export function CustomerMenuPage() {
 
   const filteredItems = menuItems.filter((item) => {
     const matchesCategory = activeCategory === "all" || item.categoryId._id === activeCategory;
-    const matchesSearch = searchQuery
-      ? item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = debouncedSearch
+      ? item.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        item.description?.toLowerCase().includes(debouncedSearch.toLowerCase())
       : true;
     return matchesCategory && matchesSearch && item.isActive;
   });
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <PageLoader message="Loading menu..." fullScreen />;
   }
 
   return (
@@ -208,6 +207,7 @@ export function CustomerMenuPage() {
                             src={item.image} 
                             alt={item.name} 
                             className="w-full h-full object-cover block"
+                            loading="lazy"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
                               e.currentTarget.parentElement.innerHTML = '<span class="text-2xl">🍽️</span>';
@@ -243,6 +243,8 @@ export function CustomerMenuPage() {
                             onClick={(e) => {
                               e.stopPropagation();
                               addToCart(item);
+                              // Haptic feedback on mobile
+                              if (navigator.vibrate) navigator.vibrate(50);
                               toast.success(`${item.name} added to cart!`);
                             }}
                           >

@@ -15,6 +15,8 @@ import { shopService, type ShopProfileData } from "@/services/shopService";
 import { uploadService } from "@/services/uploadService";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { PageLoader } from "@/components/PageLoader";
+import { SetupBanner } from "@/components/SetupBanner";
 
 export function ShopSettingsPage() {
   const { menuTheme, setMenuTheme } = useMenuTheme();
@@ -199,6 +201,9 @@ export function ShopSettingsPage() {
       await shopService.createOrUpdateShopProfile(data);
       toast.success("Shop profile saved successfully!");
       
+      // Trigger refresh in sidebar and setup context
+      window.dispatchEvent(new CustomEvent('profileUpdated'));
+      
       // Reset file states
       setLogoFile(null);
       setBannerFile(null);
@@ -276,11 +281,7 @@ export function ShopSettingsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <PageLoader message="Loading settings..." />;
   }
 
   return (
@@ -294,6 +295,9 @@ export function ShopSettingsPage() {
         <h1 className="text-3xl font-bold">Shop Settings</h1>
         <p className="text-muted-foreground">Manage your shop profile and preferences</p>
       </motion.div>
+
+      {/* Setup completion banner */}
+      <SetupBanner />
 
       {/* Shop Profile */}
       <motion.div

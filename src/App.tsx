@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OrderProvider } from "@/contexts/OrderContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ScrollToTop } from "@/components/ScrollToTop";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 
 // Layouts
 import { AuthLayout } from "@/layouts/AuthLayout";
@@ -56,6 +58,8 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
+            <OfflineIndicator />
             <Routes>
               <Route path="/" element={<LandingPage />} />
 

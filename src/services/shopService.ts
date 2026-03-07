@@ -9,6 +9,7 @@ interface Shop {
   address?: string;
   phone?: string;
   email?: string;
+  type?: string;
   ownerId: string;
   subscription: string;
   isActive: boolean;

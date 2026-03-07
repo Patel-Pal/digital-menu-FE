@@ -270,7 +270,14 @@ export function AdminLayout() {
 
         {/* Page Content */}
         <main className="p-4 lg:p-6">
-          <Outlet />
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Outlet />
+          </motion.div>
         </main>
       </div>
     </div>

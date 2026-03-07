@@ -2,7 +2,7 @@ import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { LayoutDashboard, UtensilsCrossed, FolderOpen, QrCode, BarChart3, Settings, Menu, X, LogOut, ShoppingBag, Receipt, ChevronRight, PanelLeftClose, PanelLeft, Store, Phone, Mail, MapPin, Edit2, User, Building2 } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, FolderOpen, QrCode, BarChart3, Settings, Menu, X, LogOut, ShoppingBag, Receipt, ChevronRight, PanelLeftClose, PanelLeft, Store, Phone, Mail, MapPin, Edit2, User, Building2, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,6 +12,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { shopService, type Shop } from "@/services/shopService";
 import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
+import { ShopSetupProvider } from "@/contexts/ShopSetupContext";
+import { ShopSetupGuard } from "@/components/ShopSetupGuard";
+import { OnboardingGuide } from "@/components/OnboardingGuide";
 import type { NavItem } from "@/types";
 
 const navItems: NavItem[] = [
@@ -32,6 +35,7 @@ export function ShopkeeperLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showShopProfile, setShowShopProfile] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [shop, setShop] = useState<Shop | null>(null);
   const { logout, user } = useAuth();
 
@@ -47,6 +51,10 @@ export function ShopkeeperLayout() {
     
     if (user) {
       fetchShop();
+      // Show onboarding guide on first visit
+      if (!localStorage.getItem("onboarding_seen")) {
+        setShowOnboarding(true);
+      }
     }
   }, [user]);
 
@@ -100,7 +108,23 @@ export function ShopkeeperLayout() {
     }
   };
 
+  const getBreadcrumbs = () => {
+    const title = getPageTitle();
+    if (location.pathname === "/shop") return null;
+    return (
+      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Link to="/shop" className="hover:text-foreground transition-colors flex items-center gap-1">
+          <Home className="h-3.5 w-3.5" />
+          <span>Home</span>
+        </Link>
+        <ChevronRight className="h-3 w-3" />
+        <span className="text-foreground font-medium">{title}</span>
+      </div>
+    );
+  };
+
   return (
+    <ShopSetupProvider>
     <AnalyticsProvider>
       <TooltipProvider delayDuration={0}>
         <div className="flex min-h-screen bg-muted/30">
@@ -343,7 +367,10 @@ export function ShopkeeperLayout() {
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
+            <div className="flex flex-col">
+              <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
+              {getBreadcrumbs()}
+            </div>
             <div className="flex-1" />
             <div className="flex items-center gap-4">
               <ThemeToggle size="sm" />
@@ -359,7 +386,16 @@ export function ShopkeeperLayout() {
 
           {/* Page Content */}
           <main className="p-4 lg:p-6">
-            <Outlet />
+            <ShopSetupGuard>
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Outlet />
+              </motion.div>
+            </ShopSetupGuard>
           </main>
         </div>
       </div>
@@ -514,6 +550,11 @@ export function ShopkeeperLayout() {
         </DialogContent>
       </Dialog>
       </TooltipProvider>
+
+      {/* Onboarding Guide */}
+      <OnboardingGuide open={showOnboarding} onClose={() => setShowOnboarding(false)} />
+
     </AnalyticsProvider>
+    </ShopSetupProvider>
   );
 }

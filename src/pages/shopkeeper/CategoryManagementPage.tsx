@@ -10,6 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { PageLoader } from "@/components/PageLoader";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
 import { categoryService, type Category, type CreateCategoryData, type UpdateCategoryData } from "@/services/categoryService";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -25,6 +28,7 @@ export function CategoryManagementPage() {
     icon: "",
     order: 0
   });
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   
   const { user } = useAuth();
   const shopId = user?.shopId; // Now uses real user ObjectId
@@ -98,11 +102,15 @@ export function CategoryManagementPage() {
   };
 
   const handleDelete = async (category: Category) => {
-    if (!confirm(`Are you sure you want to delete "${category.name}"?`)) return;
-    
+    setDeleteTarget(category);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await categoryService.deleteCategory(category._id);
+      await categoryService.deleteCategory(deleteTarget._id);
       toast.success("Category deleted successfully");
+      setDeleteTarget(null);
       fetchCategories();
     } catch (error: any) {
       toast.error("Failed to delete category");
@@ -121,11 +129,7 @@ export function CategoryManagementPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <PageLoader message="Loading categories..." />;
   }
 
   return (
@@ -264,16 +268,13 @@ export function CategoryManagementPage() {
         ))}
         
         {categories.length === 0 && (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <h3 className="text-lg font-semibold mb-2">No categories yet</h3>
-              <p className="text-muted-foreground mb-4">Create your first category to organize your menu</p>
-              <Button onClick={() => setIsCreateOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Category
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            variant="category"
+            title="No categories yet"
+            description="Create your first category to organize your menu"
+            actionLabel="Add Category"
+            onAction={() => setIsCreateOpen(true)}
+          />
         )}
       </div>
 
@@ -330,6 +331,17 @@ export function CategoryManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete Category"
+        description={`Are you sure you want to delete "${deleteTarget?.name}"? All menu items in this category may be affected.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { OrderNotification } from '@/components/OrderNotification';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { toast } from 'sonner';
+import { SkeletonCard } from '@/components/SkeletonCard';
 
 export function OrdersManagementPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -90,16 +91,10 @@ export function OrdersManagementPage() {
     return (
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Orders</h1>
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+          <div className="h-8 w-32 bg-muted rounded animate-pulse" />
+          <div className="h-9 w-24 bg-muted rounded animate-pulse" />
         </div>
-        <Card className="animate-pulse">
-          <CardContent className="p-6 space-y-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-10 bg-muted rounded w-full"></div>
-            ))}
-          </CardContent>
-        </Card>
+        <SkeletonCard count={4} variant="order" />
       </div>
     );
   }

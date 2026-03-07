@@ -7,10 +7,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AddMenuItemForm } from "@/components/AddMenuItemForm";
 import { EditMenuItemForm } from "@/components/EditMenuItemForm";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
 import { menuItemService, type MenuItem } from "@/services/menuItemService";
 import { categoryService, type Category } from "@/services/categoryService";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { toast } from "sonner";
+import { PageLoader } from "@/components/PageLoader";
+import { SkeletonCard } from "@/components/SkeletonCard";
 
 export function MenuManagementPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -21,9 +27,16 @@ export function MenuManagementPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MenuItem | null>(null);
 
   const { user } = useAuth();
   const shopId = user?.shopId;
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  useKeyboardShortcuts([
+    { key: "n", handler: () => setShowAddForm(true), description: "New menu item" },
+    { key: "Escape", handler: () => { setShowAddForm(false); setShowEditForm(false); }, description: "Close form" },
+  ]);
 
   useEffect(() => {
     if (shopId) {
@@ -49,21 +62,24 @@ export function MenuManagementPage() {
   };
 
   const handleToggleStatus = async (item: MenuItem) => {
+    // Optimistic update
+    setMenuItems(prev => prev.map(i => i._id === item._id ? { ...i, isActive: !i.isActive } : i));
     try {
       await menuItemService.toggleMenuItemStatus(item._id);
       toast.success(`Menu item ${item.isActive ? 'deactivated' : 'activated'}`);
-      fetchData();
     } catch (error) {
+      // Revert on failure
+      setMenuItems(prev => prev.map(i => i._id === item._id ? { ...i, isActive: item.isActive } : i));
       toast.error("Failed to toggle menu item status");
     }
   };
 
-  const handleDelete = async (item: MenuItem) => {
-    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) return;
-    
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await menuItemService.deleteMenuItem(item._id);
+      await menuItemService.deleteMenuItem(deleteTarget._id);
       toast.success("Menu item deleted successfully");
+      setDeleteTarget(null);
       fetchData();
     } catch (error) {
       toast.error("Failed to delete menu item");
@@ -77,17 +93,28 @@ export function MenuManagementPage() {
 
   const filteredItems = menuItems.filter((item) => {
     const matchesCategory = activeCategory === "all" || item.categoryId._id === activeCategory;
-    const matchesSearch = searchQuery
-      ? item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = debouncedSearch
+      ? item.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        item.description?.toLowerCase().includes(debouncedSearch.toLowerCase())
       : true;
     return matchesCategory && matchesSearch;
   });
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="space-y-6 p-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+            <div className="h-4 w-64 bg-muted rounded animate-pulse" />
+          </div>
+          <div className="h-10 w-28 bg-muted rounded animate-pulse" />
+        </div>
+        <div className="flex gap-4">
+          <div className="h-10 flex-1 bg-muted rounded animate-pulse" />
+          <div className="h-10 w-40 bg-muted rounded animate-pulse" />
+        </div>
+        <SkeletonCard count={4} variant="menu-item" />
       </div>
     );
   }
@@ -148,7 +175,7 @@ export function MenuManagementPage() {
                   {/* Image */}
                   <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
                     ) : (
                       <span className="text-2xl">🍽️</span>
                     )}
@@ -214,7 +241,7 @@ export function MenuManagementPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(item)}
+                          onClick={() => setDeleteTarget(item)}
                           className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -229,23 +256,15 @@ export function MenuManagementPage() {
         ))}
         
         {filteredItems.length === 0 && (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <h3 className="text-lg font-semibold mb-2">No menu items found</h3>
-              <p className="text-muted-foreground mb-4">
-                {searchQuery || activeCategory !== "all" 
-                  ? "Try adjusting your search or filter" 
-                  : "Create your first menu item to get started"
-                }
-              </p>
-              {!searchQuery && activeCategory === "all" && (
-                <Button onClick={() => setShowAddForm(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Menu Item
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+          <EmptyState
+            variant={debouncedSearch || activeCategory !== "all" ? "search" : "menu"}
+            title={debouncedSearch || activeCategory !== "all" ? "No items match your filter" : "No menu items yet"}
+            description={debouncedSearch || activeCategory !== "all" 
+              ? "Try adjusting your search or filter" 
+              : "Create your first menu item to get started"}
+            actionLabel={!debouncedSearch && activeCategory === "all" ? "Add Menu Item" : undefined}
+            onAction={!debouncedSearch && activeCategory === "all" ? () => setShowAddForm(true) : undefined}
+          />
         )}
       </div>
 
@@ -268,6 +287,17 @@ export function MenuManagementPage() {
           item={editingItem}
         />
       )}
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete Menu Item"
+        description={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }
