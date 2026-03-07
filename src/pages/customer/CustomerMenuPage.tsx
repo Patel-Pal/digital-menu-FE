@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, Globe, ChevronDown, UtensilsCrossed, Info, ShoppingCart, Plus, Receipt } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,22 @@ type ViewTab = "menu" | "orders" | "about" | "digital-menu";
 
 export function CustomerMenuPage() {
   const { shopId } = useParams<{ shopId: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const getInitialTab = (): ViewTab => {
+    const hash = location.hash.replace("#", "");
+    const base = hash.split("-")[0];
+    if (["menu", "orders", "about", "digital-menu"].includes(base)) return base as ViewTab;
+    return "menu";
+  };
+
+  const getInitialOrdersSubTab = (): string => {
+    const hash = location.hash.replace("#", "");
+    if (hash === "orders-pending") return "orders";
+    return "bills";
+  };
+
   const [shop, setShop] = useState<Shop | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -38,11 +54,22 @@ export function CustomerMenuPage() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showLangMenu, setShowLangMenu] = useState(false);
-  const [activeTab, setActiveTab] = useState<ViewTab>("menu");
+  const [activeTab, setActiveTabState] = useState<ViewTab>(getInitialTab);
+  const [ordersSubTab, setOrdersSubTabState] = useState(getInitialOrdersSubTab);
   const [loading, setLoading] = useState(true);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showBillModal, setShowBillModal] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+
+  const setActiveTab = (tab: ViewTab) => {
+    setActiveTabState(tab);
+    navigate({ hash: tab === "menu" ? "" : tab }, { replace: true });
+  };
+
+  const setOrdersSubTab = (sub: string) => {
+    setOrdersSubTabState(sub);
+    navigate({ hash: sub === "orders" ? "orders-pending" : "orders" }, { replace: true });
+  };
   
   const { menuTheme, setMenuTheme } = useMenuTheme();
   const theme = menuThemes[menuTheme];
@@ -133,9 +160,7 @@ export function CustomerMenuPage() {
     return found ? found.quantity : 0;
   };
 
-  if (loading) {
-    return <WelcomeSplash shopName={shop?.name || "Digital Menu"} shopLogo={shop?.logo} visible />;
-  }
+  // Splash covers the screen while loading, no need for early return
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -352,7 +377,7 @@ export function CustomerMenuPage() {
           </Card>
           
           {/* Orders and Bills Tabs */}
-          <Tabs defaultValue="bills" className="w-full">
+          <Tabs value={ordersSubTab} onValueChange={setOrdersSubTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="bills">Bills</TabsTrigger>
               <TabsTrigger value="orders">Pending Orders</TabsTrigger>
