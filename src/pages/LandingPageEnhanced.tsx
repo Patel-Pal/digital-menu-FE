@@ -296,7 +296,7 @@ export function LandingPage() {
       </motion.nav>
 
       {/* ─── Hero Section ─── */}
-      <section ref={heroRef} className="relative pt-20 pb-12 px-4 overflow-hidden min-h-[85vh] flex items-center">
+      <section ref={heroRef} className="relative pt-24 sm:pt-20 pb-8 sm:pb-12 px-4 overflow-hidden min-h-[auto] sm:min-h-[85vh] flex items-center">
         {/* Gradient Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-cyan-50 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-cyan-950/20" />
 
@@ -319,7 +319,7 @@ export function LandingPage() {
             >
               <motion.h1
                 variants={heroItem}
-                className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight"
+                className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold leading-tight"
               >
                 Create Beautiful{" "}
                 <span className="relative inline-block">
@@ -337,7 +337,7 @@ export function LandingPage() {
 
               <motion.p
                 variants={heroItem}
-                className="text-xl text-muted-foreground max-w-2xl leading-relaxed"
+                className="text-base sm:text-xl text-muted-foreground max-w-2xl leading-relaxed"
               >
                 Generate QR code menus, track analytics, and provide contactless dining
                 experiences that your customers will love. Join 1000+ restaurants already
@@ -358,7 +358,7 @@ export function LandingPage() {
               </motion.div>
 
               {/* Stats counter */}
-              <motion.div variants={heroItem} className="flex items-center gap-8 pt-4">
+              <motion.div variants={heroItem} className="flex items-center gap-4 sm:gap-8 pt-4">
                 {[
                   { value: "1000+", label: "Restaurants", color: "text-blue-600" },
                   { value: "50K+", label: "QR Scans", color: "text-purple-600" },
@@ -369,8 +369,8 @@ export function LandingPage() {
                     className="text-center"
                     whileHover={{ scale: 1.1, transition: { duration: 0.2 } }}
                   >
-                    <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-                    <div className="text-sm text-muted-foreground">{stat.label}</div>
+                    <div className={`text-xl sm:text-2xl font-bold ${stat.color}`}>{stat.value}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">{stat.label}</div>
                   </motion.div>
                 ))}
               </motion.div>
@@ -381,7 +381,7 @@ export function LandingPage() {
               initial={{ opacity: 0, x: 80, scale: 0.9 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               transition={{ duration: 0.9, delay: 0.4, ease: [0.25, 0.1, 0.25, 1] as const }}
-              className="relative h-[500px] sm:h-[600px] lg:h-[680px]"
+              className="relative hidden sm:block h-[400px] sm:h-[500px] lg:h-[680px]"
             >
               <HeroMockup />
             </motion.div>
@@ -398,21 +398,21 @@ export function LandingPage() {
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-10">
-            <TextReveal as="h2" className="text-3xl md:text-4xl font-bold mb-4" delay={0.1}>
+            <TextReveal as="h2" className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4" delay={0.1}>
               Everything You Need for{" "}
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Digital Menus
               </span>
             </TextReveal>
             <FadeInSection delay={0.2}>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto">
                 Powerful features designed to enhance your restaurant's digital presence
                 and customer experience
               </p>
             </FadeInSection>
           </div>
 
-          <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-5" staggerDelay={0.1}>
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5" staggerDelay={0.1}>
             {features.map((feature, index) => (
               <StaggerItem key={index}>
                 <AnimatedCard
@@ -452,27 +452,27 @@ export function LandingPage() {
       </section>
 
       {/* ─── Pricing Section ─── */}
-      <section id="pricing" className="py-24 px-4 relative">
+      <section id="pricing" className="py-16 sm:py-24 px-4 relative">
         {/* Parallax orbs */}
         <ParallaxWrapper speed={30} className="absolute top-10 left-10 w-48 h-48 bg-green-400/5 rounded-full blur-3xl pointer-events-none" />
         <ParallaxWrapper speed={-20} className="absolute bottom-10 right-10 w-64 h-64 bg-blue-400/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-16">
-            <TextReveal as="h2" className="text-3xl md:text-4xl font-bold mb-4" delay={0.1}>
+          <div className="text-center mb-10 sm:mb-16">
+            <TextReveal as="h2" className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4" delay={0.1}>
               Simple, Transparent{" "}
               <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
                 Pricing
               </span>
             </TextReveal>
             <FadeInSection delay={0.2}>
-              <p className="text-xl text-muted-foreground">
+              <p className="text-base sm:text-xl text-muted-foreground">
                 Choose the perfect plan for your restaurant's needs
               </p>
             </FadeInSection>
           </div>
 
-          <StaggerContainer className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto" staggerDelay={0.15}>
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto" staggerDelay={0.15}>
             {pricing.map((plan, index) => (
               <StaggerItem key={index}>
                 <AnimatedCard
@@ -487,7 +487,7 @@ export function LandingPage() {
                         : ""
                     }`}
                   >
-                    <CardContent className="p-8 relative">
+                    <CardContent className="p-6 sm:p-8 relative">
                       {plan.popular && (
                         <>
                           <Badge className="mb-4 bg-gradient-to-r from-blue-600 to-purple-600">
@@ -550,26 +550,26 @@ export function LandingPage() {
       <AboutSection onGetStarted={() => setContactPopupOpen(true)} />
 
       {/* ─── Contact Section ─── */}
-      <section id="contact" className="py-24 px-4 min-h-screen flex flex-col justify-center">
+      <section id="contact" className="py-16 sm:py-24 px-4 min-h-[80vh] sm:min-h-screen flex flex-col justify-center">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-16">
             <FadeInSection>
               <Badge className="mb-4">📞 Contact Us</Badge>
             </FadeInSection>
-            <TextReveal as="h2" className="text-3xl md:text-4xl font-bold mb-4" delay={0.1}>
+            <TextReveal as="h2" className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4" delay={0.1}>
               Get in{" "}
               <span className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
                 Touch
               </span>
             </TextReveal>
             <FadeInSection delay={0.2}>
-              <p className="text-xl text-muted-foreground">
+              <p className="text-base sm:text-xl text-muted-foreground">
                 Have questions? We'd love to hear from you and help you get started.
               </p>
             </FadeInSection>
           </div>
 
-          <StaggerContainer className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto" staggerDelay={0.12}>
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto" staggerDelay={0.12}>
             {[
               { icon: Mail, title: "Email Us", info: contactInfo.email, color: "from-blue-500 to-cyan-500" },
               { icon: Phone, title: "Call Us", info: contactInfo.phone, color: "from-green-500 to-emerald-500" },
@@ -578,7 +578,7 @@ export function LandingPage() {
               <StaggerItem key={index}>
                 <AnimatedCard hoverLift={8} hoverScale={1.03}>
                   <Card className="hover:shadow-xl transition-all duration-300">
-                    <CardContent className="p-8 text-center relative overflow-hidden">
+                    <CardContent className="p-6 sm:p-8 text-center relative overflow-hidden">
                       <motion.div
                         className={`p-4 bg-gradient-to-r ${contact.color} rounded-full w-fit mx-auto mb-6`}
                         whileHover={{ scale: 1.1, rotate: 5 }}
@@ -601,14 +601,14 @@ export function LandingPage() {
       </section>
 
       {/* ─── Footer ─── */}
-      <footer className="bg-muted/50 py-12 px-4 relative overflow-hidden">
+      <footer className="bg-muted/50 py-8 sm:py-12 px-4 relative overflow-hidden">
         <ParallaxWrapper speed={20} className="absolute top-0 right-0 w-32 h-32 opacity-5 pointer-events-none">
           <Simple3DPhone />
         </ParallaxWrapper>
 
         <div className="max-w-7xl mx-auto relative z-10">
           <FadeInSection>
-            <div className="grid md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               <div>
                 <motion.div
                   className="flex items-center gap-2 mb-4"

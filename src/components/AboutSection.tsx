@@ -137,7 +137,7 @@ function PhoneIllustration() {
 
       {/* Floating dashboard card - top right */}
       <motion.div
-        className="absolute -right-8 sm:-right-16 top-8 z-20"
+        className="absolute -right-4 sm:-right-16 top-4 sm:top-8 z-20 hidden sm:block"
         initial={{ opacity: 0, x: 30, scale: 0.9 }}
         whileInView={{ opacity: 1, x: 0, scale: 1 }}
         viewport={{ once: true }}
@@ -175,7 +175,7 @@ function PhoneIllustration() {
 
       {/* Floating scan counter - bottom left */}
       <motion.div
-        className="absolute -left-6 sm:-left-12 bottom-24 z-20"
+        className="absolute -left-4 sm:-left-12 bottom-16 sm:bottom-24 z-20 hidden sm:block"
         initial={{ opacity: 0, x: -30, scale: 0.9 }}
         whileInView={{ opacity: 1, x: 0, scale: 1 }}
         viewport={{ once: true }}
@@ -204,7 +204,7 @@ function PhoneIllustration() {
 function RightContent({ onGetStarted }: Props) {
   return (
     <motion.div
-      className="space-y-8"
+      className="space-y-5 sm:space-y-8"
       variants={ctnr}
       initial="hidden"
       whileInView="visible"
@@ -215,7 +215,7 @@ function RightContent({ onGetStarted }: Props) {
         <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">About Us</span>
       </motion.div>
 
-      <motion.h2 variants={itm} className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-[1.15] tracking-tight">
+      <motion.h2 variants={itm} className="text-2xl sm:text-3xl lg:text-5xl font-bold leading-[1.15] tracking-tight">
         Empowering Restaurants{" "}
         <br className="hidden sm:block" />
         with{" "}
@@ -300,7 +300,7 @@ export function AboutSection({ onGetStarted }: Props) {
   }, []);
 
   return (
-    <section id="about" className="py-20 sm:py-28 px-4 relative overflow-hidden bg-muted/30">
+    <section id="about" className="py-14 sm:py-28 px-4 relative overflow-hidden bg-muted/30">
       {/* Decorative background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/[0.03] rounded-full blur-[100px]" />
@@ -314,7 +314,7 @@ export function AboutSection({ onGetStarted }: Props) {
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.7, ease: "easeOut" }}
       >
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-14 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 items-center">
           {/* LEFT — Phone illustration with floating cards */}
           <motion.div
             ref={illustrationRef}
