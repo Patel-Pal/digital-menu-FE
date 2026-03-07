@@ -198,6 +198,13 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <style>{`
+        html::-webkit-scrollbar { width: 8px; }
+        html::-webkit-scrollbar-track { background: transparent; }
+        html::-webkit-scrollbar-thumb { background: linear-gradient(to bottom, #3b82f6, #8b5cf6); border-radius: 4px; }
+        html::-webkit-scrollbar-thumb:hover { background: linear-gradient(to bottom, #2563eb, #7c3aed); }
+        html { scrollbar-color: #3b82f6 transparent; }
+      `}</style>
       {/* ─── Navigation ─── */}
       <motion.nav
         className="fixed top-0 w-full bg-background/70 backdrop-blur-xl border-b border-white/10 z-50"
