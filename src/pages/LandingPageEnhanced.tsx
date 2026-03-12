@@ -530,20 +530,22 @@ export function LandingPage() {
                         ))}
                       </ul>
 
-                      <Link to="/auth/register" className="w-full">
+                      {/* <Link to="/auth/register" className="w-full"> */}
                         <AnimatedButton>
                           <Button
                             className={`w-full ${
+                              
                               plan.popular
                                 ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-blue-500/25 transition-shadow"
                                 : ""
                             }`}
+                            onClick={() => setContactPopupOpen(true)}
                             variant={plan.popular ? "default" : "outline"}
                           >
                             Get Started
                           </Button>
                         </AnimatedButton>
-                      </Link>
+                      {/* </Link> */}
                     </CardContent>
                   </Card>
                 </AnimatedCard>
