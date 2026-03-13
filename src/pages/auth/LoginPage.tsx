@@ -75,7 +75,7 @@ export function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <label className="text-sm font-medium">Password</label>
               <Link
                 to="/auth/forgot-password"
@@ -83,7 +83,7 @@ export function LoginPage() {
               >
                 Forgot password?
               </Link>
-            </div>
+            </div> */}
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
@@ -122,14 +122,14 @@ export function LoginPage() {
 
       </CardContent>
 
-      <CardFooter className="justify-center">
+      {/* <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
           Don't have an account?{" "}
           <Link to="/auth/register" className="text-primary font-medium hover:underline">
             Sign up
           </Link>
         </p>
-      </CardFooter>
+      </CardFooter> */}
     </Card>
   );
 }
