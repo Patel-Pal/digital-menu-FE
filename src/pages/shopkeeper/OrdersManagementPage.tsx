@@ -3,7 +3,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Clock, CheckCircle, XCircle, RefreshCw, UtensilsCrossed, Eye, ChefHat, StickyNote, Timer } from 'lucide-react';
@@ -13,6 +12,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { toast } from 'sonner';
 import { SkeletonCard } from '@/components/SkeletonCard';
+import { DataTable } from '@/components/DataTable';
+import type { ColumnDef, PaginationState } from '@/components/DataTable';
 
 export function OrdersManagementPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -25,6 +26,11 @@ export function OrdersManagementPage() {
     pending: 0, approved: 0, rejected: 0, completed: 0, all: 0
   });
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [pagination, setPagination] = useState<PaginationState>({
+    currentPage: 1,
+    pageSize: 20,
+    totalItems: 0,
+  });
   const { user } = useAuth();
 
   const playNotificationSound = useCallback(() => {
@@ -43,15 +49,39 @@ export function OrdersManagementPage() {
     } catch (e) {}
   }, []);
 
+  const fetchOrders = useCallback(async (page = 1, isTabSwitch = false) => {
+    if (!user?.shopId) return;
+    if (isTabSwitch) setTabLoading(true);
+    try {
+      const status = activeTab === 'all' ? undefined : activeTab;
+      const response = await orderService.getShopOrders(user.shopId, status, page, pagination.pageSize);
+      setOrders(response.data || []);
+      setCounts(response.counts || { pending: 0, approved: 0, rejected: 0, completed: 0, all: 0 });
+      if (response.pagination) {
+        setPagination({
+          currentPage: response.pagination.page,
+          pageSize: response.pagination.limit,
+          totalItems: response.pagination.total,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+      toast.error('Failed to fetch orders');
+    } finally {
+      setLoading(false);
+      setTabLoading(false);
+    }
+  }, [user?.shopId, activeTab, pagination.pageSize]);
+
   const handleWebSocketEvent = useCallback((event: string, data: any) => {
     if (event === 'new_order') {
       playNotificationSound();
       toast.success(`New order from ${data.customerName} - Table ${data.tableNumber}`);
-      fetchOrders();
+      fetchOrders(pagination.currentPage);
     } else if (event === 'order_status_updated') {
-      fetchOrders();
+      fetchOrders(pagination.currentPage);
     }
-  }, [playNotificationSound]);
+  }, [playNotificationSound, fetchOrders, pagination.currentPage]);
 
   useWebSocket({
     room: user?.shopId || '',
@@ -60,30 +90,17 @@ export function OrdersManagementPage() {
   });
 
   useEffect(() => {
-    fetchOrders(true);
-    const interval = setInterval(() => fetchOrders(false), 30000);
+    fetchOrders(1, true);
+    const interval = setInterval(() => fetchOrders(pagination.currentPage, false), 30000);
     return () => clearInterval(interval);
   }, [activeTab]);
 
-  const fetchOrders = async (isTabSwitch = false) => {
-    if (!user?.shopId) return;
-    if (isTabSwitch) setTabLoading(true);
-    try {
-      const status = activeTab === 'all' ? undefined : activeTab;
-      const response = await orderService.getShopOrders(user.shopId, status);
-      setOrders(response.data || []);
-      setCounts(response.counts || { pending: 0, approved: 0, rejected: 0, completed: 0, all: 0 });
-    } catch (error) {
-      console.error('Failed to fetch orders:', error);
-      toast.error('Failed to fetch orders');
-    } finally {
-      setLoading(false);
-      setTabLoading(false);
-    }
-  };
+  const handlePageChange = useCallback((page: number) => {
+    fetchOrders(page);
+  }, [fetchOrders]);
 
   const handleOrderUpdate = () => {
-    fetchOrders();
+    fetchOrders(pagination.currentPage);
     setSelectedOrder(null);
     setSelectedOrders(new Set());
   };
@@ -115,10 +132,10 @@ export function OrdersManagementPage() {
       );
       toast.success(`${selectedOrders.size} orders ${status}`);
       setSelectedOrders(new Set());
-      fetchOrders();
+      fetchOrders(pagination.currentPage);
     } catch (error: any) {
       toast.error('Some orders failed to update');
-      fetchOrders();
+      fetchOrders(pagination.currentPage);
     }
   };
 
@@ -144,7 +161,162 @@ export function OrdersManagementPage() {
     );
   };
 
-  if (loading) {
+  // Column definitions for the DataTable
+  const checkboxColumn: ColumnDef<Order> = {
+    id: 'select',
+    header: '',
+    headerClassName: 'w-[40px]',
+    accessorFn: () => null,
+    cell: (row) => (
+      <div onClick={e => e.stopPropagation()}>
+        <Checkbox
+          checked={selectedOrders.has(row._id)}
+          onCheckedChange={() => toggleSelectOrder(row._id)}
+        />
+      </div>
+    ),
+  };
+
+  const actionsColumn: ColumnDef<Order> = {
+    id: 'actions',
+    header: 'Actions',
+    headerClassName: 'w-[160px] text-center',
+    cellClassName: 'text-center',
+    accessorFn: () => null,
+    cell: (row) => (
+      <div className="flex items-center justify-center gap-2" onClick={e => e.stopPropagation()}>
+        {row.status === 'pending' && (
+          <Button
+            size="sm"
+            className="h-8 text-xs"
+            onClick={() => setSelectedOrder(row)}
+          >
+            <ChefHat className="h-3.5 w-3.5 mr-1" />
+            Review
+          </Button>
+        )}
+        {row.status === 'approved' && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs"
+            onClick={async () => {
+              try {
+                await orderService.updateOrderStatus(row._id, { status: 'completed' });
+                toast.success('Order completed');
+                fetchOrders(pagination.currentPage);
+              } catch (error: any) {
+                toast.error('Failed to update order');
+              }
+            }}
+          >
+            <CheckCircle className="h-3.5 w-3.5 mr-1" />
+            Complete
+          </Button>
+        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              onClick={() => setExpandedOrder(expandedOrder === row._id ? null : row._id)}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>View Details</TooltipContent>
+        </Tooltip>
+      </div>
+    ),
+  };
+
+  const orderColumns: ColumnDef<Order>[] = [
+    checkboxColumn,
+    {
+      id: 'orderId',
+      header: 'Order ID',
+      headerClassName: 'w-[100px]',
+      accessorFn: (row) => row._id,
+      cell: (row) => (
+        <span className="font-mono font-bold text-sm">#{row._id.slice(-6)}</span>
+      ),
+    },
+    {
+      id: 'customer',
+      header: 'Customer',
+      accessorFn: (row) => row.customerName,
+      cell: (row) => <span className="font-medium">{row.customerName}</span>,
+    },
+    {
+      id: 'table',
+      header: 'Table',
+      headerClassName: 'w-[80px] text-center',
+      cellClassName: 'text-center',
+      accessorFn: (row) => row.tableNumber,
+      cell: (row) => (
+        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary font-bold text-sm">
+          {row.tableNumber}
+        </span>
+      ),
+    },
+    {
+      id: 'items',
+      header: 'Items',
+      accessorFn: (row) => row.items.map(i => `${i.quantity}x ${i.name}`).join(', '),
+      cell: (row) => {
+        const summary = row.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
+        return (
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-muted-foreground">
+              {summary.slice(0, 40)}{summary.length > 40 ? '...' : ''}
+            </span>
+            {row.orderNotes && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <StickyNote className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p className="max-w-[200px]">{row.orderNotes}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'amount',
+      header: 'Amount',
+      headerClassName: 'w-[100px] text-right',
+      cellClassName: 'text-right font-bold text-primary',
+      accessorFn: (row) => row.totalAmount,
+      cell: (row) => <span>₹{row.totalAmount.toFixed(2)}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      headerClassName: 'w-[120px] text-center',
+      cellClassName: 'text-center',
+      accessorFn: (row) => row.status,
+      cell: (row) => getStatusBadge(row.status),
+    },
+    {
+      id: 'date',
+      header: 'Date',
+      headerClassName: 'w-[140px]',
+      accessorFn: (row) => row.createdAt,
+      cell: (row) => (
+        <span className="text-sm text-muted-foreground">{formatTime(row.createdAt)}</span>
+      ),
+    },
+    actionsColumn,
+  ];
+
+  // Find the currently expanded order for the detail panel
+  const expandedOrderData = expandedOrder ? orders.find(o => o._id === expandedOrder) : null;
+
+  if (loading && orders.length === 0) {
     return (
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
@@ -160,14 +332,21 @@ export function OrdersManagementPage() {
     <TooltipProvider delayDuration={0}>
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <div />
-          <Button onClick={() => fetchOrders(false)} variant="outline" size="sm">
+          <div>
+            <Checkbox
+              checked={orders.length > 0 && selectedOrders.size === orders.length}
+              onCheckedChange={toggleSelectAll}
+              className="mr-2"
+            />
+            <span className="text-sm text-muted-foreground">Select All</span>
+          </div>
+          <Button onClick={() => fetchOrders(pagination.currentPage, false)} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); setSelectedOrders(new Set()); setExpandedOrder(null); }} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="pending">Pending {counts.pending > 0 && `(${counts.pending})`}</TabsTrigger>
             <TabsTrigger value="approved">Approved {counts.approved > 0 && `(${counts.approved})`}</TabsTrigger>
@@ -177,13 +356,6 @@ export function OrdersManagementPage() {
           </TabsList>
 
           <TabsContent value={activeTab}>
-            {/* Tab Loading */}
-            {tabLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              </div>
-            ) : (
-            <>
             {/* Bulk Actions Bar */}
             {selectedOrders.size > 0 && (
               <div className="flex items-center gap-3 mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
@@ -209,220 +381,102 @@ export function OrdersManagementPage() {
               </div>
             )}
 
-            {orders.length === 0 ? (
-              <Card className="border-dashed">
-                <CardContent className="p-10 text-center">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                    <UtensilsCrossed className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-1">No {activeTab} orders</h3>
-                  <p className="text-sm text-muted-foreground">Orders will appear here when received</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
+            <DataTable<Order>
+              mode="server"
+              columns={orderColumns}
+              data={orders}
+              pagination={pagination}
+              onPageChange={handlePageChange}
+              loading={tabLoading}
+              emptyState={{
+                icon: <UtensilsCrossed className="h-8 w-8" />,
+                title: `No ${activeTab} orders`,
+                description: 'Orders will appear here when received',
+              }}
+            />
+
+            {/* Expanded Order Detail Panel */}
+            {expandedOrderData && (
+              <Card className="mt-4 border-primary/20">
                 <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50">
-                        <TableHead className="w-[40px]">
-                          <Checkbox
-                            checked={orders.length > 0 && selectedOrders.size === orders.length}
-                            onCheckedChange={toggleSelectAll}
-                          />
-                        </TableHead>
-                        <TableHead className="w-[100px]">Order ID</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead className="w-[80px] text-center">Table</TableHead>
-                        <TableHead>Items</TableHead>
-                        <TableHead className="w-[100px] text-right">Amount</TableHead>
-                        <TableHead className="w-[120px] text-center">Status</TableHead>
-                        <TableHead className="w-[140px]">Date</TableHead>
-                        <TableHead className="w-[160px] text-center">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orders.map((order) => (
-                        <>
-                          <TableRow
-                            key={order._id}
-                            className={`cursor-pointer ${expandedOrder === order._id ? 'bg-muted/30' : ''} ${order.status === 'pending' ? 'bg-amber-500/5' : ''} ${selectedOrders.has(order._id) ? 'bg-primary/5' : ''}`}
-                            onClick={() => setExpandedOrder(expandedOrder === order._id ? null : order._id)}
-                          >
-                            <TableCell onClick={e => e.stopPropagation()}>
-                              <Checkbox
-                                checked={selectedOrders.has(order._id)}
-                                onCheckedChange={() => toggleSelectOrder(order._id)}
-                              />
-                            </TableCell>
-                            <TableCell className="font-mono font-bold text-sm">
-                              #{order._id.slice(-6)}
-                            </TableCell>
-                            <TableCell>
-                              <span className="font-medium">{order.customerName}</span>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary font-bold text-sm">
-                                {order.tableNumber}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-sm text-muted-foreground">
-                                  {order.items.map(i => `${i.quantity}x ${i.name}`).join(', ').slice(0, 40)}
-                                  {order.items.map(i => `${i.quantity}x ${i.name}`).join(', ').length > 40 ? '...' : ''}
-                                </span>
-                                {order.orderNotes && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <StickyNote className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">
-                                      <p className="max-w-[200px]">{order.orderNotes}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right font-bold text-primary">
-                              ₹{order.totalAmount.toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {getStatusBadge(order.status)}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {formatTime(order.createdAt)}
-                            </TableCell>
-                            <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex items-center justify-center gap-2">
-                                {order.status === 'pending' && (
-                                  <Button
-                                    size="sm"
-                                    className="h-8 text-xs"
-                                    onClick={() => setSelectedOrder(order)}
-                                  >
-                                    <ChefHat className="h-3.5 w-3.5 mr-1" />
-                                    Review
-                                  </Button>
-                                )}
-                                {order.status === 'approved' && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-8 text-xs"
-                                    onClick={async () => {
-                                      try {
-                                        await orderService.updateOrderStatus(order._id, { status: 'completed' });
-                                        toast.success('Order completed');
-                                        fetchOrders();
-                                      } catch (error: any) {
-                                        toast.error('Failed to update order');
-                                      }
-                                    }}
-                                  >
-                                    <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                                    Complete
-                                  </Button>
-                                )}
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-8 w-8 p-0"
-                                      onClick={() => setExpandedOrder(expandedOrder === order._id ? null : order._id)}
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>View Details</TooltipContent>
-                                </Tooltip>
-                              </div>
-                            </TableCell>
-                          </TableRow>
+                  <div className="px-6 py-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold">
+                        Order #{expandedOrderData._id.slice(-6)} — {expandedOrderData.customerName}
+                      </h3>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setExpandedOrder(null)}>
+                        Close
+                      </Button>
+                    </div>
 
-                          {/* Expanded Row */}
-                          {expandedOrder === order._id && (
-                            <TableRow key={`${order._id}-detail`} className="bg-muted/20 hover:bg-muted/20">
-                              <TableCell colSpan={9} className="p-0">
-                                <div className="px-6 py-4 space-y-3">
-                                  {/* Items Detail */}
-                                  <div className="rounded-lg border border-border/50 overflow-hidden">
-                                    <div className="bg-muted/50 px-4 py-2">
-                                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order Items</span>
-                                    </div>
-                                    <table className="w-full text-sm">
-                                      <thead>
-                                        <tr className="border-b border-border/30">
-                                          <th className="text-left px-4 py-2 text-xs font-medium text-muted-foreground">Item</th>
-                                          <th className="text-center px-4 py-2 text-xs font-medium text-muted-foreground">Qty</th>
-                                          <th className="text-right px-4 py-2 text-xs font-medium text-muted-foreground">Price</th>
-                                          <th className="text-right px-4 py-2 text-xs font-medium text-muted-foreground">Total</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody className="divide-y divide-border/20">
-                                        {order.items.map((item, idx) => (
-                                          <tr key={idx}>
-                                            <td className="px-4 py-2 font-medium">{item.name}</td>
-                                            <td className="px-4 py-2 text-center">
-                                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-primary/10 text-primary text-xs font-bold">{item.quantity}</span>
-                                            </td>
-                                            <td className="px-4 py-2 text-right text-muted-foreground">₹{item.price.toFixed(2)}</td>
-                                            <td className="px-4 py-2 text-right font-semibold">₹{(item.price * item.quantity).toFixed(2)}</td>
-                                          </tr>
-                                        ))}
-                                      </tbody>
-                                      <tfoot>
-                                        <tr className="border-t border-border/50">
-                                          <td colSpan={3} className="px-4 py-2 text-right font-semibold">Total:</td>
-                                          <td className="px-4 py-2 text-right font-bold text-primary text-base">₹{order.totalAmount.toFixed(2)}</td>
-                                        </tr>
-                                      </tfoot>
-                                    </table>
-                                  </div>
+                    {/* Items Detail */}
+                    <div className="rounded-lg border border-border/50 overflow-hidden">
+                      <div className="bg-muted/50 px-4 py-2">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order Items</span>
+                      </div>
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-border/30">
+                            <th className="text-left px-4 py-2 text-xs font-medium text-muted-foreground">Item</th>
+                            <th className="text-center px-4 py-2 text-xs font-medium text-muted-foreground">Qty</th>
+                            <th className="text-right px-4 py-2 text-xs font-medium text-muted-foreground">Price</th>
+                            <th className="text-right px-4 py-2 text-xs font-medium text-muted-foreground">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/20">
+                          {expandedOrderData.items.map((item, idx) => (
+                            <tr key={idx}>
+                              <td className="px-4 py-2 font-medium">{item.name}</td>
+                              <td className="px-4 py-2 text-center">
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-primary/10 text-primary text-xs font-bold">{item.quantity}</span>
+                              </td>
+                              <td className="px-4 py-2 text-right text-muted-foreground">₹{item.price.toFixed(2)}</td>
+                              <td className="px-4 py-2 text-right font-semibold">₹{(item.price * item.quantity).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t border-border/50">
+                            <td colSpan={3} className="px-4 py-2 text-right font-semibold">Total:</td>
+                            <td className="px-4 py-2 text-right font-bold text-primary text-base">₹{expandedOrderData.totalAmount.toFixed(2)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
 
-                                  {/* Info Badges Row */}
-                                  <div className="flex flex-wrap gap-2">
-                                    {order.orderNotes && (
-                                      <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2 flex-1 min-w-[200px]">
-                                        <StickyNote className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                          <p className="text-xs font-semibold text-amber-500 mb-0.5">Notes</p>
-                                          <p className="text-sm text-amber-600 dark:text-amber-400">{order.orderNotes}</p>
-                                        </div>
-                                      </div>
-                                    )}
-                                    {order.status === 'approved' && order.estimatedReadyTime && (
-                                      <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
-                                        <Timer className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                                        <div>
-                                          <p className="text-xs font-semibold text-emerald-500 mb-0.5">Estimated Ready</p>
-                                          <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{order.estimatedReadyTime} minutes</p>
-                                        </div>
-                                      </div>
-                                    )}
-                                    {order.status === 'rejected' && order.rejectionReason && (
-                                      <div className="flex items-start gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 flex-1 min-w-[200px]">
-                                        <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                          <p className="text-xs font-semibold text-red-500 mb-0.5">Rejection Reason</p>
-                                          <p className="text-sm text-red-600 dark:text-red-400">{order.rejectionReason}</p>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </>
-                      ))}
-                    </TableBody>
-                  </Table>
+                    {/* Info Badges Row */}
+                    <div className="flex flex-wrap gap-2">
+                      {expandedOrderData.orderNotes && (
+                        <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2 flex-1 min-w-[200px]">
+                          <StickyNote className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs font-semibold text-amber-500 mb-0.5">Notes</p>
+                            <p className="text-sm text-amber-600 dark:text-amber-400">{expandedOrderData.orderNotes}</p>
+                          </div>
+                        </div>
+                      )}
+                      {expandedOrderData.status === 'approved' && expandedOrderData.estimatedReadyTime && (
+                        <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
+                          <Timer className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs font-semibold text-emerald-500 mb-0.5">Estimated Ready</p>
+                            <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{expandedOrderData.estimatedReadyTime} minutes</p>
+                          </div>
+                        </div>
+                      )}
+                      {expandedOrderData.status === 'rejected' && expandedOrderData.rejectionReason && (
+                        <div className="flex items-start gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 flex-1 min-w-[200px]">
+                          <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs font-semibold text-red-500 mb-0.5">Rejection Reason</p>
+                            <p className="text-sm text-red-600 dark:text-red-400">{expandedOrderData.rejectionReason}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            )}
-            </>
             )}
           </TabsContent>
         </Tabs>

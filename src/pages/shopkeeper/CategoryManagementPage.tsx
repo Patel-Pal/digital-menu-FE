@@ -1,20 +1,18 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Plus, Edit, Trash2, Eye, EyeOff, GripVertical } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { PageLoader } from "@/components/PageLoader";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { EmptyState } from "@/components/EmptyState";
 import { categoryService, type Category, type CreateCategoryData, type UpdateCategoryData } from "@/services/categoryService";
 import { useAuth } from "@/contexts/AuthContext";
+import { DataTable } from "@/components/DataTable";
+import type { ColumnDef } from "@/components/DataTable";
 
 export function CategoryManagementPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -31,7 +29,7 @@ export function CategoryManagementPage() {
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   
   const { user } = useAuth();
-  const shopId = user?.shopId; // Now uses real user ObjectId
+  const shopId = user?.shopId;
 
   useEffect(() => {
     if (shopId) {
@@ -128,6 +126,80 @@ export function CategoryManagementPage() {
     setIsEditOpen(true);
   };
 
+  const columns: ColumnDef<Category>[] = useMemo(() => [
+    {
+      id: "icon",
+      header: "Icon",
+      accessorFn: (row) => row.icon ?? "",
+      headerClassName: "w-16",
+      cell: (row) => (
+        <span className="text-2xl">{row.icon || "—"}</span>
+      ),
+    },
+    {
+      id: "name",
+      header: "Name",
+      searchable: true,
+      accessorFn: (row) => row.name,
+      cell: (row) => (
+        <span className="font-semibold">{row.name}</span>
+      ),
+    },
+    {
+      id: "description",
+      header: "Description",
+      accessorFn: (row) => row.description ?? "",
+      cell: (row) => (
+        <span className="text-sm text-muted-foreground line-clamp-1">
+          {row.description || "—"}
+        </span>
+      ),
+    },
+    {
+      id: "order",
+      header: "Display Order",
+      accessorFn: (row) => row.order,
+      cell: (row) => (
+        <span className="text-sm">{row.order}</span>
+      ),
+    },
+    {
+      id: "status",
+      header: "Status",
+      accessorFn: (row) => (row.isActive ? "Active" : "Inactive"),
+      cell: (row) => (
+        <Badge variant={row.isActive ? "default" : "secondary"}>
+          {row.isActive ? "Active" : "Inactive"}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      accessorFn: () => "",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      cell: (row) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(row)}>
+            {row.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => openEditDialog(row)}>
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(row)}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ], []);
+
   if (loading) {
     return <PageLoader message="Loading categories..." />;
   }
@@ -201,79 +273,18 @@ export function CategoryManagementPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
-        {categories.map((category) => (
-          <motion.div
-            key={category._id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="group"
-          >
-            <Card className={`transition-all ${!category.isActive ? 'opacity-60' : ''}`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <GripVertical className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-2xl">{category.icon}</span>
-                    </div>
-                    
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{category.name}</h3>
-                        <Badge variant={category.isActive ? "default" : "secondary"}>
-                          {category.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-                      {category.description && (
-                        <p className="text-sm text-muted-foreground">{category.description}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">Order: {category.order}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleToggleStatus(category)}
-                    >
-                      {category.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditDialog(category)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(category)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-        
-        {categories.length === 0 && (
-          <EmptyState
-            variant="category"
-            title="No categories yet"
-            description="Create your first category to organize your menu"
-            actionLabel="Add Category"
-            onAction={() => setIsCreateOpen(true)}
-          />
-        )}
-      </div>
+      {/* DataTable */}
+      <DataTable<Category>
+        mode="client"
+        columns={columns}
+        data={categories}
+        search={{ placeholder: "Search categories..." }}
+        loading={false}
+        emptyState={{
+          title: "No categories found",
+          description: "Create your first category to organize your menu.",
+        }}
+      />
 
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>

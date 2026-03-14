@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { CreditCard, TrendingUp, Users, DollarSign } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +6,102 @@ import { Badge } from "@/components/ui/badge";
 import { adminService } from "@/services/adminService";
 import { toast } from "sonner";
 import { PageLoader } from "@/components/PageLoader";
+import { DataTable } from "@/components/DataTable";
+import type { ColumnDef } from "@/components/DataTable";
+
+interface Subscription {
+  _id: string;
+  name: string;
+  ownerId?: { name?: string; email?: string };
+  type?: string;
+  subscription: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+const PLAN_PRICES: Record<string, number> = {
+  free: 0,
+  basic: 9.99,
+  premium: 24.99,
+  enterprise: 49.99,
+};
+
+const columns: ColumnDef<Subscription>[] = [
+  {
+    id: "shopName",
+    header: "Shop",
+    searchable: true,
+    accessorFn: (row) => row.name,
+    cell: (row) => (
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center font-bold text-primary">
+          {row.name.charAt(0)}
+        </div>
+        <p className="font-medium">{row.name}</p>
+      </div>
+    ),
+  },
+  {
+    id: "owner",
+    header: "Owner",
+    searchable: true,
+    accessorFn: (row) => row.ownerId?.name ?? "",
+    cell: (row) => (
+      <div>
+        <p className="font-medium">{row.ownerId?.name}</p>
+        <p className="text-sm text-muted-foreground">{row.ownerId?.email}</p>
+      </div>
+    ),
+  },
+  {
+    id: "plan",
+    header: "Plan",
+    accessorFn: (row) => row.subscription,
+    cell: (row) => (
+      <Badge
+        variant={
+          row.subscription === "premium"
+            ? "default"
+            : row.subscription === "basic"
+              ? "secondary"
+              : "outline"
+        }
+      >
+        {row.subscription}
+      </Badge>
+    ),
+  },
+  {
+    id: "status",
+    header: "Status",
+    accessorFn: (row) => (row.isActive ? "Active" : "Inactive"),
+    cell: (row) => (
+      <Badge variant={row.isActive ? "success" : "destructive"}>
+        {row.isActive ? "Active" : "Inactive"}
+      </Badge>
+    ),
+  },
+  {
+    id: "price",
+    header: "Price",
+    accessorFn: (row) => PLAN_PRICES[row.subscription] ?? 0,
+    cell: (row) => (
+      <span className="font-bold">
+        ₹{(PLAN_PRICES[row.subscription] ?? 0).toFixed(2)}/mo
+      </span>
+    ),
+  },
+  {
+    id: "createdAt",
+    header: "Created",
+    accessorFn: (row) => row.createdAt,
+    cell: (row) => (
+      <span className="text-muted-foreground">
+        {new Date(row.createdAt).toLocaleDateString()}
+      </span>
+    ),
+  },
+];
 
 export function AdminSubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState<any>(null);
@@ -32,7 +127,8 @@ export function AdminSubscriptionsPage() {
     return <PageLoader message="Loading subscriptions..." />;
   }
 
-  const totalShops = subscriptions?.subscriptions?.length || 0;
+  const subscriptionList: Subscription[] = subscriptions?.subscriptions ?? [];
+  const totalShops = subscriptionList.length;
   const premiumCount = subscriptions?.distribution?.find((d: any) => d._id === 'premium')?.count || 0;
   const basicCount = subscriptions?.distribution?.find((d: any) => d._id === 'basic')?.count || 0;
   const freeCount = subscriptions?.distribution?.find((d: any) => d._id === 'free')?.count || 0;
@@ -121,55 +217,18 @@ export function AdminSubscriptionsPage() {
         </CardContent>
       </Card>
 
-      {/* Recent Subscriptions */}
-      <Card variant="elevated">
-        <CardHeader><CardTitle>All Subscriptions</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          {subscriptions?.subscriptions?.map((shop: any, index: number) => {
-            const prices: { [key: string]: number } = { free: 0, basic: 9.99, premium: 24.99, enterprise: 49.99 };
-            const price = prices[shop.subscription] || 0;
-            
-            return (
-              <motion.div
-                key={shop._id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.02 }}
-                className="p-3 rounded-xl bg-muted/50"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center font-bold text-primary">
-                    {shop.name.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium truncate">{shop.name}</p>
-                        <p className="text-sm text-muted-foreground">{shop.ownerId?.name} • {shop.ownerId?.email}</p>
-                      </div>
-                      <span className="font-bold shrink-0">₹{price.toFixed(2)}/mo</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Created: {new Date(shop.createdAt).toLocaleDateString()}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant={shop.subscription === "premium" ? "default" : shop.subscription === "basic" ? "secondary" : "outline"}>
-                        {shop.subscription}
-                      </Badge>
-                      <Badge variant={shop.isActive ? "success" : "destructive"}>
-                        {shop.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground capitalize">
-                        {shop.type || 'restaurant'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </CardContent>
-      </Card>
+      {/* Subscriptions Table */}
+      <DataTable<Subscription>
+        mode="client"
+        columns={columns}
+        data={subscriptionList}
+        search={{ placeholder: "Search by shop or owner..." }}
+        loading={false}
+        emptyState={{
+          title: "No subscriptions found",
+          description: "There are no subscription records to display.",
+        }}
+      />
     </div>
   );
 }

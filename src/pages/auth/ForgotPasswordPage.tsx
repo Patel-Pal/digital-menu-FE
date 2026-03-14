@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, ArrowLeft, CheckCircle, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle, Lock, Eye, EyeOff, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { passwordResetService } from "@/services/passwordResetService";
 import { toast } from "sonner";
+
+const OTP_DURATION = 180; // 3 minutes in seconds
 
 type Step = 'email' | 'otp' | 'password' | 'success';
 
@@ -20,7 +22,41 @@ export function ForgotPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(OTP_DURATION);
+  const [isExpired, setIsExpired] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const navigate = useNavigate();
+
+  const startTimer = useCallback(() => {
+    // Clear any existing timer
+    if (timerRef.current) clearInterval(timerRef.current);
+    setTimeLeft(OTP_DURATION);
+    setIsExpired(false);
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          setIsExpired(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +65,8 @@ export function ForgotPasswordPage() {
     try {
       await passwordResetService.forgotPassword({ email });
       toast.success("OTP sent to your email!");
+      setOtp("");
+      startTimer();
       setStep('otp');
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to send OTP");
@@ -42,6 +80,11 @@ export function ForgotPasswordPage() {
     
     if (otp.length !== 6) {
       toast.error("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    if (isExpired) {
+      toast.error("OTP has expired. Please request a new one.");
       return;
     }
 
@@ -187,7 +230,7 @@ export function ForgotPasswordPage() {
 
             <Button 
               type="submit" 
-              className="w-full" 
+              className="w-full py-3 px-4" 
               size="lg" 
               variant="gradient"
               disabled={loading}
@@ -230,11 +273,20 @@ export function ForgotPasswordPage() {
 
         <CardContent className="pt-4">
           <form onSubmit={handleOtpSubmit} className="space-y-6">
+            {/* Timer */}
+            <div className="flex items-center justify-center gap-2">
+              <Timer className={`h-4 w-4 ${isExpired ? 'text-destructive' : 'text-primary'}`} />
+              <span className={`text-sm font-mono font-semibold ${isExpired ? 'text-destructive' : 'text-primary'}`}>
+                {isExpired ? "OTP Expired" : formatTime(timeLeft)}
+              </span>
+            </div>
+
             <div className="flex justify-center">
               <InputOTP
                 maxLength={6}
                 value={otp}
                 onChange={(value) => setOtp(value)}
+                disabled={isExpired}
               >
                 <InputOTPGroup>
                   <InputOTPSlot index={0} />
@@ -248,23 +300,39 @@ export function ForgotPasswordPage() {
             </div>
 
             <div className="text-center text-sm text-muted-foreground">
-              Didn't receive the code?{" "}
-              <button
-                type="button"
-                onClick={handleEmailSubmit}
-                className="text-primary font-medium hover:underline"
-                disabled={loading}
-              >
-                Resend OTP
-              </button>
+              {isExpired ? (
+                <>
+                  OTP expired.{" "}
+                  <button
+                    type="button"
+                    onClick={handleEmailSubmit}
+                    className="text-primary font-medium hover:underline"
+                    disabled={loading}
+                  >
+                    Send new OTP
+                  </button>
+                </>
+              ) : (
+                <>
+                  Didn't receive the code?{" "}
+                  <button
+                    type="button"
+                    onClick={handleEmailSubmit}
+                    className="text-primary font-medium hover:underline"
+                    disabled={loading}
+                  >
+                    Resend OTP
+                  </button>
+                </>
+              )}
             </div>
 
             <Button 
               type="submit" 
-              className="w-full" 
+              className="w-full py-3 px-4" 
               size="lg" 
               variant="gradient"
-              disabled={loading || otp.length !== 6}
+              disabled={loading || otp.length !== 6 || isExpired}
             >
               {loading ? "Verifying..." : "Verify OTP"}
             </Button>

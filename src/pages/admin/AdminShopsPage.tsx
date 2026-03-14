@@ -1,52 +1,195 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Search, Filter, MoreVertical, Eye, Edit, Trash2, Plus } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { adminService } from "@/services/adminService";
 import { toast } from "sonner";
 import { PageLoader } from "@/components/PageLoader";
+import { DataTable } from "@/components/DataTable";
+import type { ColumnDef, FilterConfig, PaginationState } from "@/components/DataTable";
+
+interface Shop {
+  _id: string;
+  name: string;
+  ownerId?: { name?: string; email?: string };
+  type?: string;
+  subscription: string;
+  qrScans?: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+const filterConfigs: FilterConfig[] = [
+  {
+    id: "status",
+    label: "Status",
+    options: [
+      { label: "Active", value: "active" },
+      { label: "Inactive", value: "inactive" },
+    ],
+    accessorFn: (row: Shop) => (row.isActive ? "active" : "inactive"),
+  },
+  {
+    id: "subscription",
+    label: "Plan",
+    options: [
+      { label: "Free", value: "free" },
+      { label: "Basic", value: "basic" },
+      { label: "Premium", value: "premium" },
+      { label: "Enterprise", value: "enterprise" },
+    ],
+    accessorFn: (row: Shop) => row.subscription,
+  },
+];
+
+const columns: ColumnDef<Shop>[] = [
+  {
+    id: "name",
+    header: "Shop",
+    accessorFn: (row) => row.name,
+    cell: (row) => (
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center font-bold text-primary">
+          {row.name.charAt(0)}
+        </div>
+        <div>
+          <p className="font-medium">{row.name}</p>
+          <p className="text-sm text-muted-foreground">{row.ownerId?.email}</p>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "type",
+    header: "Type",
+    accessorFn: (row) => row.type || "restaurant",
+    cell: (row) => <span className="capitalize">{row.type || "restaurant"}</span>,
+  },
+  {
+    id: "subscription",
+    header: "Plan",
+    accessorFn: (row) => row.subscription,
+    cell: (row) => (
+      <Badge
+        variant={
+          row.subscription === "premium"
+            ? "default"
+            : row.subscription === "basic"
+              ? "secondary"
+              : "outline"
+        }
+      >
+        {row.subscription}
+      </Badge>
+    ),
+  },
+  {
+    id: "qrScans",
+    header: "QR Scans",
+    accessorFn: (row) => row.qrScans ?? 0,
+    cell: (row) => <span className="font-medium">{(row.qrScans ?? 0).toLocaleString()}</span>,
+  },
+  {
+    id: "status",
+    header: "Status",
+    accessorFn: (row) => (row.isActive ? "Active" : "Inactive"),
+    cell: (row) => (
+      <Badge variant={row.isActive ? "success" : "destructive"}>
+        {row.isActive ? "Active" : "Inactive"}
+      </Badge>
+    ),
+  },
+  {
+    id: "createdAt",
+    header: "Created",
+    accessorFn: (row) => row.createdAt,
+    cell: (row) => (
+      <span className="text-muted-foreground">
+        {new Date(row.createdAt).toLocaleDateString()}
+      </span>
+    ),
+  },
+];
 
 export function AdminShopsPage() {
-  const [shops, setShops] = useState<any[]>([]);
+  const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [subscriptionFilter, setSubscriptionFilter] = useState("all");
-  const [pagination, setPagination] = useState<any>({});
+  const [pagination, setPagination] = useState<PaginationState>({
+    currentPage: 1,
+    pageSize: 10,
+    totalItems: 0,
+  });
+
+  // Track current query params so callbacks can build on them
+  const [queryParams, setQueryParams] = useState<{
+    search?: string;
+    status?: string;
+    subscription?: string;
+  }>({});
+  const queryParamsRef = useRef(queryParams);
+  queryParamsRef.current = queryParams;
+
+  const fetchShops = useCallback(
+    async (params: { search?: string; status?: string; subscription?: string; page?: number }) => {
+      try {
+        setLoading(true);
+        const response = await adminService.getAllShops({
+          search: params.search || undefined,
+          status: params.status || undefined,
+          subscription: params.subscription || undefined,
+          page: params.page ?? 1,
+          limit: 10,
+        });
+        setShops(response.data);
+        setPagination({
+          currentPage: response.pagination.page,
+          pageSize: response.pagination.limit,
+          totalItems: response.pagination.total,
+        });
+      } catch {
+        toast.error("Failed to fetch shops");
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    fetchShops();
-  }, [searchQuery, statusFilter, subscriptionFilter]);
+    fetchShops({});
+  }, [fetchShops]);
 
-  const fetchShops = async (page = 1) => {
-    try {
-      setLoading(true);
-      const response = await adminService.getAllShops({
-        search: searchQuery,
-        status: statusFilter === "all" ? undefined : statusFilter,
-        subscription: subscriptionFilter === "all" ? undefined : subscriptionFilter,
-        page,
-        limit: 10
-      });
-      setShops(response.data);
-      setPagination(response.pagination);
-    } catch (error) {
-      toast.error("Failed to fetch shops");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handlePageChange = useCallback(
+    (page: number) => {
+      fetchShops({ ...queryParamsRef.current, page });
+    },
+    [fetchShops]
+  );
+
+  const handleSearch = useCallback(
+    (query: string) => {
+      const next = { ...queryParamsRef.current, search: query };
+      setQueryParams(next);
+      fetchShops({ ...next, page: 1 });
+    },
+    [fetchShops]
+  );
+
+  const handleFilterChange = useCallback(
+    (filters: Record<string, string>) => {
+      const next = { ...queryParamsRef.current, ...filters };
+      setQueryParams(next);
+      fetchShops({ ...next, page: 1 });
+    },
+    [fetchShops]
+  );
 
   const handleStatusToggle = async (shopId: string, currentStatus: boolean) => {
     try {
       await adminService.updateShopStatus(shopId, !currentStatus);
       toast.success("Shop status updated");
-      fetchShops();
-    } catch (error) {
+      fetchShops({ ...queryParams, page: pagination.currentPage });
+    } catch {
       toast.error("Failed to update shop status");
     }
   };
@@ -55,15 +198,44 @@ export function AdminShopsPage() {
     if (!confirm("Are you sure you want to delete this shop? This action cannot be undone.")) {
       return;
     }
-    
     try {
       await adminService.deleteShop(shopId);
       toast.success("Shop deleted successfully");
-      fetchShops();
-    } catch (error) {
+      fetchShops({ ...queryParams, page: pagination.currentPage });
+    } catch {
       toast.error("Failed to delete shop");
     }
   };
+
+  // Actions column needs access to handlers, so we define it here
+  const actionsColumn: ColumnDef<Shop> = {
+    id: "actions",
+    header: "Actions",
+    headerClassName: "text-right",
+    cellClassName: "text-right",
+    accessorFn: () => null,
+    cell: (row) => (
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => handleStatusToggle(row._id, row.isActive)}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="text-destructive"
+          onClick={() => handleDeleteShop(row._id)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    ),
+  };
+
+  const allColumns = [...columns, actionsColumn];
 
   if (loading && shops.length === 0) {
     return <PageLoader message="Loading shops..." />;
@@ -74,187 +246,28 @@ export function AdminShopsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Shops</h1>
-          <p className="text-muted-foreground">Manage all registered shops ({pagination.total || 0} total)</p>
+          <p className="text-muted-foreground">
+            Manage all registered shops ({pagination.totalItems} total)
+          </p>
         </div>
       </div>
 
-      {/* Search & Filter */}
-      <div className="flex gap-3">
-        <div className="flex-1">
-          <Input
-            placeholder="Search shops..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={subscriptionFilter} onValueChange={setSubscriptionFilter}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Plan" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="free">Free</SelectItem>
-            <SelectItem value="basic">Basic</SelectItem>
-            <SelectItem value="premium">Premium</SelectItem>
-            <SelectItem value="enterprise">Enterprise</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Desktop Table */}
-      <Card variant="elevated" className="hidden lg:block">
-        <CardContent className="p-0">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left p-4 font-medium text-muted-foreground">Shop</th>
-                <th className="text-left p-4 font-medium text-muted-foreground">Type</th>
-                <th className="text-left p-4 font-medium text-muted-foreground">Plan</th>
-                <th className="text-left p-4 font-medium text-muted-foreground">QR Scans</th>
-                <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
-                <th className="text-left p-4 font-medium text-muted-foreground">Created</th>
-                <th className="text-right p-4 font-medium text-muted-foreground">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shops.map((shop) => (
-                <tr key={shop._id} className="border-b border-border last:border-0 hover:bg-muted/50">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center font-bold text-primary">
-                        {shop.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-medium">{shop.name}</p>
-                        <p className="text-sm text-muted-foreground">{shop.ownerId?.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <span className="capitalize">{shop.type || 'restaurant'}</span>
-                  </td>
-                  <td className="p-4">
-                    <Badge variant={shop.subscription === "premium" ? "default" : shop.subscription === "basic" ? "secondary" : "outline"}>
-                      {shop.subscription}
-                    </Badge>
-                  </td>
-                  <td className="p-4 font-medium">{shop.qrScans?.toLocaleString() || 0}</td>
-                  <td className="p-4">
-                    <Badge variant={shop.isActive ? "success" : "destructive"}>
-                      {shop.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </td>
-                  <td className="p-4 text-muted-foreground">
-                    {new Date(shop.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon-sm"
-                        onClick={() => handleStatusToggle(shop._id, shop.isActive)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon-sm" 
-                        className="text-destructive"
-                        onClick={() => handleDeleteShop(shop._id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
-
-      {/* Mobile Cards */}
-      <div className="lg:hidden space-y-3">
-        {shops.map((shop, index) => (
-          <motion.div
-            key={shop._id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-          >
-            <Card variant="elevated">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center font-bold text-primary text-lg">
-                      {shop.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-semibold">{shop.name}</p>
-                      <p className="text-sm text-muted-foreground">{shop.ownerId?.email}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{shop.type || 'restaurant'}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon-sm"
-                      onClick={() => handleStatusToggle(shop._id, shop.isActive)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon-sm" 
-                      className="text-destructive"
-                      onClick={() => handleDeleteShop(shop._id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                  <div className="flex gap-2">
-                    <Badge variant={shop.subscription === "premium" ? "default" : "secondary"}>
-                      {shop.subscription}
-                    </Badge>
-                    <Badge variant={shop.isActive ? "success" : "destructive"}>
-                      {shop.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                  <span className="text-sm font-medium">{shop.qrScans || 0} scans</span>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Pagination */}
-      {pagination.pages > 1 && (
-        <div className="flex justify-center gap-2">
-          {Array.from({ length: pagination.pages }, (_, i) => (
-            <Button
-              key={i + 1}
-              variant={pagination.page === i + 1 ? "default" : "outline"}
-              size="sm"
-              onClick={() => fetchShops(i + 1)}
-            >
-              {i + 1}
-            </Button>
-          ))}
-        </div>
-      )}
+      <DataTable<Shop>
+        mode="server"
+        columns={allColumns}
+        data={shops}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+        onSearch={handleSearch}
+        onFilterChange={handleFilterChange}
+        search={{ placeholder: "Search shops..." }}
+        filters={filterConfigs}
+        loading={loading}
+        emptyState={{
+          title: "No shops found",
+          description: "Try adjusting your search or filter criteria.",
+        }}
+      />
     </div>
   );
 }
