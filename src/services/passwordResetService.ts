@@ -10,17 +10,10 @@ interface ForgotPasswordPayload {
 }
 
 interface ResetPasswordPayload {
-  token: string;
   email: string;
+  otp: string;
   newPassword: string;
   confirmPassword: string;
-}
-
-interface VerifyTokenResponse {
-  valid: boolean;
-  message: string;
-  email?: string;
-  userName?: string;
 }
 
 export const passwordResetService = {
@@ -56,8 +49,39 @@ export const passwordResetService = {
   },
 
   /**
-   * Reset password using token
-   * @param payload - Reset password payload with token, email, and new password
+   * Verify OTP code
+   * @param payload - Object with email and otp
+   * @returns Promise with success message
+   */
+  async verifyOtp(payload: { email: string; otp: string }) {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Invalid or expired OTP");
+      }
+
+      return {
+        success: true,
+        message: data.message,
+      };
+    } catch (error) {
+      console.error("Verify OTP error:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Reset password using OTP
+   * @param payload - Reset password payload with email, otp, and new password
    * @returns Promise with success message
    */
   async resetPassword(payload: ResetPasswordPayload) {
@@ -83,53 +107,6 @@ export const passwordResetService = {
     } catch (error) {
       console.error("Reset password error:", error);
       throw error;
-    }
-  },
-
-  /**
-   * Verify reset token validity
-   * @param token - Reset token from email link
-   * @param email - User's email address
-   * @returns Promise with token validity and user information
-   */
-  async verifyResetToken(
-    token: string,
-    email: string
-  ): Promise<VerifyTokenResponse> {
-    try {
-      const response = await fetch(
-        `${API_URL}/api/auth/verify-reset-token?token=${encodeURIComponent(
-          token
-        )}&email=${encodeURIComponent(email)}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          valid: false,
-          message: data.message || "Invalid or expired token",
-        };
-      }
-
-      return {
-        valid: true,
-        message: data.message,
-        email: data.email,
-        userName: data.userName,
-      };
-    } catch (error) {
-      console.error("Token verification error:", error);
-      return {
-        valid: false,
-        message: "Error verifying token",
-      };
     }
   },
 
