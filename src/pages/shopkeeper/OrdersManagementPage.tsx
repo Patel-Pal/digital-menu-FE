@@ -241,7 +241,14 @@ export function OrdersManagementPage() {
       id: 'customer',
       header: 'Customer',
       accessorFn: (row) => row.customerName,
-      cell: (row) => <span className="font-medium">{row.customerName}</span>,
+      cell: (row) => (
+        <div className="flex flex-col">
+          <span className="font-medium">{row.customerName}</span>
+          {row.waiterId && row.waiterId.name && (
+            <span className="text-xs text-muted-foreground">via {row.waiterId.name}</span>
+          )}
+        </div>
+      ),
     },
     {
       id: 'table',

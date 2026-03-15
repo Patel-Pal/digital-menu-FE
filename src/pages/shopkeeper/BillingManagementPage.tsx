@@ -233,18 +233,9 @@ export function BillingManagementPage() {
             <Button
               size="sm"
               className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white"
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.stopPropagation();
-                try {
-                  await billingService.updatePaymentStatus(row._id, {
-                    paymentStatus: 'paid',
-                    paymentMethod: row.paymentMethod
-                  });
-                  toast.success('Payment marked as paid');
-                  fetchBills(pagination.currentPage);
-                } catch (error: any) {
-                  toast.error('Failed to update payment');
-                }
+                setSelectedBill(row);
               }}
             >
               <CheckCircle className="h-3 w-3 mr-1" />

@@ -76,10 +76,26 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'shopkeeper' | 'customer';
+  role: 'admin' | 'shopkeeper' | 'customer' | 'waiter';
   avatar?: string;
   shopId?: string;
 }
+
+// Waiter Types
+export interface Waiter {
+  id: string;
+  _id?: string;
+  name: string;
+  email: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export type CreateWaiterData = {
+  name: string;
+  email: string;
+  password: string;
+};
 
 // UI Types
 export interface NavItem {

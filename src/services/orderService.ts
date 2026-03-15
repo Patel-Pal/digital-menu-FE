@@ -22,6 +22,7 @@ export interface Order {
   billingStatus?: 'unbilled' | 'billed';
   estimatedReadyTime?: number;
   rejectionReason?: string;
+  waiterId?: { _id: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -69,13 +70,16 @@ class OrderService {
   }
 
   async createOrder(orderData: CreateOrderData) {
-    const response = await axios.post(`${API_BASE_URL}/orders`, orderData);
+    const response = await axios.post(`${API_BASE_URL}/orders`, orderData, {
+      headers: this.getAuthHeaders()
+    });
     return response.data;
   }
 
-  async getShopOrders(shopId: string, status?: string, page = 1, limit = 20): Promise<OrderResponse> {
+  async getShopOrders(shopId: string, status?: string, page = 1, limit = 20, waiterId?: string): Promise<OrderResponse> {
     const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
     if (status) params.append('status', status);
+    if (waiterId) params.append('waiterId', waiterId);
     
     const response = await axios.get(
       `${API_BASE_URL}/orders/shop/${shopId}?${params}`,

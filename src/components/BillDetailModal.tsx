@@ -15,7 +15,8 @@ import {
   DollarSign,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Printer
 } from 'lucide-react';
 import { Bill, billingService } from '@/services/billingService';
 import { toast } from 'sonner';
@@ -51,21 +52,6 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
 
   const handlePaymentMethodUpdate = async (method: 'cash' | 'card' | 'upi' | 'online') => {
     setSelectedPaymentMethod(method);
-    if (bill.paymentStatus === 'pending') {
-      setIsUpdating(true);
-      try {
-        await billingService.updatePaymentStatus(bill._id, {
-          paymentStatus: 'pending',
-          paymentMethod: method
-        });
-        onBillUpdate();
-      } catch (error: any) {
-        console.error('Update payment method error:', error);
-        toast.error('Failed to update payment method');
-      } finally {
-        setIsUpdating(false);
-      }
-    }
   };
 
   const formatDate = (dateString: string) => {
@@ -103,6 +89,59 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
       case 'failed': return 'bg-red-100 text-red-800 border-red-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
+  };
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    if (!printWindow) return;
+    
+    const itemsHtml = bill.items.map(item => `
+      <tr>
+        <td style="padding:4px 0;border-bottom:1px dashed #ddd">${item.name}</td>
+        <td style="padding:4px 8px;text-align:center;border-bottom:1px dashed #ddd">${item.quantity}</td>
+        <td style="padding:4px 0;text-align:right;border-bottom:1px dashed #ddd">₹${item.totalPrice.toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    printWindow.document.write(`
+      <html><head><title>Bill - ${bill.billNumber}</title>
+      <style>
+        body { font-family: 'Courier New', monospace; max-width: 300px; margin: 0 auto; padding: 20px; font-size: 12px; }
+        h2 { text-align: center; margin: 0 0 4px; }
+        .center { text-align: center; }
+        .line { border-top: 1px dashed #000; margin: 8px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        .total { font-weight: bold; font-size: 14px; }
+        @media print { body { margin: 0; padding: 10px; } }
+      </style></head><body>
+        <h2>BILL</h2>
+        <p class="center">${bill.billNumber}</p>
+        <div class="line"></div>
+        <p>Customer: ${bill.customerName}</p>
+        <p>Table: ${bill.tableNumber}</p>
+        <p>Date: ${formatDate(bill.createdAt)}</p>
+        <div class="line"></div>
+        <table>
+          <tr><th style="text-align:left">Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount</th></tr>
+          ${itemsHtml}
+        </table>
+        <div class="line"></div>
+        <table>
+          <tr><td>Subtotal</td><td style="text-align:right">₹${bill.subtotal.toFixed(2)}</td></tr>
+          <tr><td>Tax (5%)</td><td style="text-align:right">₹${bill.taxAmount.toFixed(2)}</td></tr>
+        </table>
+        <div class="line"></div>
+        <table><tr class="total"><td>TOTAL</td><td style="text-align:right">₹${bill.totalAmount.toFixed(2)}</td></tr></table>
+        <div class="line"></div>
+        <p class="center">Payment: ${bill.paymentMethod.toUpperCase()}</p>
+        <p class="center">Status: ${bill.paymentStatus.toUpperCase()}</p>
+        <div class="line"></div>
+        <p class="center" style="margin-top:12px">Thank you!</p>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   };
 
   return (
@@ -221,7 +260,7 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
           {bill.paymentStatus === 'pending' && (
             <div className="space-y-4">
               {/* Payment Method Selection */}
-              <Card className="border-0 bg-blue-50">
+              <Card className="border-0 bg-muted/30">
                 <CardContent className="p-4">
                   <h4 className="font-semibold mb-3 text-center">Select Payment Method</h4>
                   <div className="grid grid-cols-2 gap-2">
@@ -272,23 +311,32 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
               {/* Payment Action Buttons */}
               <div className="flex gap-2">
                 <Button
+                  onClick={handlePrint}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print Bill
+                </Button>
+                <Button
                   onClick={() => handlePaymentStatusUpdate('paid')}
                   disabled={isUpdating}
                   className="flex-1 bg-green-600 hover:bg-green-700"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  {isUpdating ? 'Processing...' : 'Mark as Paid'}
-                </Button>
-                <Button
-                  onClick={() => handlePaymentStatusUpdate('failed')}
-                  disabled={isUpdating}
-                  variant="destructive"
-                  className="flex-1"
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Mark as Failed
+                  {isUpdating ? 'Processing...' : 'Confirm Payment'}
                 </Button>
               </div>
+              <Button
+                onClick={() => handlePaymentStatusUpdate('failed')}
+                disabled={isUpdating}
+                variant="destructive"
+                className="w-full"
+                size="sm"
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Mark as Failed
+              </Button>
             </div>
           )}
 
@@ -330,6 +378,10 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
 
           <Button onClick={onClose} variant="outline" className="w-full">
             Close
+          </Button>
+          <Button onClick={handlePrint} variant="ghost" className="w-full">
+            <Printer className="h-4 w-4 mr-2" />
+            Print Bill
           </Button>
         </div>
       </DialogContent>

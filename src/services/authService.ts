@@ -9,7 +9,7 @@ interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role: 'admin' | 'shopkeeper' | 'customer';
+  role: 'admin' | 'shopkeeper' | 'customer' | 'waiter';
 }
 
 interface UpdateProfileData {
