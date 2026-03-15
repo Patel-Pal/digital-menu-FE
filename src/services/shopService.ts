@@ -31,6 +31,14 @@ interface ShopProfileData {
   menuTheme?: string;
   type?: string;
   qrColor?: string;
+  qrSettings?: {
+    bgColor?: string;
+    logoInQr?: boolean;
+    style?: 'squares' | 'dots' | 'rounded';
+    frameText?: string;
+    frameColor?: string;
+    cornerRadius?: number;
+  };
 }
 
 export const shopService = {

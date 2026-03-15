@@ -39,6 +39,23 @@ export interface UpdatePaymentData {
   paymentMethod?: 'cash' | 'card' | 'upi' | 'online';
 }
 
+export interface ShopBillsResponse {
+  success: boolean;
+  data: Bill[];
+  counts: {
+    pending: number;
+    paid: number;
+    failed: number;
+    all: number;
+  };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
 class BillingService {
   async generateBill(billData: GenerateBillData) {
     const response = await api.post('/billing/generate', billData);
@@ -56,7 +73,7 @@ class BillingService {
     return response.data;
   }
 
-  async getShopBills(shopId: string, status?: string, page = 1, limit = 20) {
+  async getShopBills(shopId: string, status?: string, page = 1, limit = 20): Promise<ShopBillsResponse> {
     const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
     if (status) params.append('status', status);
     

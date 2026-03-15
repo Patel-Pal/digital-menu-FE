@@ -27,6 +27,7 @@ import { AdminShopsPage } from "@/pages/admin/AdminShopsPage";
 import { AdminSubscriptionsPage } from "@/pages/admin/AdminSubscriptionsPage";
 import { AdminAnalyticsPage } from "@/pages/admin/AdminAnalyticsPage";
 import { AdminContentPage } from "@/pages/admin/AdminContentPage";
+import { AdminSettingsPage } from "@/pages/admin/AdminSettingsPage";
 
 // Shopkeeper Pages
 import { ShopkeeperDashboard } from "@/pages/shopkeeper/ShopkeeperDashboard";
@@ -75,6 +76,7 @@ const App = () => (
                 <Route path="subscriptions" element={<AdminSubscriptionsPage />} />
                 <Route path="analytics" element={<AdminAnalyticsPage />} />
                 <Route path="content" element={<AdminContentPage />} />
+                <Route path="settings" element={<AdminSettingsPage />} />
               </Route>
 
               <Route path="/shop" element={<ShopkeeperLayout />}>

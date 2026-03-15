@@ -1,16 +1,18 @@
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { LayoutDashboard, UtensilsCrossed, FolderOpen, QrCode, BarChart3, Settings, Menu, X, LogOut, ShoppingBag, Receipt, ChevronRight, PanelLeftClose, PanelLeft, Store, Phone, Mail, MapPin, Edit2, User, Building2, Home } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, FolderOpen, QrCode, BarChart3, Settings, Menu, X, LogOut, ShoppingBag, Receipt, ChevronRight, PanelLeftClose, PanelLeft, Store, Phone, Mail, MapPin, Edit2, User, Building2, Home, Bell, Clock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { shopService, type Shop } from "@/services/shopService";
+import { orderService, type Order } from "@/services/orderService";
+import { billingService, type Bill } from "@/services/billingService";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { ShopSetupProvider } from "@/contexts/ShopSetupContext";
 import { ShopSetupGuard } from "@/components/ShopSetupGuard";
@@ -38,6 +40,52 @@ export function ShopkeeperLayout() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [shop, setShop] = useState<Shop | null>(null);
   const { logout, user } = useAuth();
+  const [pendingOrderCount, setPendingOrderCount] = useState(0);
+  const [pendingBillCount, setPendingBillCount] = useState(0);
+  const [recentPendingOrders, setRecentPendingOrders] = useState<Order[]>([]);
+  const [recentPendingBills, setRecentPendingBills] = useState<Bill[]>([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchPendingCount = useCallback(async () => {
+    if (!user?.shopId) return;
+    try {
+      const [orderRes, billRes] = await Promise.all([
+        orderService.getShopOrders(user.shopId, 'pending', 1, 5),
+        billingService.getShopBills(user.shopId, 'pending', 1, 5),
+      ]);
+      setPendingOrderCount(orderRes.counts?.pending || 0);
+      setPendingBillCount(billRes.counts?.pending || 0);
+      setRecentPendingOrders(orderRes.data || []);
+      setRecentPendingBills(billRes.data || []);
+    } catch (error) {
+      console.error('Failed to fetch pending counts:', error);
+    }
+  }, [user?.shopId]);
+
+  // Close notification panel on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    if (notifOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [notifOpen]);
+
+  const handleWebSocketEvent = useCallback((event: string, _data: any) => {
+    if (event === 'new_order' || event === 'order_status_updated' || event === 'bill_generated' || event === 'payment_received') {
+      fetchPendingCount();
+    }
+  }, [fetchPendingCount]);
+
+  useWebSocket({
+    room: user?.shopId || '',
+    roomType: 'shop',
+    onEvent: handleWebSocketEvent,
+  });
 
   useEffect(() => {
     const fetchShop = async () => {
@@ -51,6 +99,7 @@ export function ShopkeeperLayout() {
     
     if (user) {
       fetchShop();
+      fetchPendingCount();
       // Show onboarding guide on first visit
       if (!localStorage.getItem("onboarding_seen")) {
         setShowOnboarding(true);
@@ -175,10 +224,32 @@ export function ShopkeeperLayout() {
                       sidebarCollapsed && "justify-center"
                     )}
                   >
-                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <div className="relative flex-shrink-0">
+                      <Icon className="h-5 w-5" />
+                      {item.title === 'Orders' && pendingOrderCount > 0 && sidebarCollapsed && (
+                        <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
+                          {pendingOrderCount}
+                        </span>
+                      )}
+                      {item.title === 'Billing' && pendingBillCount > 0 && sidebarCollapsed && (
+                        <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-yellow-500 px-1 text-[10px] font-bold text-white">
+                          {pendingBillCount}
+                        </span>
+                      )}
+                    </div>
                     {!sidebarCollapsed && (
                       <>
                         <span className="flex-1">{item.title}</span>
+                        {item.title === 'Orders' && pendingOrderCount > 0 && (
+                          <Badge className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-amber-500 text-white hover:bg-amber-500 rounded-full">
+                            {pendingOrderCount}
+                          </Badge>
+                        )}
+                        {item.title === 'Billing' && pendingBillCount > 0 && (
+                          <Badge className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-yellow-500 text-white hover:bg-yellow-500 rounded-full">
+                            {pendingBillCount}
+                          </Badge>
+                        )}
                         {isActive && (
                           <ChevronRight className="h-4 w-4" />
                         )}
@@ -324,7 +395,17 @@ export function ShopkeeperLayout() {
                         )}
                       >
                         <Icon className="h-5 w-5" />
-                        {item.title}
+                        <span className="flex-1">{item.title}</span>
+                        {item.title === 'Orders' && pendingOrderCount > 0 && (
+                          <Badge className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-amber-500 text-white hover:bg-amber-500 rounded-full">
+                            {pendingOrderCount}
+                          </Badge>
+                        )}
+                        {item.title === 'Billing' && pendingBillCount > 0 && (
+                          <Badge className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-yellow-500 text-white hover:bg-yellow-500 rounded-full">
+                            {pendingBillCount}
+                          </Badge>
+                        )}
                         {isActive && (
                           <ChevronRight className="ml-auto h-4 w-4" />
                         )}
@@ -371,15 +452,176 @@ export function ShopkeeperLayout() {
               <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
             </div>
             <div className="flex-1" />
-            <div className="flex items-center gap-4">
-              <ThemeToggle size="sm" />
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold overflow-hidden">
-                {shop?.logo ? (
-                  <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
-                ) : (
-                  shop?.name?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || "S"
+            <div
+              className="relative"
+              ref={notifRef}
+              onMouseEnter={() => {
+                if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+                hoverTimerRef.current = setTimeout(() => setNotifOpen(true), 200);
+              }}
+              onMouseLeave={() => {
+                if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+                hoverTimerRef.current = setTimeout(() => setNotifOpen(false), 300);
+              }}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
+                onClick={() => setNotifOpen(!notifOpen)}
+              >
+                <Bell className="h-5 w-5" />
+                {(pendingOrderCount + pendingBillCount) > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white animate-pulse">
+                    {pendingOrderCount + pendingBillCount}
+                  </span>
                 )}
-              </div>
+              </Button>
+
+              {/* Notification Dropdown */}
+              <AnimatePresence>
+                {notifOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-12 w-[380px] max-h-[480px] overflow-hidden rounded-xl border border-border bg-background shadow-2xl z-50"
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
+                      <div className="flex items-center gap-2">
+                        <Bell className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-semibold">Notifications</span>
+                      </div>
+                      {(pendingOrderCount + pendingBillCount) > 0 && (
+                        <Badge className="h-5 px-2 text-[10px] font-bold bg-red-500 text-white hover:bg-red-500 rounded-full">
+                          {pendingOrderCount + pendingBillCount} pending
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="overflow-y-auto max-h-[400px]">
+                      {/* Pending Orders Section */}
+                      {pendingOrderCount > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/5 border-b border-border/50">
+                            <ShoppingBag className="h-3.5 w-3.5 text-amber-500" />
+                            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                              Pending Orders
+                            </span>
+                            <Badge className="ml-auto h-4 px-1.5 text-[10px] font-bold bg-amber-500 text-white hover:bg-amber-500 rounded-full">
+                              {pendingOrderCount}
+                            </Badge>
+                          </div>
+                          <div className="divide-y divide-border/30">
+                            {recentPendingOrders.map((order) => (
+                              <button
+                                key={order._id}
+                                onClick={() => { setNotifOpen(false); navigate('/shop/orders'); }}
+                                className="w-full flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left"
+                              >
+                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 flex-shrink-0 mt-0.5">
+                                  <Clock className="h-4 w-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm font-medium truncate">{order.customerName}</span>
+                                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                                      Table {order.tableNumber}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                                    {order.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+                                  </p>
+                                  <div className="flex items-center justify-between mt-1">
+                                    <span className="text-xs font-semibold text-primary">₹{order.totalAmount.toFixed(2)}</span>
+                                    <span className="text-[10px] text-muted-foreground">
+                                      {new Date(order.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                          {pendingOrderCount > 5 && (
+                            <button
+                              onClick={() => { setNotifOpen(false); navigate('/shop/orders'); }}
+                              className="w-full text-center py-2 text-xs font-medium text-primary hover:bg-muted/50 transition-colors border-t border-border/30"
+                            >
+                              View all {pendingOrderCount} pending orders →
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Pending Bills Section */}
+                      {pendingBillCount > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 px-4 py-2 bg-yellow-500/5 border-b border-border/50 border-t border-border/50">
+                            <CreditCard className="h-3.5 w-3.5 text-yellow-500" />
+                            <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">
+                              Unpaid Bills
+                            </span>
+                            <Badge className="ml-auto h-4 px-1.5 text-[10px] font-bold bg-yellow-500 text-white hover:bg-yellow-500 rounded-full">
+                              {pendingBillCount}
+                            </Badge>
+                          </div>
+                          <div className="divide-y divide-border/30">
+                            {recentPendingBills.map((bill) => (
+                              <button
+                                key={bill._id}
+                                onClick={() => { setNotifOpen(false); navigate('/shop/billing'); }}
+                                className="w-full flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left"
+                              >
+                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-500/10 text-yellow-500 flex-shrink-0 mt-0.5">
+                                  <Receipt className="h-4 w-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm font-medium truncate">{bill.customerName}</span>
+                                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                                      Table {bill.tableNumber}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    Bill #{bill.billNumber}
+                                  </p>
+                                  <div className="flex items-center justify-between mt-1">
+                                    <span className="text-xs font-semibold text-primary">₹{bill.totalAmount.toFixed(2)}</span>
+                                    <span className="text-[10px] text-muted-foreground">
+                                      {new Date(bill.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                          {pendingBillCount > 5 && (
+                            <button
+                              onClick={() => { setNotifOpen(false); navigate('/shop/billing'); }}
+                              className="w-full text-center py-2 text-xs font-medium text-primary hover:bg-muted/50 transition-colors border-t border-border/30"
+                            >
+                              View all {pendingBillCount} unpaid bills →
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Empty State */}
+                      {pendingOrderCount === 0 && pendingBillCount === 0 && (
+                        <div className="flex flex-col items-center justify-center py-10 px-4">
+                          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                            <Bell className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <p className="text-sm font-medium text-muted-foreground">All caught up</p>
+                          <p className="text-xs text-muted-foreground/70 mt-1">No pending orders or unpaid bills</p>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </header>
 

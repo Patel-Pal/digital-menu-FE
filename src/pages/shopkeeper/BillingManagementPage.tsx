@@ -28,6 +28,7 @@ export function BillingManagementPage() {
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [counts, setCounts] = useState({ pending: 0, paid: 0, failed: 0, all: 0 });
   const [pagination, setPagination] = useState<PaginationState>({
     currentPage: 1,
     pageSize: 20,
@@ -60,6 +61,7 @@ export function BillingManagementPage() {
       const status = activeTab === 'all' ? undefined : activeTab;
       const response = await billingService.getShopBills(user.shopId, status, page, pagination.pageSize);
       setBills(response.data || []);
+      setCounts(response.counts || { pending: 0, paid: 0, failed: 0, all: 0 });
       if (response.pagination) {
         setPagination({
           currentPage: response.pagination.page,
@@ -124,14 +126,6 @@ export function BillingManagementPage() {
       </Badge>
     );
   };
-
-  // Stats computed from the current page of bills
-  const counts = useMemo(() => ({
-    pending: bills.filter(b => b.paymentStatus === 'pending').length,
-    paid: bills.filter(b => b.paymentStatus === 'paid').length,
-    failed: bills.filter(b => b.paymentStatus === 'failed').length,
-    all: bills.length,
-  }), [bills]);
 
   const totalRevenue = useMemo(() =>
     bills.filter(b => b.paymentStatus === 'paid').reduce((sum, b) => sum + b.totalAmount, 0),

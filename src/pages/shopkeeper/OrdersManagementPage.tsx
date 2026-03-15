@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,8 @@ import { SkeletonCard } from '@/components/SkeletonCard';
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef, PaginationState } from '@/components/DataTable';
 
+const PAGE_SIZE = 20;
+
 export function OrdersManagementPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,10 +30,16 @@ export function OrdersManagementPage() {
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [pagination, setPagination] = useState<PaginationState>({
     currentPage: 1,
-    pageSize: 20,
+    pageSize: PAGE_SIZE,
     totalItems: 0,
   });
   const { user } = useAuth();
+
+  // Refs to avoid stale closures in callbacks
+  const activeTabRef = useRef(activeTab);
+  activeTabRef.current = activeTab;
+  const paginationRef = useRef(pagination);
+  paginationRef.current = pagination;
 
   const playNotificationSound = useCallback(() => {
     try {
@@ -40,8 +48,8 @@ export function OrdersManagementPage() {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.frequency.setValueAtTime(587, ctx.currentTime); // D5
-      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.15); // G5
+      osc.frequency.setValueAtTime(587, ctx.currentTime);
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.15);
       gain.gain.setValueAtTime(0.3, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
       osc.start(ctx.currentTime);
@@ -53,8 +61,8 @@ export function OrdersManagementPage() {
     if (!user?.shopId) return;
     if (isTabSwitch) setTabLoading(true);
     try {
-      const status = activeTab === 'all' ? undefined : activeTab;
-      const response = await orderService.getShopOrders(user.shopId, status, page, pagination.pageSize);
+      const status = activeTabRef.current === 'all' ? undefined : activeTabRef.current;
+      const response = await orderService.getShopOrders(user.shopId, status, page, PAGE_SIZE);
       setOrders(response.data || []);
       setCounts(response.counts || { pending: 0, approved: 0, rejected: 0, completed: 0, all: 0 });
       if (response.pagination) {
@@ -71,17 +79,17 @@ export function OrdersManagementPage() {
       setLoading(false);
       setTabLoading(false);
     }
-  }, [user?.shopId, activeTab, pagination.pageSize]);
+  }, [user?.shopId]);
 
   const handleWebSocketEvent = useCallback((event: string, data: any) => {
     if (event === 'new_order') {
       playNotificationSound();
       toast.success(`New order from ${data.customerName} - Table ${data.tableNumber}`);
-      fetchOrders(pagination.currentPage);
+      fetchOrders(paginationRef.current.currentPage);
     } else if (event === 'order_status_updated') {
-      fetchOrders(pagination.currentPage);
+      fetchOrders(paginationRef.current.currentPage);
     }
-  }, [playNotificationSound, fetchOrders, pagination.currentPage]);
+  }, [playNotificationSound, fetchOrders]);
 
   useWebSocket({
     room: user?.shopId || '',
@@ -91,19 +99,19 @@ export function OrdersManagementPage() {
 
   useEffect(() => {
     fetchOrders(1, true);
-    const interval = setInterval(() => fetchOrders(pagination.currentPage, false), 30000);
+    const interval = setInterval(() => fetchOrders(paginationRef.current.currentPage, false), 30000);
     return () => clearInterval(interval);
-  }, [activeTab]);
+  }, [activeTab, fetchOrders]);
 
   const handlePageChange = useCallback((page: number) => {
     fetchOrders(page);
   }, [fetchOrders]);
 
-  const handleOrderUpdate = () => {
-    fetchOrders(pagination.currentPage);
+  const handleOrderUpdate = useCallback(() => {
+    fetchOrders(paginationRef.current.currentPage);
     setSelectedOrder(null);
     setSelectedOrders(new Set());
-  };
+  }, [fetchOrders]);
 
   const toggleSelectOrder = (orderId: string) => {
     setSelectedOrders(prev => {
@@ -132,10 +140,10 @@ export function OrdersManagementPage() {
       );
       toast.success(`${selectedOrders.size} orders ${status}`);
       setSelectedOrders(new Set());
-      fetchOrders(pagination.currentPage);
+      fetchOrders(paginationRef.current.currentPage);
     } catch (error: any) {
       toast.error('Some orders failed to update');
-      fetchOrders(pagination.currentPage);
+      fetchOrders(paginationRef.current.currentPage);
     }
   };
 
@@ -204,7 +212,7 @@ export function OrdersManagementPage() {
               try {
                 await orderService.updateOrderStatus(row._id, { status: 'completed' });
                 toast.success('Order completed');
-                fetchOrders(pagination.currentPage);
+                fetchOrders(paginationRef.current.currentPage);
               } catch (error: any) {
                 toast.error('Failed to update order');
               }
@@ -340,7 +348,7 @@ export function OrdersManagementPage() {
             />
             <span className="text-sm text-muted-foreground">Select All</span>
           </div>
-          <Button onClick={() => fetchOrders(pagination.currentPage, false)} variant="outline" size="sm">
+          <Button onClick={() => fetchOrders(paginationRef.current.currentPage, false)} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -348,11 +356,40 @@ export function OrdersManagementPage() {
 
         <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); setSelectedOrders(new Set()); setExpandedOrder(null); }} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="pending">Pending {counts.pending > 0 && `(${counts.pending})`}</TabsTrigger>
-            <TabsTrigger value="approved">Approved {counts.approved > 0 && `(${counts.approved})`}</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected {counts.rejected > 0 && `(${counts.rejected})`}</TabsTrigger>
-            <TabsTrigger value="completed">Completed {counts.completed > 0 && `(${counts.completed})`}</TabsTrigger>
-            <TabsTrigger value="all">All {counts.all > 0 && `(${counts.all})`}</TabsTrigger>
+            <TabsTrigger value="pending" className="relative gap-2">
+              <Clock className="h-3.5 w-3.5" />
+              Pending
+              <Badge className="ml-1 h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-amber-500 text-white hover:bg-amber-500 rounded-full">
+                {counts.pending}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="approved" className="relative gap-2">
+              <CheckCircle className="h-3.5 w-3.5" />
+              Approved
+              <Badge className="ml-1 h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-emerald-500 text-white hover:bg-emerald-500 rounded-full">
+                {counts.approved}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="rejected" className="relative gap-2">
+              <XCircle className="h-3.5 w-3.5" />
+              Rejected
+              <Badge className="ml-1 h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-red-500 text-white hover:bg-red-500 rounded-full">
+                {counts.rejected}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="completed" className="relative gap-2">
+              <CheckCircle className="h-3.5 w-3.5" />
+              Completed
+              <Badge className="ml-1 h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-blue-500 text-white hover:bg-blue-500 rounded-full">
+                {counts.completed}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="all" className="relative gap-2">
+              All
+              <Badge className="ml-1 h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-gray-500 text-white hover:bg-gray-500 rounded-full">
+                {counts.all}
+              </Badge>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab}>
