@@ -42,10 +42,17 @@ import { BillingAnalyticsPage } from "@/pages/shopkeeper/BillingAnalyticsPage";
 import { ShopSettingsPage } from "@/pages/shopkeeper/ShopSettingsPage";
 import { ShopDetailsFormPage } from "@/pages/shopkeeper/ShopDetailsFormPage";
 import { ShopAboutFormPage } from "@/pages/shopkeeper/ShopAboutFormPage";
+import { WaiterManagementPage } from "@/pages/shopkeeper/WaiterManagementPage";
 
 // Customer Pages
 import { CustomerMenuPage } from "@/pages/customer/CustomerMenuPage";
 import { LandingPage } from "@/pages/LandingPageEnhanced";
+
+// Waiter Layout & Pages
+import { WaiterLayout } from "@/layouts/WaiterLayout";
+import { WaiterMenuPage } from "@/pages/waiter/WaiterMenuPage";
+import { WaiterOrdersPage } from "@/pages/waiter/WaiterOrdersPage";
+import { WaiterTablesPage } from "@/pages/waiter/WaiterTablesPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -93,11 +100,22 @@ const App = () => (
                 <Route path="settings" element={<ShopSettingsPage />} />
                 <Route path="details" element={<ShopDetailsFormPage />} />
                 <Route path="about" element={<ShopAboutFormPage />} />
+                <Route path="waiters" element={<WaiterManagementPage />} />
               </Route>
 
               <Route element={<CustomerLayout />}>
                 <Route path="/menu" element={<CustomerMenuPage />} />
                 <Route path="/menu/:shopId" element={<CustomerMenuPage />} />
+              </Route>
+
+              <Route path="/waiter" element={
+                <ProtectedRoute allowedRoles={['waiter']}>
+                  <WaiterLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<WaiterMenuPage />} />
+                <Route path="orders" element={<WaiterOrdersPage />} />
+                <Route path="tables" element={<WaiterTablesPage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
