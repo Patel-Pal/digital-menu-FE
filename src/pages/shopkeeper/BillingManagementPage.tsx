@@ -17,6 +17,7 @@ import { Bill, billingService } from '@/services/billingService';
 import { BillDetailModal } from '@/components/BillDetailModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { useNotificationSoundSettings } from '@/contexts/NotificationSoundContext';
 import { toast } from 'sonner';
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef, PaginationState } from '@/components/DataTable';
@@ -35,13 +36,15 @@ export function BillingManagementPage() {
     totalItems: 0,
   });
   const { user } = useAuth();
+  const { playSound } = useNotificationSoundSettings();
 
   const handleWebSocketEvent = useCallback((event: string, data: any) => {
     if (event === 'payment_received') {
+      playSound();
       toast.success(`Payment received from ${data.customerName} - ₹${data.amount}`);
       fetchBills(pagination.currentPage);
     }
-  }, [pagination.currentPage]);
+  }, [pagination.currentPage, playSound]);
 
   useWebSocket({
     room: user?.shopId || '',

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OrderProvider } from "@/contexts/OrderContext";
+import { NotificationSoundProvider } from "@/contexts/NotificationSoundContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
@@ -55,6 +56,7 @@ const App = () => (
     <AuthProvider>
       <OrderProvider>
         <ThemeProvider>
+        <NotificationSoundProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -102,6 +104,7 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
+      </NotificationSoundProvider>
       </ThemeProvider>
       </OrderProvider>
     </AuthProvider>

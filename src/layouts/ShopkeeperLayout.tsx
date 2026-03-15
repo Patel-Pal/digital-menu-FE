@@ -13,6 +13,7 @@ import { shopService, type Shop } from "@/services/shopService";
 import { orderService, type Order } from "@/services/orderService";
 import { billingService, type Bill } from "@/services/billingService";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { useNotificationSoundSettings } from "@/contexts/NotificationSoundContext";
 import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { ShopSetupProvider } from "@/contexts/ShopSetupContext";
 import { ShopSetupGuard } from "@/components/ShopSetupGuard";
@@ -47,6 +48,7 @@ export function ShopkeeperLayout() {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { playSound } = useNotificationSoundSettings();
 
   const fetchPendingCount = useCallback(async () => {
     if (!user?.shopId) return;
@@ -78,8 +80,12 @@ export function ShopkeeperLayout() {
   const handleWebSocketEvent = useCallback((event: string, _data: any) => {
     if (event === 'new_order' || event === 'order_status_updated' || event === 'bill_generated' || event === 'payment_received') {
       fetchPendingCount();
+      // Play notification sound for incoming events
+      if (event === 'new_order' || event === 'bill_generated') {
+        playSound();
+      }
     }
-  }, [fetchPendingCount]);
+  }, [fetchPendingCount, playSound]);
 
   useWebSocket({
     room: user?.shopId || '',

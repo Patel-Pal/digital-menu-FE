@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Store, Phone, Mail, MapPin, Save, Upload, X, User, Edit, Eye, EyeOff, Palette, Sun } from "lucide-react";
+import { Store, Phone, Mail, MapPin, Save, Upload, X, User, Edit, Eye, EyeOff, Palette, Sun, Volume2, VolumeX, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,9 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { ImageCropper } from "@/components/ImageCropper";
 import { useMenuTheme, menuThemes, MenuTheme } from "@/contexts/ThemeContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useNotificationSoundSettings } from "@/contexts/NotificationSoundContext";
+import { SOUND_LABELS, playNotificationSound, type SoundPreset } from "@/hooks/useNotificationSound";
 import { shopService, type ShopProfileData } from "@/services/shopService";
 import { uploadService } from "@/services/uploadService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +25,7 @@ import { SetupBanner } from "@/components/SetupBanner";
 export function ShopSettingsPage() {
   const { menuTheme, setMenuTheme } = useMenuTheme();
   const { user, updateProfile } = useAuth();
+  const { settings: soundSettings, updateSettings: updateSoundSettings } = useNotificationSoundSettings();
   
   const [profileData, setProfileData] = useState<ShopProfileData>({
     description: "",
@@ -520,6 +525,85 @@ export function ShopSettingsPage() {
               </div>
               <ThemeToggle />
             </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Notification Sound */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {soundSettings.enabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+              Notification Sound
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {/* Enable/Disable */}
+            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+              <div className="space-y-1">
+                <p className="font-medium">Sound Notifications</p>
+                <p className="text-sm text-muted-foreground">Play a sound when new orders or bills arrive</p>
+              </div>
+              <Switch checked={soundSettings.enabled} onCheckedChange={v => updateSoundSettings({ enabled: v })} />
+            </div>
+
+            {soundSettings.enabled && (
+              <>
+                {/* Sound Preset */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Sound Type</Label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {(Object.keys(SOUND_LABELS) as SoundPreset[]).map(preset => (
+                      <button
+                        key={preset}
+                        onClick={() => {
+                          updateSoundSettings({ preset });
+                          playNotificationSound(preset, soundSettings.volume);
+                        }}
+                        className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all text-xs font-medium ${
+                          soundSettings.preset === preset
+                            ? 'border-primary bg-primary/5 text-primary'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <Play className="h-4 w-4" />
+                        {SOUND_LABELS[preset]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Volume */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Volume</Label>
+                    <span className="text-xs text-muted-foreground">{Math.round(soundSettings.volume * 100)}%</span>
+                  </div>
+                  <Slider
+                    value={[soundSettings.volume * 100]}
+                    onValueChange={([v]) => updateSoundSettings({ volume: v / 100 })}
+                    min={10}
+                    max={100}
+                    step={5}
+                  />
+                </div>
+
+                {/* Test Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => playNotificationSound(soundSettings.preset, soundSettings.volume)}
+                  className="gap-2"
+                >
+                  <Play className="h-4 w-4" /> Test Sound
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       </motion.div>

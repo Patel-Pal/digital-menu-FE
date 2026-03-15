@@ -10,6 +10,7 @@ import { Order, orderService } from '@/services/orderService';
 import { OrderNotification } from '@/components/OrderNotification';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { useNotificationSoundSettings } from '@/contexts/NotificationSoundContext';
 import { toast } from 'sonner';
 import { SkeletonCard } from '@/components/SkeletonCard';
 import { DataTable } from '@/components/DataTable';
@@ -41,21 +42,7 @@ export function OrdersManagementPage() {
   const paginationRef = useRef(pagination);
   paginationRef.current = pagination;
 
-  const playNotificationSound = useCallback(() => {
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.setValueAtTime(587, ctx.currentTime);
-      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.15);
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.4);
-    } catch (e) {}
-  }, []);
+  const { playSound } = useNotificationSoundSettings();
 
   const fetchOrders = useCallback(async (page = 1, isTabSwitch = false) => {
     if (!user?.shopId) return;
@@ -83,13 +70,13 @@ export function OrdersManagementPage() {
 
   const handleWebSocketEvent = useCallback((event: string, data: any) => {
     if (event === 'new_order') {
-      playNotificationSound();
+      playSound();
       toast.success(`New order from ${data.customerName} - Table ${data.tableNumber}`);
       fetchOrders(paginationRef.current.currentPage);
     } else if (event === 'order_status_updated') {
       fetchOrders(paginationRef.current.currentPage);
     }
-  }, [playNotificationSound, fetchOrders]);
+  }, [playSound, fetchOrders]);
 
   useWebSocket({
     room: user?.shopId || '',
