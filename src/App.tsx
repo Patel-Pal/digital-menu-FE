@@ -54,6 +54,7 @@ import { WaiterMenuPage } from "@/pages/waiter/WaiterMenuPage";
 import { WaiterOrdersPage } from "@/pages/waiter/WaiterOrdersPage";
 import { WaiterTablesPage } from "@/pages/waiter/WaiterTablesPage";
 
+import { Analytics } from "@vercel/analytics/react";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,6 +68,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <Analytics />
           <BrowserRouter>
             <ScrollToTop />
             <OfflineIndicator />
