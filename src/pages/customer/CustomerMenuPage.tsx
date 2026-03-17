@@ -18,6 +18,7 @@ import { BillGenerationModal } from "@/components/BillGenerationModal";
 import { menuItemService } from "@/services/menuItemService";
 import { categoryService, type Category } from "@/services/categoryService";
 import { shopService, type Shop } from "@/services/shopService";
+import { reviewService } from "@/services/reviewService";
 import { useMenuTheme, menuThemes, MenuTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrder } from "@/contexts/OrderContext";
@@ -60,6 +61,8 @@ export function CustomerMenuPage() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showBillModal, setShowBillModal] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+  const [averageRating, setAverageRating] = useState<number | undefined>(undefined);
+  const [totalReviews, setTotalReviews] = useState<number | undefined>(undefined);
 
   const setActiveTab = (tab: ViewTab) => {
     setActiveTabState(tab);
@@ -109,15 +112,18 @@ export function CustomerMenuPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [shopResponse, menuResponse, categoryResponse] = await Promise.all([
+      const [shopResponse, menuResponse, categoryResponse, reviewStats] = await Promise.all([
         shopService.getShopByOwnerId(currentShopId),
         menuItemService.getMenuItemsByShop(currentShopId),
-        categoryService.getCategoriesByShop(currentShopId)
+        categoryService.getCategoriesByShop(currentShopId),
+        reviewService.getReviews(currentShopId, 1, 1)
       ]);
       
       setShop(shopResponse.data || null);
       setMenuItems(menuResponse.data || []);
       setCategories(categoryResponse.data || []);
+      setAverageRating(reviewStats.averageRating);
+      setTotalReviews(reviewStats.totalReviews);
       
       // Set shop's theme if available
       if (shopResponse.data?.menuTheme) {
@@ -394,12 +400,12 @@ export function CustomerMenuPage() {
         <div className="space-y-4">
           <Card className="border-0 shadow-sm bg-card rounded-xl">
             <CardContent className="p-6">
-              <AboutShop shop={shop} themeColor={theme.primary} />
+              <AboutShop shop={shop} themeColor={theme.primary} averageRating={averageRating} totalReviews={totalReviews} />
             </CardContent>
           </Card>
           <Card className="border-0 shadow-sm bg-card rounded-xl">
             <CardContent className="p-6">
-              <CustomerRating themeColor={""} shopName={""} />
+              <CustomerRating themeColor={theme.primary} shopName={shop?.name || ""} shopId={currentShopId} />
             </CardContent>
           </Card>
         </div>
