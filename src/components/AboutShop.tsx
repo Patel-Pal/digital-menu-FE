@@ -3,11 +3,13 @@ import { MapPin, Phone, Mail, Clock, Star, Users } from "lucide-react";
 import type { Shop } from "@/types";
 
 interface AboutShopProps {
-  shop: Pick<Shop, "name" | "description" | "address" | "phone" | "email">;
+  shop: Pick<Shop, "name" | "description" | "address" | "phone" | "email" | "rating" | "reviewCount"> | null;
   themeColor: string;
+  averageRating?: number;
+  totalReviews?: number;
 }
 
-export function AboutShop({ shop, themeColor }: AboutShopProps) {
+export function AboutShop({ shop, themeColor, averageRating, totalReviews }: AboutShopProps) {
   const contactInfo = [
     { icon: MapPin, label: "Address", value: shop.address },
     { icon: Phone, label: "Phone", value: shop.phone },
@@ -44,7 +46,9 @@ export function AboutShop({ shop, themeColor }: AboutShopProps) {
               style={{ color: `hsl(${themeColor})` }}
             />
           </div>
-          <p className="text-sm font-bold text-foreground">{shop?.rating || "4.8"}</p>
+          <p className="text-sm font-bold text-foreground">
+            {averageRating != null ? averageRating.toFixed(1) : (shop?.rating != null ? Number(shop.rating).toFixed(1) : "—")}
+          </p>
           <p className="text-[10px] text-muted-foreground">Rating</p>
         </div>
         <div className="text-center space-y-2">
@@ -54,7 +58,13 @@ export function AboutShop({ shop, themeColor }: AboutShopProps) {
               style={{ color: `hsl(${themeColor})` }}
             />
           </div>
-          <p className="text-sm font-bold text-foreground">2.5k+</p>
+          <p className="text-sm font-bold text-foreground">
+            {(() => {
+              const count = totalReviews ?? shop?.reviewCount;
+              if (count == null) return "—";
+              return count >= 1000 ? `${(count / 1000).toFixed(1)}k+` : `${count}+`;
+            })()}
+          </p>
           <p className="text-[10px] text-muted-foreground">Happy Guests</p>
         </div>
         <div className="text-center space-y-2">
