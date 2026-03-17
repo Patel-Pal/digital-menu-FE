@@ -54,6 +54,13 @@ import { WaiterMenuPage } from "@/pages/waiter/WaiterMenuPage";
 import { WaiterOrdersPage } from "@/pages/waiter/WaiterOrdersPage";
 import { WaiterTablesPage } from "@/pages/waiter/WaiterTablesPage";
 
+// Chef Layout & Pages
+import { ChefLayout } from "@/layouts/ChefLayout";
+import { ChefOrdersPage } from "@/pages/chef/ChefOrdersPage";
+
+// Shopkeeper Chef Management Page
+import { ChefManagementPage } from "@/pages/shopkeeper/ChefManagementPage";
+
 import { Analytics } from "@vercel/analytics/react";
 import NotFound from "./pages/NotFound";
 
@@ -103,6 +110,7 @@ const App = () => (
                 <Route path="details" element={<ShopDetailsFormPage />} />
                 <Route path="about" element={<ShopAboutFormPage />} />
                 <Route path="waiters" element={<WaiterManagementPage />} />
+                <Route path="chefs" element={<ChefManagementPage />} />
               </Route>
 
               <Route element={<CustomerLayout />}>
@@ -118,6 +126,14 @@ const App = () => (
                 <Route index element={<WaiterMenuPage />} />
                 <Route path="orders" element={<WaiterOrdersPage />} />
                 <Route path="tables" element={<WaiterTablesPage />} />
+              </Route>
+
+              <Route path="/chef" element={
+                <ProtectedRoute allowedRoles={['chef']}>
+                  <ChefLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<ChefOrdersPage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

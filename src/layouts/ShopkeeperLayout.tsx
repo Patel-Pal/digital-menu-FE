@@ -1,7 +1,7 @@
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, UtensilsCrossed, FolderOpen, QrCode, BarChart3, Settings, Menu, X, LogOut, ShoppingBag, Receipt, ChevronRight, PanelLeftClose, PanelLeft, Store, Phone, Mail, MapPin, Edit2, User, Building2, Home, Bell, Clock, CreditCard, Users } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, FolderOpen, QrCode, BarChart3, Settings, Menu, X, LogOut, ShoppingBag, Receipt, ChevronRight, PanelLeftClose, PanelLeft, Store, Phone, Mail, MapPin, Edit2, User, Building2, Home, Bell, Clock, CreditCard, Users, ChefHat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -28,6 +28,7 @@ const navItems: NavItem[] = [
   { title: "Billing", href: "/shop/billing", icon: Receipt },
   { title: "Billing Analytics", href: "/shop/billing-analytics", icon: BarChart3 },
   { title: "Waiters", href: "/shop/waiters", icon: Users },
+  { title: "Chefs", href: "/shop/chefs", icon: ChefHat },
   { title: "QR Code", href: "/shop/qr", icon: QrCode },
   { title: "Analytics", href: "/shop/analytics", icon: BarChart3 },
   { title: "Settings", href: "/shop/settings", icon: Settings },
@@ -159,6 +160,8 @@ export function ShopkeeperLayout() {
         return "Analytics";
       case "/shop/settings":
         return "Settings";
+      case "/shop/chefs":
+        return "Chef Management";
       default:
         return "Digital Menu";
     }

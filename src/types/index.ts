@@ -97,6 +97,23 @@ export type CreateWaiterData = {
   password: string;
 };
 
+// Chef Types
+export interface Chef {
+  id: string;
+  _id?: string;
+  name: string;
+  email: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export type CreateChefData = {
+  name: string;
+  email: string;
+  password: string;
+};
+
+
 // UI Types
 export interface NavItem {
   title: string;

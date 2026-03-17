@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { QrCode, Eye, TrendingUp, Star, ArrowRight, Plus, BarChart3, ShoppingBag, Receipt, UtensilsCrossed, IndianRupee, Users } from "lucide-react";
+import { QrCode, Eye, TrendingUp, Star, ArrowRight, Plus, BarChart3, ShoppingBag, Receipt, UtensilsCrossed, IndianRupee, Users, ChefHat } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { shopService, type Shop } from "@/services/shopService";
 import { menuItemService, type MenuItem } from "@/services/menuItemService";
 import { billingService } from "@/services/billingService";
 import { waiterService } from "@/services/waiterService";
+import { chefService } from "@/services/chefService";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 function getGreeting() {
@@ -27,6 +28,7 @@ export function ShopkeeperDashboard() {
   const [popularItems, setPopularItems] = useState<MenuItem[]>([]);
   const [todayRevenue, setTodayRevenue] = useState(0);
   const [activeWaiterCount, setActiveWaiterCount] = useState(0);
+  const [activeChefCount, setActiveChefCount] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,6 +59,15 @@ export function ShopkeeperDashboard() {
             setActiveWaiterCount(waiters.filter((w: any) => w.isActive).length);
           } catch (e) {
             // waiter service may not be available
+          }
+
+          // Fetch active chef count
+          try {
+            const chefs = await chefService.getShopChefs(user.shopId);
+            const raw = Array.isArray(chefs) ? chefs : (chefs as any).data ?? [];
+            setActiveChefCount(raw.filter((c: any) => c.isActive).length);
+          } catch (e) {
+            // chef service may not be available
           }
         }
       } catch (error) {
@@ -130,6 +141,13 @@ export function ShopkeeperDashboard() {
           change={`${activeWaiterCount} on duty`}
           changeType={activeWaiterCount > 0 ? "positive" : "neutral"}
           icon={<Users className="h-5 w-5" />}
+        />
+        <StatCard
+          title="Active Chefs"
+          value={activeChefCount.toString()}
+          change={`${activeChefCount} on duty`}
+          changeType={activeChefCount > 0 ? "positive" : "neutral"}
+          icon={<ChefHat className="h-5 w-5" />}
         />
         <StatCard
           title="Today's Revenue"
