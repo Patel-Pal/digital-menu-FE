@@ -1,7 +1,7 @@
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, UtensilsCrossed, FolderOpen, QrCode, BarChart3, Settings, Menu, X, LogOut, ShoppingBag, Receipt, ChevronRight, PanelLeftClose, PanelLeft, Store, Phone, Mail, MapPin, Edit2, User, Building2, Home, Bell, Clock, CreditCard, Users } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, FolderOpen, QrCode, BarChart3, Settings, Menu, X, LogOut, ShoppingBag, Receipt, ChevronRight, PanelLeftClose, PanelLeft, Store, Phone, Mail, MapPin, Edit2, User, Building2, Home, Bell, Clock, CreditCard, Users, ChefHat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -28,6 +28,7 @@ const navItems: NavItem[] = [
   { title: "Billing", href: "/shop/billing", icon: Receipt },
   { title: "Billing Analytics", href: "/shop/billing-analytics", icon: BarChart3 },
   { title: "Waiters", href: "/shop/waiters", icon: Users },
+  { title: "Chefs", href: "/shop/chefs", icon: ChefHat },
   { title: "QR Code", href: "/shop/qr", icon: QrCode },
   { title: "Analytics", href: "/shop/analytics", icon: BarChart3 },
   { title: "Settings", href: "/shop/settings", icon: Settings },
@@ -159,6 +160,8 @@ export function ShopkeeperLayout() {
         return "Analytics";
       case "/shop/settings":
         return "Settings";
+      case "/shop/chefs":
+        return "Chef Management";
       default:
         return "Digital Menu";
     }
@@ -213,8 +216,8 @@ export function ShopkeeperLayout() {
               </button>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 space-y-1 px-3 py-4">
+            {/* Navigation - scrollable */}
+            <nav className="flex-1 overflow-y-auto scrollbar-hide space-y-1 px-3 py-4">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
@@ -359,7 +362,7 @@ export function ShopkeeperLayout() {
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground lg:hidden"
+                className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground lg:hidden flex flex-col"
               >
                 <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
                   <button
@@ -385,7 +388,7 @@ export function ShopkeeperLayout() {
                     <X className="h-5 w-5" />
                   </Button>
                 </div>
-                <nav className="flex-1 space-y-1 px-3 py-4">
+                <nav className="flex-1 overflow-y-auto scrollbar-hide space-y-1 px-3 py-4">
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.href;

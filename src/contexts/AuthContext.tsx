@@ -5,7 +5,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'shopkeeper' | 'customer' | 'waiter';
+  role: 'admin' | 'shopkeeper' | 'customer' | 'waiter' | 'chef';
   shopId?: string;
 }
 
@@ -72,6 +72,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         window.location.href = '/shop';
       } else if (newUser.role === 'waiter') {
         window.location.href = '/waiter';
+      } else if (newUser.role === 'chef') {
+        window.location.href = '/chef';
       } else {
         window.location.href = '/menu';
       }
@@ -86,7 +88,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         name, 
         email, 
         password, 
-        role: role as 'admin' | 'shopkeeper' | 'customer' | 'waiter' 
+        role: role as 'admin' | 'shopkeeper' | 'customer' | 'waiter' | 'chef'
       });
       const { token: newToken, user: newUser } = response;
       
@@ -103,6 +105,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         window.location.href = '/shop';
       } else if (newUser.role === 'waiter') {
         window.location.href = '/waiter';
+      } else if (newUser.role === 'chef') {
+        window.location.href = '/chef';
       } else {
         window.location.href = '/menu';
       }

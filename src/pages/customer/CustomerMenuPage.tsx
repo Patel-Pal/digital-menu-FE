@@ -177,8 +177,12 @@ export function CustomerMenuPage() {
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-sm font-bold">
-              🍽️
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-sm font-bold overflow-hidden">
+              {shop?.logo ? (
+                <img src={shop.logo} alt={shop?.name} className="w-full h-full object-cover" />
+              ) : (
+                "🍽️"
+              )}
             </div>
             <div className="flex-1">
               <h1 className="font-bold text-lg">{shop?.name || "Digital Menu"}</h1>
