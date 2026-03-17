@@ -216,8 +216,8 @@ export function ShopkeeperLayout() {
               </button>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 space-y-1 px-3 py-4">
+            {/* Navigation - scrollable */}
+            <nav className="flex-1 overflow-y-auto scrollbar-hide space-y-1 px-3 py-4">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
@@ -362,7 +362,7 @@ export function ShopkeeperLayout() {
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground lg:hidden"
+                className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground lg:hidden flex flex-col"
               >
                 <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
                   <button
@@ -388,7 +388,7 @@ export function ShopkeeperLayout() {
                     <X className="h-5 w-5" />
                   </Button>
                 </div>
-                <nav className="flex-1 space-y-1 px-3 py-4">
+                <nav className="flex-1 overflow-y-auto scrollbar-hide space-y-1 px-3 py-4">
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.href;
