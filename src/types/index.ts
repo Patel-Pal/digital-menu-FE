@@ -41,6 +41,8 @@ export interface Shop {
   subscription: SubscriptionPlan;
   createdAt: string;
   qrScans: number;
+  rating?: number;
+  reviewCount?: number;
 }
 
 export type SubscriptionPlan = 'free' | 'basic' | 'premium' | 'enterprise';

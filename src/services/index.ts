@@ -8,3 +8,4 @@ export * from './billingService';
 export * from './passwordResetService';
 export * from './waiterService';
 export * from './chefService';
+export * from './reviewService';
