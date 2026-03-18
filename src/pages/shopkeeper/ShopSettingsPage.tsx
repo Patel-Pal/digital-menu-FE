@@ -290,7 +290,7 @@ export function ShopSettingsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 sm:p-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -557,7 +557,7 @@ export function ShopSettingsPage() {
                 {/* Sound Preset */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Sound Type</Label>
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                     {(Object.keys(SOUND_LABELS) as SoundPreset[]).map(preset => (
                       <button
                         key={preset}
