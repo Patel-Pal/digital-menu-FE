@@ -68,7 +68,7 @@ export function ShopkeeperAnalyticsPage() {
   }
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6 p-4 sm:p-6">
       {/* Stats Grid */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

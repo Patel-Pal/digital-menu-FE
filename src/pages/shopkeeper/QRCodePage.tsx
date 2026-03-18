@@ -281,7 +281,7 @@ export function QRCodePage() {
   }, [renderQR]);
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6 p-4 sm:p-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: QR Preview */}
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>

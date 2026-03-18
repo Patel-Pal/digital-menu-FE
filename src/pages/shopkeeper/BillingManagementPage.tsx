@@ -2,17 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Receipt, 
-  Eye, 
-  RefreshCw, 
-  DollarSign, 
-  Clock, 
-  CheckCircle, 
-  XCircle,
-  Download
-} from 'lucide-react';
+import { Receipt, Eye, RefreshCw, DollarSign, Clock, CheckCircle, XCircle, Download, Search } from 'lucide-react';
 import { Bill, billingService } from '@/services/billingService';
 import { BillDetailModal } from '@/components/BillDetailModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,12 +21,9 @@ export function BillingManagementPage() {
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileSearch, setMobileSearch] = useState('');
   const [counts, setCounts] = useState({ pending: 0, paid: 0, failed: 0, all: 0 });
-  const [pagination, setPagination] = useState<PaginationState>({
-    currentPage: 1,
-    pageSize: 20,
-    totalItems: 0,
-  });
+  const [pagination, setPagination] = useState<PaginationState>({ currentPage: 1, pageSize: 20, totalItems: 0 });
   const { user } = useAuth();
   const { playSound } = useNotificationSoundSettings();
 
@@ -46,34 +35,22 @@ export function BillingManagementPage() {
     }
   }, [pagination.currentPage, playSound]);
 
-  useWebSocket({
-    room: user?.shopId || '',
-    roomType: 'shop',
-    onEvent: handleWebSocketEvent
-  });
+  useWebSocket({ room: user?.shopId || '', roomType: 'shop', onEvent: handleWebSocketEvent });
 
-  useEffect(() => {
-    fetchBills(1, true);
-  }, [activeTab]);
+  useEffect(() => { fetchBills(1, true); }, [activeTab]);
 
   const fetchBills = useCallback(async (page = 1, isTabSwitch = false) => {
     if (!user?.shopId) return;
     if (isTabSwitch) setTabLoading(true);
-
     try {
       const status = activeTab === 'all' ? undefined : activeTab;
       const response = await billingService.getShopBills(user.shopId, status, page, pagination.pageSize);
       setBills(response.data || []);
       setCounts(response.counts || { pending: 0, paid: 0, failed: 0, all: 0 });
       if (response.pagination) {
-        setPagination({
-          currentPage: response.pagination.page,
-          pageSize: response.pagination.limit,
-          totalItems: response.pagination.total,
-        });
+        setPagination({ currentPage: response.pagination.page, pageSize: response.pagination.limit, totalItems: response.pagination.total });
       }
-    } catch (error) {
-      console.error('Failed to fetch bills:', error);
+    } catch {
       toast.error('Failed to fetch bills');
     } finally {
       setLoading(false);
@@ -81,39 +58,23 @@ export function BillingManagementPage() {
     }
   }, [user?.shopId, activeTab, pagination.pageSize]);
 
-  const handlePageChange = useCallback((page: number) => {
-    fetchBills(page);
-  }, [fetchBills]);
+  const handlePageChange = useCallback((page: number) => { fetchBills(page); }, [fetchBills]);
+  const handleBillUpdate = () => { fetchBills(pagination.currentPage); setSelectedBill(null); };
+  const handleSearchChange = useCallback((query: string) => { setSearchQuery(query); }, []);
 
-  const handleBillUpdate = () => {
-    fetchBills(pagination.currentPage);
-    setSelectedBill(null);
-  };
-
-  // Client-side search within the current page (backend doesn't support search)
   const filteredBills = useMemo(() => {
-    if (!searchQuery) return bills;
-    const q = searchQuery.toLowerCase();
-    return bills.filter(bill =>
-      bill.billNumber.toLowerCase().includes(q) ||
-      bill.customerName.toLowerCase().includes(q) ||
-      bill.tableNumber.toLowerCase().includes(q)
-    );
-  }, [bills, searchQuery]);
+    const q = (searchQuery || mobileSearch).toLowerCase();
+    if (!q) return bills;
+    return bills.filter(b => b.billNumber.toLowerCase().includes(q) || b.customerName.toLowerCase().includes(q) || b.tableNumber.toLowerCase().includes(q));
+  }, [bills, searchQuery, mobileSearch]);
 
-  const handleSearchChange = useCallback((query: string) => {
-    setSearchQuery(query);
-  }, []);
+  const totalRevenue = useMemo(() => bills.filter(b => b.paymentStatus === 'paid').reduce((sum, b) => sum + b.totalAmount, 0), [bills]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  const formatDateShort = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, { icon: React.ReactNode; className: string }> = {
@@ -122,134 +83,39 @@ export function BillingManagementPage() {
       failed: { icon: <XCircle className="h-3 w-3" />, className: 'bg-red-100 text-red-800 border-red-200' },
     };
     const c = config[status] || { icon: <Clock className="h-3 w-3" />, className: 'bg-gray-100 text-gray-800 border-gray-200' };
-    return (
-      <Badge className={`${c.className} text-xs gap-1 px-2 py-0.5 rounded-full border`}>
-        {c.icon}
-        <span className="capitalize">{status}</span>
-      </Badge>
-    );
+    return <Badge className={`${c.className} text-xs gap-1 px-2 py-0.5 rounded-full border`}>{c.icon}<span className="capitalize">{status}</span></Badge>;
   };
-
-  const totalRevenue = useMemo(() =>
-    bills.filter(b => b.paymentStatus === 'paid').reduce((sum, b) => sum + b.totalAmount, 0),
-    [bills]
-  );
 
   const exportToCSV = () => {
     const headers = ['Bill Number', 'Customer', 'Table', 'Amount', 'Status', 'Payment Method', 'Date'];
-    const rows = filteredBills.map(b => [
-      b.billNumber,
-      b.customerName,
-      b.tableNumber,
-      b.totalAmount.toFixed(2),
-      b.paymentStatus,
-      b.paymentMethod || '',
-      new Date(b.createdAt).toLocaleString()
-    ]);
+    const rows = filteredBills.map(b => [b.billNumber, b.customerName, b.tableNumber, b.totalAmount.toFixed(2), b.paymentStatus, b.paymentMethod || '', new Date(b.createdAt).toLocaleString()]);
     const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `bills-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
+    a.href = url; a.download = `bills-${new Date().toISOString().split('T')[0]}.csv`; a.click();
     URL.revokeObjectURL(url);
     toast.success('Bills exported to CSV');
   };
 
-  // Column definitions for the DataTable
   const billColumns: ColumnDef<Bill>[] = [
+    { id: 'billNumber', header: 'Bill #', headerClassName: 'w-[120px]', accessorFn: (row) => row.billNumber, cell: (row) => <span className="font-mono text-sm font-medium">{row.billNumber}</span> },
+    { id: 'customer', header: 'Customer', accessorFn: (row) => row.customerName, cell: (row) => <span className="font-medium">{row.customerName}</span> },
+    { id: 'table', header: 'Table', headerClassName: 'w-[80px] text-center', cellClassName: 'text-center', accessorFn: (row) => row.tableNumber, cell: (row) => <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary font-bold text-sm">{row.tableNumber}</span> },
+    { id: 'amount', header: 'Amount', headerClassName: 'w-[110px] text-right', cellClassName: 'text-right font-bold text-primary', accessorFn: (row) => row.totalAmount, cell: (row) => <span>₹{row.totalAmount.toFixed(2)}</span> },
+    { id: 'paymentStatus', header: 'Status', headerClassName: 'w-[120px] text-center', cellClassName: 'text-center', accessorFn: (row) => row.paymentStatus, cell: (row) => getStatusBadge(row.paymentStatus) },
+    { id: 'paymentMethod', header: 'Payment', headerClassName: 'w-[100px] text-center', cellClassName: 'text-center', accessorFn: (row) => row.paymentMethod, cell: (row) => <span className="text-sm capitalize text-muted-foreground">{row.paymentMethod || '—'}</span> },
+    { id: 'date', header: 'Date', headerClassName: 'w-[160px]', accessorFn: (row) => row.createdAt, cell: (row) => <span className="text-sm text-muted-foreground">{formatDate(row.createdAt)}</span> },
     {
-      id: 'billNumber',
-      header: 'Bill #',
-      headerClassName: 'w-[120px]',
-      accessorFn: (row) => row.billNumber,
-      cell: (row) => <span className="font-mono text-sm font-medium">{row.billNumber}</span>,
-    },
-    {
-      id: 'customer',
-      header: 'Customer',
-      accessorFn: (row) => row.customerName,
-      cell: (row) => <span className="font-medium">{row.customerName}</span>,
-    },
-    {
-      id: 'table',
-      header: 'Table',
-      headerClassName: 'w-[80px] text-center',
-      cellClassName: 'text-center',
-      accessorFn: (row) => row.tableNumber,
-      cell: (row) => (
-        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary font-bold text-sm">
-          {row.tableNumber}
-        </span>
-      ),
-    },
-    {
-      id: 'amount',
-      header: 'Amount',
-      headerClassName: 'w-[110px] text-right',
-      cellClassName: 'text-right font-bold text-primary',
-      accessorFn: (row) => row.totalAmount,
-      cell: (row) => <span>₹{row.totalAmount.toFixed(2)}</span>,
-    },
-    {
-      id: 'paymentStatus',
-      header: 'Status',
-      headerClassName: 'w-[120px] text-center',
-      cellClassName: 'text-center',
-      accessorFn: (row) => row.paymentStatus,
-      cell: (row) => getStatusBadge(row.paymentStatus),
-    },
-    {
-      id: 'paymentMethod',
-      header: 'Payment',
-      headerClassName: 'w-[100px] text-center',
-      cellClassName: 'text-center',
-      accessorFn: (row) => row.paymentMethod,
-      cell: (row) => (
-        <span className="text-sm capitalize text-muted-foreground">
-          {row.paymentMethod || '—'}
-        </span>
-      ),
-    },
-    {
-      id: 'date',
-      header: 'Date',
-      headerClassName: 'w-[160px]',
-      accessorFn: (row) => row.createdAt,
-      cell: (row) => (
-        <span className="text-sm text-muted-foreground">{formatDate(row.createdAt)}</span>
-      ),
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      headerClassName: 'w-[130px] text-center',
-      cellClassName: 'text-center',
-      accessorFn: () => null,
+      id: 'actions', header: 'Actions', headerClassName: 'w-[130px] text-center', cellClassName: 'text-center', accessorFn: () => null,
       cell: (row) => (
         <div className="flex items-center justify-center gap-2" onClick={e => e.stopPropagation()}>
           {row.paymentStatus === 'pending' && (
-            <Button
-              size="sm"
-              className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedBill(row);
-              }}
-            >
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Pay
+            <Button size="sm" className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white" onClick={e => { e.stopPropagation(); setSelectedBill(row); }}>
+              <CheckCircle className="h-3 w-3 mr-1" />Pay
             </Button>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => setSelectedBill(row)}
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setSelectedBill(row)}><Eye className="h-4 w-4" /></Button>
         </div>
       ),
     },
@@ -257,135 +123,119 @@ export function BillingManagementPage() {
 
   if (loading && bills.length === 0) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 bg-muted rounded"></div>
-            ))}
-          </div>
+          <div className="h-8 bg-muted rounded w-1/4" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[1,2,3,4].map(i => <div key={i} className="h-24 bg-muted rounded" />)}</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-muted-foreground">Manage customer bills and payments</p>
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground hidden sm:block">Manage customer bills and payments</p>
+        <div className="flex items-center gap-2 ml-auto">
           <Button onClick={exportToCSV} variant="outline" size="sm" disabled={filteredBills.length === 0}>
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
+            <Download className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Export CSV</span>
           </Button>
           <Button onClick={() => fetchBills(pagination.currentPage, false)} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            <RefreshCw className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Receipt className="h-5 w-5 text-blue-600" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: 'Total Bills', value: counts.all, icon: <Receipt className="h-5 w-5 text-blue-600" />, bg: 'bg-blue-100' },
+          { label: 'Paid Bills', value: counts.paid, icon: <CheckCircle className="h-5 w-5 text-green-600" />, bg: 'bg-green-100' },
+          { label: 'Pending', value: counts.pending, icon: <Clock className="h-5 w-5 text-yellow-600" />, bg: 'bg-yellow-100' },
+          { label: 'Revenue', value: `₹${totalRevenue.toFixed(0)}`, icon: <DollarSign className="h-5 w-5 text-purple-600" />, bg: 'bg-purple-100' },
+        ].map(stat => (
+          <Card key={stat.label}>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${stat.bg} flex items-center justify-center flex-shrink-0`}>{stat.icon}</div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground truncate">{stat.label}</p>
+                  <p className="text-lg sm:text-2xl font-bold truncate">{stat.value}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Bills</p>
-                <p className="text-2xl font-bold">{counts.all}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Paid Bills</p>
-                <p className="text-2xl font-bold">{counts.paid}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold">{counts.pending}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                <DollarSign className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold">₹{totalRevenue.toFixed(2)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Tabs + DataTable */}
+      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
-          <TabsTrigger value="pending">Pending ({counts.pending})</TabsTrigger>
-          <TabsTrigger value="paid">Paid ({counts.paid})</TabsTrigger>
-          <TabsTrigger value="failed">Failed ({counts.failed})</TabsTrigger>
+          <TabsTrigger value="all" className="text-xs sm:text-sm">All<span className="ml-1 hidden sm:inline">({counts.all})</span><span className="ml-1 sm:hidden text-[10px]">{counts.all}</span></TabsTrigger>
+          <TabsTrigger value="pending" className="text-xs sm:text-sm">Pending<span className="ml-1 hidden sm:inline">({counts.pending})</span><span className="ml-1 sm:hidden text-[10px]">{counts.pending}</span></TabsTrigger>
+          <TabsTrigger value="paid" className="text-xs sm:text-sm">Paid<span className="ml-1 hidden sm:inline">({counts.paid})</span><span className="ml-1 sm:hidden text-[10px]">{counts.paid}</span></TabsTrigger>
+          <TabsTrigger value="failed" className="text-xs sm:text-sm">Failed<span className="ml-1 hidden sm:inline">({counts.failed})</span><span className="ml-1 sm:hidden text-[10px]">{counts.failed}</span></TabsTrigger>
         </TabsList>
 
-        <TabsContent value={activeTab}>
-          <DataTable<Bill>
-            mode="server"
-            columns={billColumns}
-            data={filteredBills}
-            pagination={pagination}
-            onPageChange={handlePageChange}
-            onSearch={handleSearchChange}
-            loading={tabLoading}
-            search={{ placeholder: 'Search by bill number, customer, or table...' }}
-            emptyState={{
-              icon: <Receipt className="h-8 w-8" />,
-              title: 'No bills found',
-              description: searchQuery
-                ? 'Try adjusting your search terms'
-                : 'Bills will appear here when customers generate them',
-            }}
-          />
+        <TabsContent value={activeTab} className="space-y-3">
+          {/* Mobile card list */}
+          <div className="sm:hidden space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search bills..." className="pl-9" value={mobileSearch} onChange={e => setMobileSearch(e.target.value)} />
+            </div>
+            {tabLoading ? (
+              <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-24 bg-muted rounded-xl animate-pulse" />)}</div>
+            ) : filteredBills.length === 0 ? (
+              <Card><CardContent className="py-10 text-center"><Receipt className="h-8 w-8 mx-auto mb-2 text-muted-foreground" /><p className="text-muted-foreground">No bills found</p></CardContent></Card>
+            ) : (
+              filteredBills.map(bill => (
+                <Card key={bill._id} className="overflow-hidden">
+                  <CardContent className="p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-sm font-semibold">{bill.billNumber}</span>
+                          {getStatusBadge(bill.paymentStatus)}
+                        </div>
+                        <p className="font-medium mt-0.5">{bill.customerName}</p>
+                        <p className="text-xs text-muted-foreground">Table {bill.tableNumber} · {formatDateShort(bill.createdAt)}</p>
+                        {bill.paymentMethod && <p className="text-xs text-muted-foreground capitalize mt-0.5">via {bill.paymentMethod}</p>}
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold text-primary text-lg">₹{bill.totalAmount.toFixed(2)}</p>
+                        <div className="flex items-center gap-1 mt-1 justify-end">
+                          {bill.paymentStatus === 'pending' && (
+                            <Button size="sm" className="h-7 text-xs px-2 bg-green-600 hover:bg-green-700 text-white" onClick={() => setSelectedBill(bill)}>
+                              <CheckCircle className="h-3 w-3 mr-1" />Pay
+                            </Button>
+                          )}
+                          <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => setSelectedBill(bill)}><Eye className="h-3.5 w-3.5" /></Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+
+          {/* Desktop DataTable */}
+          <div className="hidden sm:block">
+            <DataTable<Bill>
+              mode="server" columns={billColumns} data={filteredBills}
+              pagination={pagination} onPageChange={handlePageChange}
+              onSearch={handleSearchChange} loading={tabLoading}
+              search={{ placeholder: 'Search by bill number, customer, or table...' }}
+              emptyState={{ icon: <Receipt className="h-8 w-8" />, title: 'No bills found', description: searchQuery ? 'Try adjusting your search terms' : 'Bills will appear here when customers generate them' }}
+            />
+          </div>
         </TabsContent>
       </Tabs>
 
-      {/* Bill Detail Modal */}
       {selectedBill && (
-        <BillDetailModal
-          bill={selectedBill}
-          isOpen={!!selectedBill}
-          onClose={() => setSelectedBill(null)}
-          onBillUpdate={handleBillUpdate}
-        />
+        <BillDetailModal bill={selectedBill} isOpen={!!selectedBill} onClose={() => setSelectedBill(null)} onBillUpdate={handleBillUpdate} />
       )}
     </div>
   );

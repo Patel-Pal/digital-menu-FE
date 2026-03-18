@@ -152,10 +152,10 @@ export function BillingAnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-muted rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-24 bg-muted rounded"></div>
             ))}
@@ -167,7 +167,7 @@ export function BillingAnalyticsPage() {
 
   if (!analytics) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="text-center">
           <p>Failed to load analytics data</p>
           <Button onClick={fetchAnalytics} className="mt-4">
@@ -180,7 +180,7 @@ export function BillingAnalyticsPage() {
   }
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6 p-4 sm:p-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -209,8 +209,8 @@ export function BillingAnalyticsPage() {
       >
         <Card variant="elevated">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:justify-between">
+              <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Period:</span>
@@ -232,7 +232,7 @@ export function BillingAnalyticsPage() {
               <select 
                 value={days} 
                 onChange={(e) => setDays(Number(e.target.value))}
-                className="px-3 py-1 border rounded-lg text-sm bg-background"
+                className="px-3 py-1 border rounded-lg text-sm bg-background w-full sm:w-auto"
               >
                 <option value={7}>Last 7 days</option>
                 <option value={30}>Last 30 days</option>

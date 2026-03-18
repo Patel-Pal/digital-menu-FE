@@ -81,7 +81,7 @@ export function ShopkeeperDashboard() {
   }, [user]);
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       {/* Welcome Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -119,7 +119,7 @@ export function ShopkeeperDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="grid grid-cols-2 gap-3"
+        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
       >
         <StatCard
           title="Menu Views"
@@ -155,7 +155,7 @@ export function ShopkeeperDashboard() {
           change="From paid bills today"
           changeType={todayRevenue > 0 ? "positive" : "neutral"}
           icon={<IndianRupee className="h-5 w-5" />}
-          className="col-span-2"
+          className="col-span-2 sm:col-span-4"
         />
       </motion.div>
 
