@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Download, Share2, RefreshCcw, Eye, Smartphone, ExternalLink, Image, Palette, Type, Square, Circle, RectangleHorizontal, Save, RotateCcw, Bold, Italic, Minus, Plus } from "lucide-react";
+import { Download, Share2, RefreshCcw, Eye, Smartphone, ExternalLink, Image, Palette, Type, Square, Circle, RectangleHorizontal, Save, RotateCcw, Bold, Italic, Minus, Plus, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -282,32 +282,40 @@ export function QRCodePage() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:[&>*]:self-stretch">
         {/* Left: QR Preview */}
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-          <Card>
-            <CardContent className="p-6 flex flex-col items-center relative">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex">
+          <Card className="flex flex-col w-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <QrCode className="h-5 w-5" /> QR Code Preview
+              </CardTitle>
               {ownerId && (
                 <Button
-                  variant="ghost" size="icon"
-                  className="absolute top-4 right-4 h-10 w-10 rounded-lg hover:bg-primary/10 group"
+                  variant="ghost" size="sm"
+                  className="h-8 text-xs gap-1.5 hover:bg-primary/10"
                   onClick={() => window.open(`/menu/${ownerId}`, '_blank')}
-                  title="Open customer menu"
                 >
-                  <ExternalLink className="h-5 w-5 transition-transform group-hover:scale-110" />
+                  <ExternalLink className="h-3.5 w-3.5" /> Preview Menu
                 </Button>
               )}
-
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1 items-center gap-4">
               {/* Display canvas with all customizations */}
               <div className="rounded-2xl overflow-hidden shadow-lg border border-border/50 bg-white">
                 <canvas ref={displayCanvasRef} className="max-w-[328px] w-full h-auto" />
               </div>
 
-              <p className="mt-4 text-sm text-muted-foreground text-center">Scan to view menu</p>
-              <p className="text-xs text-muted-foreground break-all text-center max-w-xs">{menuUrl}</p>
+              <div className="text-center space-y-1">
+                <p className="text-sm text-muted-foreground">Scan to view menu</p>
+                <p className="text-xs text-muted-foreground/70 break-all max-w-xs">{menuUrl}</p>
+              </div>
+
+              {/* Push buttons to bottom */}
+              <div className="flex-1" />
 
               {/* Action Buttons */}
-              <div className="flex gap-3 mt-4 w-full">
+              <div className="flex gap-3 w-full">
                 <Button variant="gradient" className="flex-1 h-11" onClick={handleDownload}>
                   <Download className="h-4 w-4 mr-2" /> Download
                 </Button>
@@ -320,8 +328,8 @@ export function QRCodePage() {
         </motion.div>
 
         {/* Right: Customization Panel */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex">
+          <Card className="flex flex-col w-full">
             <CardHeader className="flex flex-row items-center justify-between pb-4">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Palette className="h-5 w-5" /> Customize QR Code
