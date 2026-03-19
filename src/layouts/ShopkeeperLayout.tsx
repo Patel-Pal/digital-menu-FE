@@ -22,14 +22,14 @@ import type { NavItem } from "@/types";
 
 const navItems: NavItem[] = [
   { title: "Home", href: "/shop", icon: LayoutDashboard },
-  { title: "Menu", href: "/shop/menu", icon: UtensilsCrossed },
+  { title: "QR Code", href: "/shop/qr", icon: QrCode },
   { title: "Categories", href: "/shop/categories", icon: FolderOpen },
+  { title: "Menu", href: "/shop/menu", icon: UtensilsCrossed },
   { title: "Orders", href: "/shop/orders", icon: ShoppingBag },
   { title: "Billing", href: "/shop/billing", icon: Receipt },
   { title: "Billing Analytics", href: "/shop/billing-analytics", icon: BarChart3 },
   { title: "Waiters", href: "/shop/waiters", icon: Users },
   { title: "Chefs", href: "/shop/chefs", icon: ChefHat },
-  { title: "QR Code", href: "/shop/qr", icon: QrCode },
   { title: "Analytics", href: "/shop/analytics", icon: BarChart3 },
   { title: "Settings", href: "/shop/settings", icon: Settings },
 ];
@@ -192,7 +192,7 @@ export function ShopkeeperLayout() {
           "hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 transition-all duration-300",
           sidebarCollapsed ? "lg:w-16" : "lg:w-64"
         )}>
-          <div className="flex flex-col flex-1 bg-sidebar text-sidebar-foreground">
+          <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground overflow-hidden">
             {/* Logo - Clickable */}
             <div className="flex h-16 items-center border-b border-sidebar-border px-6">
               <button
