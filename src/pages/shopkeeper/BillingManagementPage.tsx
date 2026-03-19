@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Receipt, Eye, RefreshCw, DollarSign, Clock, CheckCircle, XCircle, Download, Search } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Receipt, Eye, RefreshCw, DollarSign, Clock, CheckCircle, XCircle, Download, Search, FileText, FileSpreadsheet, FileDown } from 'lucide-react';
 import { Bill, billingService } from '@/services/billingService';
 import { BillDetailModal } from '@/components/BillDetailModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +14,10 @@ import { useNotificationSoundSettings } from '@/contexts/NotificationSoundContex
 import { toast } from 'sonner';
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef, PaginationState } from '@/components/DataTable';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { shopService } from '@/services/shopService';
 
 export function BillingManagementPage() {
   const [bills, setBills] = useState<Bill[]>([]);
@@ -24,8 +29,13 @@ export function BillingManagementPage() {
   const [mobileSearch, setMobileSearch] = useState('');
   const [counts, setCounts] = useState({ pending: 0, paid: 0, failed: 0, all: 0 });
   const [pagination, setPagination] = useState<PaginationState>({ currentPage: 1, pageSize: 20, totalItems: 0 });
+  const [shopName, setShopName] = useState('');
   const { user } = useAuth();
   const { playSound } = useNotificationSoundSettings();
+
+  useEffect(() => {
+    shopService.getShopProfile().then(r => setShopName(r.data?.name || '')).catch(() => {});
+  }, []);
 
   const handleWebSocketEvent = useCallback((event: string, data: any) => {
     if (event === 'payment_received') {
@@ -89,7 +99,8 @@ export function BillingManagementPage() {
   const exportToCSV = () => {
     const headers = ['Bill Number', 'Customer', 'Table', 'Amount', 'Status', 'Payment Method', 'Date'];
     const rows = filteredBills.map(b => [b.billNumber, b.customerName, b.tableNumber, b.totalAmount.toFixed(2), b.paymentStatus, b.paymentMethod || '', new Date(b.createdAt).toLocaleString()]);
-    const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const shopLine = shopName ? `"${shopName}"\n\n` : '';
+    const csv = shopLine + [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -98,7 +109,106 @@ export function BillingManagementPage() {
     toast.success('Bills exported to CSV');
   };
 
-  const billColumns: ColumnDef<Bill>[] = [
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    let y = 18;
+
+    // Title
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bills Report', 14, y);
+    y += 8;
+
+    // Shop name
+    if (shopName) {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(40);
+      doc.text(shopName, 14, y);
+      y += 7;
+    }
+
+    // Date
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(120);
+    doc.text(`Generated on ${dateStr}`, 14, y);
+    doc.setTextColor(0);
+    y += 7;
+
+    // Summary
+    const paid = filteredBills.filter(b => b.paymentStatus === 'paid');
+    const revenue = paid.reduce((s, b) => s + b.totalAmount, 0);
+    doc.setFontSize(9);
+    doc.text(`Total Bills: ${filteredBills.length}   Paid: ${paid.length}   Revenue: Rs.${revenue.toFixed(2)}`, 14, y);
+    y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Bill #', 'Customer', 'Table', 'Amount (Rs.)', 'Status', 'Payment', 'Date']],
+      body: filteredBills.map(b => [
+        b.billNumber,
+        b.customerName,
+        b.tableNumber,
+        b.totalAmount.toFixed(2),
+        b.paymentStatus.toUpperCase(),
+        b.paymentMethod || '—',
+        new Date(b.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      ]),
+      headStyles: { fillColor: [234, 88, 12], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fontSize: 8.5 },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      columnStyles: {
+        0: { cellWidth: 32 },
+        3: { halign: 'right' },
+        4: { halign: 'center' },
+        5: { halign: 'center' },
+      },
+      margin: { left: 14, right: 14 },
+    });
+
+    doc.save(`bills-${new Date().toISOString().split('T')[0]}.pdf`);
+    toast.success('Bills exported to PDF');
+  };
+
+  const exportToExcel = () => {
+    const rows = filteredBills.map(b => ({
+      'Bill Number': b.billNumber,
+      'Customer': b.customerName,
+      'Table': b.tableNumber,
+      'Subtotal (Rs.)': parseFloat(b.subtotal?.toFixed(2) ?? b.totalAmount.toFixed(2)),
+      'Tax (Rs.)': parseFloat((b.taxAmount ?? 0).toFixed(2)),
+      'Total Amount (Rs.)': parseFloat(b.totalAmount.toFixed(2)),
+      'Status': b.paymentStatus,
+      'Payment Method': b.paymentMethod || '',
+      'Date': new Date(b.createdAt).toLocaleString(),
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{ wch: 28 }, { wch: 20 }, { wch: 8 }, { wch: 14 }, { wch: 12 }, { wch: 16 }, { wch: 12 }, { wch: 16 }, { wch: 22 }];
+    const wb = XLSX.utils.book_new();
+    // Bills sheet first so it opens by default
+    XLSX.utils.book_append_sheet(wb, ws, 'Bills');
+    // Summary sheet second
+    const paidBills = filteredBills.filter(b => b.paymentStatus === 'paid');
+    const revenue = paidBills.reduce((s, b) => s + b.totalAmount, 0);
+    const summaryData: (string | number)[][] = [
+      ['Bills Report'],
+      [],
+      ...(shopName ? [['Shop', shopName]] : []),
+      ['Generated', new Date().toLocaleString()],
+      [],
+      ['Total Bills', filteredBills.length],
+      ['Paid Bills', paidBills.length],
+      ['Pending Bills', filteredBills.filter(b => b.paymentStatus === 'pending').length],
+      ['Total Revenue (Rs.)', parseFloat(revenue.toFixed(2))],
+    ];
+    const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+    summaryWs['!cols'] = [{ wch: 20 }, { wch: 30 }];
+    XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary');
+    XLSX.writeFile(wb, `bills-${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Bills exported to Excel');
+  };  const billColumns: ColumnDef<Bill>[] = [
     { id: 'billNumber', header: 'Bill #', headerClassName: 'w-[120px]', accessorFn: (row) => row.billNumber, cell: (row) => <span className="font-mono text-sm font-medium">{row.billNumber}</span> },
     { id: 'customer', header: 'Customer', accessorFn: (row) => row.customerName, cell: (row) => <span className="font-medium">{row.customerName}</span> },
     { id: 'table', header: 'Table', headerClassName: 'w-[80px] text-center', cellClassName: 'text-center', accessorFn: (row) => row.tableNumber, cell: (row) => <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary font-bold text-sm">{row.tableNumber}</span> },
@@ -138,9 +248,24 @@ export function BillingManagementPage() {
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground hidden sm:block">Manage customer bills and payments</p>
         <div className="flex items-center gap-2 ml-auto">
-          <Button onClick={exportToCSV} variant="outline" size="sm" disabled={filteredBills.length === 0}>
-            <Download className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Export CSV</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={filteredBills.length === 0}>
+                <FileDown className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Export</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem onClick={exportToPDF} className="gap-2 cursor-pointer">
+                <FileText className="h-4 w-4 text-red-500" /> Export as PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportToExcel} className="gap-2 cursor-pointer">
+                <FileSpreadsheet className="h-4 w-4 text-green-600" /> Export as Excel
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportToCSV} className="gap-2 cursor-pointer">
+                <Download className="h-4 w-4 text-blue-500" /> Export as CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={() => fetchBills(pagination.currentPage, false)} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Refresh</span>
           </Button>
