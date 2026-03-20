@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { orderService, type Order } from "@/services/orderService";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { useNotificationSoundSettings } from "@/contexts/NotificationSoundContext";
 import { toast } from "sonner";
 
 type ChefTab = "pending" | "approved";
@@ -29,6 +30,7 @@ export function ChefOrdersPage() {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [completingOrderId, setCompletingOrderId] = useState<string | null>(null);
   const [counts, setCounts] = useState({ pending: 0, approved: 0 });
+  const { playSound } = useNotificationSoundSettings();
 
   const fetchOrders = useCallback(async () => {
     if (!shopId) return;
@@ -51,10 +53,33 @@ export function ChefOrdersPage() {
   }, [shopId]);
 
   const handleWebSocketEvent = useCallback(
-    (event: string, _data: any) => {
-      if (event === "new_order" || event === "order_status_updated") fetchOrders();
+    (event: string, data: any) => {
+      if (event === "new_order") {
+        playSound();
+        toast.info(
+          `🆕 New order from ${data.customerName} — Table ${data.tableNumber}`,
+          { duration: 5000 }
+        );
+        fetchOrders();
+      }
+      if (event === "order_status_updated") {
+        // Only notify for status changes the chef didn't initiate
+        if (data.status === "approved") {
+          playSound();
+          toast.success(
+            `✅ Order approved — Table ${data.tableNumber} (${data.customerName})`,
+            { duration: 5000 }
+          );
+        } else if (data.status === "rejected") {
+          toast.info(
+            `❌ Order rejected — Table ${data.tableNumber} (${data.customerName})`,
+            { duration: 4000 }
+          );
+        }
+        fetchOrders();
+      }
     },
-    [fetchOrders]
+    [fetchOrders, playSound]
   );
 
   useWebSocket({ room: shopId, roomType: "shop", onEvent: handleWebSocketEvent });
