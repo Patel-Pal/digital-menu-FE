@@ -26,9 +26,10 @@ interface BillDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onBillUpdate: () => void;
+  isCustomer?: boolean;
 }
 
-export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDetailModalProps) {
+export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate, isCustomer = false }: BillDetailModalProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(bill.paymentMethod);
 
@@ -146,48 +147,48 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md max-h-[85vh] overflow-y-auto rounded-2xl p-3 sm:p-6 mx-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Receipt className="h-5 w-5" />
             Bill Details
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {/* Bill Header */}
           <Card className="border-0 bg-muted/30">
-            <CardContent className="p-4">
-              <div className="text-center space-y-2 mb-4">
-                <h3 className="font-bold text-lg">BILL</h3>
-                <p className="text-sm font-mono">{bill.billNumber}</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="text-center space-y-1.5 mb-3">
+                <h3 className="font-bold text-base sm:text-lg">BILL</h3>
+                <p className="text-xs sm:text-sm font-mono break-all">{bill.billNumber}</p>
                 <Badge className={`text-xs ${getStatusColor(bill.paymentStatus)} rounded-full border`}>
                   {getStatusIcon(bill.paymentStatus)}
                   <span className="ml-1 capitalize">{bill.paymentStatus}</span>
                 </Badge>
               </div>
               
-              <Separator className="my-3" />
+              <Separator className="my-2.5" />
               
-              <div className="space-y-2 text-sm">
+              <div className="space-y-1.5 text-xs sm:text-sm">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
+                  <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                   <span className="text-muted-foreground">Customer:</span>
-                  <span className="font-medium">{bill.customerName}</span>
+                  <span className="font-medium truncate">{bill.customerName}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Hash className="h-4 w-4 text-muted-foreground" />
+                  <Hash className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                   <span className="text-muted-foreground">Table:</span>
                   <span className="font-medium">{bill.tableNumber}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                   <span className="text-muted-foreground">Created:</span>
                   <span className="font-medium">{formatDate(bill.createdAt)}</span>
                 </div>
                 {bill.paidAt && (
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <CheckCircle className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
                     <span className="text-muted-foreground">Paid:</span>
                     <span className="font-medium">{formatDate(bill.paidAt)}</span>
                   </div>
@@ -203,18 +204,18 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
 
           {/* Bill Items */}
           <Card className="border-0 bg-muted/20">
-            <CardContent className="p-4">
-              <h4 className="font-semibold mb-3">Items ({bill.items.length})</h4>
-              <div className="space-y-3">
+            <CardContent className="p-3 sm:p-4">
+              <h4 className="font-semibold mb-2 text-sm sm:text-base">Items ({bill.items.length})</h4>
+              <div className="space-y-2">
                 {bill.items.map((item, index) => (
-                  <div key={index} className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{item.name}</p>
+                  <div key={index} className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-xs sm:text-sm truncate">{item.name}</p>
                       <p className="text-xs text-muted-foreground">
                         ₹{item.price.toFixed(2)} × {item.quantity}
                       </p>
                     </div>
-                    <span className="font-medium text-sm">₹{item.totalPrice.toFixed(2)}</span>
+                    <span className="font-medium text-xs sm:text-sm flex-shrink-0">₹{item.totalPrice.toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -223,8 +224,8 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
 
           {/* Bill Summary */}
           <Card className="border-0 bg-muted/30">
-            <CardContent className="p-4">
-              <div className="space-y-2 text-sm">
+            <CardContent className="p-3 sm:p-4">
+              <div className="space-y-1.5 text-xs sm:text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
                   <span>₹{bill.subtotal.toFixed(2)}</span>
@@ -234,7 +235,7 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
                   <span>₹{bill.taxAmount.toFixed(2)}</span>
                 </div>
                 <Separator />
-                <div className="flex justify-between font-bold text-lg">
+                <div className="flex justify-between font-bold text-base sm:text-lg">
                   <span>Total:</span>
                   <span>₹{bill.totalAmount.toFixed(2)}</span>
                 </div>
@@ -244,9 +245,9 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
 
           {/* Order References */}
           <Card className="border-0 bg-muted/20">
-            <CardContent className="p-4">
-              <h4 className="font-semibold mb-2">Related Orders</h4>
-              <div className="flex flex-wrap gap-2">
+            <CardContent className="p-3 sm:p-4">
+              <h4 className="font-semibold mb-2 text-sm sm:text-base">Related Orders</h4>
+              <div className="flex flex-wrap gap-1.5">
                 {bill.orderIds.map((orderId, index) => (
                   <Badge key={index} variant="outline" className="text-xs font-mono">
                     #{orderId.slice(-6)}
@@ -257,21 +258,21 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
           </Card>
 
           {/* Actions */}
-          {bill.paymentStatus === 'pending' && (
-            <div className="space-y-4">
+          {!isCustomer && bill.paymentStatus === 'pending' && (
+            <div className="space-y-3">
               {/* Payment Method Selection */}
               <Card className="border-0 bg-muted/30">
-                <CardContent className="p-4">
-                  <h4 className="font-semibold mb-3 text-center">Select Payment Method</h4>
+                <CardContent className="p-3 sm:p-4">
+                  <h4 className="font-semibold mb-2 text-center text-sm sm:text-base">Select Payment Method</h4>
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       variant={selectedPaymentMethod === 'cash' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => handlePaymentMethodUpdate('cash')}
                       disabled={isUpdating}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-1.5 text-xs sm:text-sm"
                     >
-                      <Banknote className="h-4 w-4" />
+                      <Banknote className="h-3.5 w-3.5" />
                       Cash
                     </Button>
                     <Button
@@ -279,9 +280,9 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
                       size="sm"
                       onClick={() => handlePaymentMethodUpdate('card')}
                       disabled={isUpdating}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-1.5 text-xs sm:text-sm"
                     >
-                      <CreditCard className="h-4 w-4" />
+                      <CreditCard className="h-3.5 w-3.5" />
                       Card
                     </Button>
                     <Button
@@ -289,9 +290,9 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
                       size="sm"
                       onClick={() => handlePaymentMethodUpdate('upi')}
                       disabled={isUpdating}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-1.5 text-xs sm:text-sm"
                     >
-                      <Smartphone className="h-4 w-4" />
+                      <Smartphone className="h-3.5 w-3.5" />
                       UPI
                     </Button>
                     <Button
@@ -299,9 +300,9 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
                       size="sm"
                       onClick={() => handlePaymentMethodUpdate('online')}
                       disabled={isUpdating}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-1.5 text-xs sm:text-sm"
                     >
-                      <DollarSign className="h-4 w-4" />
+                      <DollarSign className="h-3.5 w-3.5" />
                       Online
                     </Button>
                   </div>
@@ -313,17 +314,19 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
                 <Button
                   onClick={handlePrint}
                   variant="outline"
-                  className="flex-1"
+                  size="sm"
+                  className="flex-1 text-xs sm:text-sm"
                 >
-                  <Printer className="h-4 w-4 mr-2" />
-                  Print Bill
+                  <Printer className="h-3.5 w-3.5 mr-1.5" />
+                  Print
                 </Button>
                 <Button
                   onClick={() => handlePaymentStatusUpdate('paid')}
                   disabled={isUpdating}
-                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  size="sm"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-xs sm:text-sm"
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
                   {isUpdating ? 'Processing...' : 'Confirm Payment'}
                 </Button>
               </div>
@@ -331,10 +334,10 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
                 onClick={() => handlePaymentStatusUpdate('failed')}
                 disabled={isUpdating}
                 variant="destructive"
-                className="w-full"
+                className="w-full text-xs sm:text-sm"
                 size="sm"
               >
-                <XCircle className="h-4 w-4 mr-2" />
+                <XCircle className="h-3.5 w-3.5 mr-1.5" />
                 Mark as Failed
               </Button>
             </div>
@@ -342,12 +345,12 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
 
           {bill.paymentStatus === 'paid' && (
             <Card className="border-0 bg-green-50">
-              <CardContent className="p-4 text-center">
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
+              <CardContent className="p-3 sm:p-4 text-center">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-2">
+                  <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                 </div>
-                <p className="text-green-600 font-medium mb-1">Payment Completed</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-green-600 font-medium mb-1 text-sm">Payment Completed</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Paid via {bill.paymentMethod.toUpperCase()}
                   {bill.paidAt && ` on ${formatDate(bill.paidAt)}`}
                 </p>
@@ -357,32 +360,36 @@ export function BillDetailModal({ bill, isOpen, onClose, onBillUpdate }: BillDet
 
           {bill.paymentStatus === 'failed' && (
             <Card className="border-0 bg-red-50">
-              <CardContent className="p-4 text-center">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
-                  <XCircle className="h-6 w-6 text-red-600" />
+              <CardContent className="p-3 sm:p-4 text-center">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-2">
+                  <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
                 </div>
-                <p className="text-red-600 font-medium mb-3">Payment Failed</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePaymentStatusUpdate('paid')}
-                  disabled={isUpdating}
-                  className="border-green-200 text-green-700 hover:bg-green-50"
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Retry Payment
-                </Button>
+                <p className="text-red-600 font-medium mb-2 text-sm">Payment Failed</p>
+                {!isCustomer && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePaymentStatusUpdate('paid')}
+                    disabled={isUpdating}
+                    className="border-green-200 text-green-700 hover:bg-green-50 text-xs sm:text-sm"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                    Retry Payment
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}
 
-          <Button onClick={onClose} variant="outline" className="w-full">
+          <Button onClick={onClose} variant="outline" className="w-full text-sm" size="sm">
             Close
           </Button>
-          <Button onClick={handlePrint} variant="ghost" className="w-full">
-            <Printer className="h-4 w-4 mr-2" />
-            Print Bill
-          </Button>
+          {!isCustomer && (
+            <Button onClick={handlePrint} variant="ghost" className="w-full text-sm" size="sm">
+              <Printer className="h-3.5 w-3.5 mr-1.5" />
+              Print Bill
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
