@@ -5,6 +5,7 @@ import { Receipt, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { Bill, billingService } from '@/services/billingService';
 import { useOrder } from '@/contexts/OrderContext';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { useNotificationSoundSettings } from '@/contexts/NotificationSoundContext';
 import { Button } from '@/components/ui/button';
 import { BillDetailModal } from './BillDetailModal';
 import { toast } from 'sonner';
@@ -18,6 +19,7 @@ export function CustomerBillHistory({ shopId }: CustomerBillHistoryProps) {
   const [loading, setLoading] = useState(true);
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const { deviceId } = useOrder();
+  const { playSound } = useNotificationSoundSettings();
 
   const fetchBills = useCallback(async () => {
     try {
@@ -33,10 +35,12 @@ export function CustomerBillHistory({ shopId }: CustomerBillHistoryProps) {
   const handleWebSocketEvent = useCallback((event: string, data: any) => {
     console.log('WebSocket event received:', event, data);
     if (event === 'bill_generated') {
+      playSound();
       toast.success(`Bill generated - ₹${data.totalAmount}`);
       fetchBills();
     }
     if (event === 'payment_received') {
+      playSound();
       toast.success(`Payment confirmed! ₹${data.amount} via ${data.paymentMethod?.toUpperCase()}`);
       // Update bill status in state immediately
       setBills(prev => prev.map(bill =>
@@ -45,7 +49,7 @@ export function CustomerBillHistory({ shopId }: CustomerBillHistoryProps) {
           : bill
       ));
     }
-  }, [fetchBills]);
+  }, [fetchBills, playSound]);
 
   // WebSocket connection for real-time updates
   useWebSocket({
@@ -130,30 +134,33 @@ export function CustomerBillHistory({ shopId }: CustomerBillHistoryProps) {
       <div className="space-y-3">
         {bills.map((bill) => (
           <Card key={bill._id} className="border-0 shadow-sm bg-card rounded-xl overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Receipt className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-semibold font-mono text-sm">{bill.billNumber}</span>
-                    <Badge className={`text-xs ${getStatusColor(bill.paymentStatus)} rounded-full border`}>
-                      {getStatusIcon(bill.paymentStatus)}
-                      <span className="ml-1 capitalize">{bill.paymentStatus}</span>
-                    </Badge>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex flex-col gap-2 mb-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <Receipt className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="font-semibold font-mono text-xs sm:text-sm truncate">{bill.billNumber}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="font-bold text-base sm:text-lg">₹{bill.totalAmount.toFixed(2)}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => setSelectedBill(bill)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Table {bill.tableNumber} • {formatDate(bill.createdAt)} {formatTime(bill.createdAt)}
                   </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-lg">₹{bill.totalAmount.toFixed(2)}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedBill(bill)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
+                  <Badge className={`text-xs ${getStatusColor(bill.paymentStatus)} rounded-full border flex-shrink-0`}>
+                    {getStatusIcon(bill.paymentStatus)}
+                    <span className="ml-1 capitalize">{bill.paymentStatus}</span>
+                  </Badge>
                 </div>
               </div>
 
@@ -200,6 +207,7 @@ export function CustomerBillHistory({ shopId }: CustomerBillHistoryProps) {
           bill={selectedBill}
           isOpen={!!selectedBill}
           onClose={() => setSelectedBill(null)}
+          isCustomer={true}
           onBillUpdate={() => {
             fetchBills();
             setSelectedBill(null);
