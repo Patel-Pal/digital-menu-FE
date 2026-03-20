@@ -19,6 +19,7 @@ import { menuItemService } from "@/services/menuItemService";
 import { categoryService, type Category } from "@/services/categoryService";
 import { shopService, type Shop } from "@/services/shopService";
 import { reviewService } from "@/services/reviewService";
+import { orderService } from "@/services/orderService";
 import { useMenuTheme, menuThemes, MenuTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrder } from "@/contexts/OrderContext";
@@ -63,6 +64,7 @@ export function CustomerMenuPage() {
   const [showSplash, setShowSplash] = useState(true);
   const [averageRating, setAverageRating] = useState<number | undefined>(undefined);
   const [totalReviews, setTotalReviews] = useState<number | undefined>(undefined);
+  const [hasUnbilledOrders, setHasUnbilledOrders] = useState(false);
 
   const setActiveTab = (tab: ViewTab) => {
     setActiveTabState(tab);
@@ -77,7 +79,7 @@ export function CustomerMenuPage() {
   const { menuTheme, setMenuTheme } = useMenuTheme();
   const theme = menuThemes[menuTheme];
   const { user } = useAuth();
-  const { cart, addToCart, getTotalItems, getTotalAmount } = useOrder();
+  const { cart, addToCart, getTotalItems, getTotalAmount, deviceId } = useOrder();
   const debouncedSearch = useDebounce(searchQuery, 300);
   
   // For demo, use current user's shopId or a default
@@ -88,6 +90,25 @@ export function CustomerMenuPage() {
       fetchData();
     }
   }, [currentShopId]);
+
+  // Check for unbilled orders when orders tab is shown or deviceId changes
+  useEffect(() => {
+    if (deviceId && currentShopId) {
+      checkUnbilledOrders();
+    }
+  }, [deviceId, currentShopId, activeTab]);
+
+  const checkUnbilledOrders = async () => {
+    try {
+      const response = await orderService.getCustomerOrders(deviceId, currentShopId);
+      const unbilled = (response.data || []).filter(
+        (order: any) => (!order.billingStatus || order.billingStatus === 'unbilled') && order.status !== 'rejected'
+      );
+      setHasUnbilledOrders(unbilled.length > 0);
+    } catch {
+      setHasUnbilledOrders(false);
+    }
+  };
 
   // Separate effect for tracking scans - ALWAYS track on first load
   useEffect(() => {
@@ -327,9 +348,8 @@ export function CustomerMenuPage() {
                             onClick={(e) => {
                               e.stopPropagation();
                               addToCart(item);
-                              // Haptic feedback on mobile
                               if (navigator.vibrate) navigator.vibrate(50);
-                              toast.success(`${item.name} added to cart!`);
+                              toast.success(`${item.name} added to cart`);
                             }}
                           >
                             <Plus className="h-4 w-4" />
@@ -367,7 +387,8 @@ export function CustomerMenuPage() {
         </div>
       ) : activeTab === "orders" ? (
         <div className="space-y-4">
-          {/* Generate Bill Button */}
+          {/* Generate Bill Button - only show when there are unbilled orders */}
+          {hasUnbilledOrders && (
           <Card className="border-0 shadow-sm bg-card rounded-xl">
             <CardContent className="p-5">
               <div className="flex items-center justify-between gap-4">
@@ -385,6 +406,7 @@ export function CustomerMenuPage() {
               </div>
             </CardContent>
           </Card>
+          )}
           
           {/* Orders and Bills Tabs */}
           <Tabs value={ordersSubTab} onValueChange={setOrdersSubTab} className="w-full">
@@ -457,23 +479,6 @@ export function CustomerMenuPage() {
       )}
       </main>
 
-      {/* Sticky Cart Summary Bar */}
-      {getTotalItems() > 0 && activeTab === "menu" && (
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="fixed bottom-14 left-0 right-0 z-30 px-3 pb-1"
-        >
-          <button
-            onClick={() => setShowOrderModal(true)}
-            className="w-full flex items-center justify-between bg-primary text-primary-foreground rounded-xl px-4 py-3 shadow-lg"
-          >
-            <span className="text-sm font-medium">{getTotalItems()} item{getTotalItems() > 1 ? 's' : ''}</span>
-            <span className="text-sm font-bold">₹{getTotalAmount().toFixed(2)} — View Cart</span>
-          </button>
-        </motion.div>
-      )}
-
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-t safe-area-pb">
         <div className="flex">
@@ -531,20 +536,25 @@ export function CustomerMenuPage() {
         </div>
       </div>
 
-      {/* Floating Order Button */}
+      {/* Floating Order Button — draggable */}
       {getTotalItems() > 0 && (
         <motion.div
+          drag
+          dragConstraints={{ top: -window.innerHeight + 140, bottom: 0, left: -window.innerWidth + 80, right: 0 }}
+          dragElastic={0.1}
+          dragMomentum={false}
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="fixed bottom-20 right-4 z-40"
+          whileDrag={{ scale: 1.1 }}
+          className="fixed bottom-20 right-4 z-40 cursor-grab active:cursor-grabbing touch-none"
         >
           <Button
             onClick={() => setShowOrderModal(true)}
-            className="h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 relative"
-            size="lg"
+            className="h-11 w-11 rounded-full shadow-lg bg-primary hover:bg-primary/90 relative p-0"
+            size="sm"
           >
-            <ShoppingCart className="h-6 w-6" />
-            <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center min-w-[20px] border-2 border-background">
+            <ShoppingCart className="h-4 w-4" />
+            <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center min-w-[16px] border-2 border-background">
               {getTotalItems() > 99 ? '99+' : getTotalItems()}
             </span>
           </Button>
@@ -570,7 +580,7 @@ export function CustomerMenuPage() {
       {/* Bill Generation Modal */}
       <BillGenerationModal
         isOpen={showBillModal}
-        onClose={() => setShowBillModal(false)}
+        onClose={() => { setShowBillModal(false); checkUnbilledOrders(); }}
         shopId={currentShopId}
         tableNumber={shop?.name || "1"}
       />
