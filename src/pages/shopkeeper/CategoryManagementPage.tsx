@@ -122,7 +122,7 @@ export function CategoryManagementPage() {
     },
   ], []);
 
-  const CategoryFormFields = () => (
+  const categoryFormFields = (
     <div className="space-y-4">
       <div><Label htmlFor="cat-name">Category Name</Label><Input id="cat-name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., Appetizers" /></div>
       <div><Label htmlFor="cat-desc">Description</Label><Textarea id="cat-desc" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Brief description" /></div>
@@ -144,7 +144,7 @@ export function CategoryManagementPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Create New Category</DialogTitle><DialogDescription>Add a new category to organize your menu items</DialogDescription></DialogHeader>
-            <CategoryFormFields />
+            {categoryFormFields}
             <DialogFooter><Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button><Button onClick={handleCreate}>Create Category</Button></DialogFooter>
           </DialogContent>
         </Dialog>
@@ -199,7 +199,7 @@ export function CategoryManagementPage() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Edit Category</DialogTitle><DialogDescription>Update category information</DialogDescription></DialogHeader>
-          <CategoryFormFields />
+          {categoryFormFields}
           <DialogFooter><Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button><Button onClick={handleUpdate}>Update Category</Button></DialogFooter>
         </DialogContent>
       </Dialog>
