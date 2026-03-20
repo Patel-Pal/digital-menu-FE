@@ -87,14 +87,16 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
                   This will consolidate all your completed orders into a single bill.
                 </p>
               </div>
-              <Button 
-                onClick={handleGenerateBill}
-                disabled={isGenerating}
-                className="w-full"
-                size="lg"
-              >
-                {isGenerating ? 'Generating Bill...' : 'Generate Bill'}
-              </Button>
+              <div className="px-2 pb-2">
+                <Button 
+                  onClick={handleGenerateBill}
+                  disabled={isGenerating}
+                  className="w-full py-1 text-base"
+                  size="lg"
+                >
+                  {isGenerating ? 'Generating Bill...' : 'Generate Bill'}
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -188,13 +190,15 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
                 </div>
               </div>
 
-              <Button 
-                onClick={handleBillGenerated} 
-                className="w-full"
-                size="lg"
-              >
-                Continue
-              </Button>
+              <div className="px-4 pb-2">
+                <Button 
+                  onClick={handleBillGenerated} 
+                  className="w-full py-1 text-base"
+                  size="lg"
+                >
+                  Continue
+                </Button>
+              </div>
             </div>
           )}
         </div>
