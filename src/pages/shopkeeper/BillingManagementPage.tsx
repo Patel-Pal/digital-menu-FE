@@ -38,6 +38,14 @@ export function BillingManagementPage() {
   }, []);
 
   const handleWebSocketEvent = useCallback((event: string, data: any) => {
+    if (event === 'bill_generated') {
+      playSound();
+      toast.info(
+        `🧾 New bill request from ${data.customerName} — Table ${data.tableNumber} — ₹${data.totalAmount?.toFixed(2)}`,
+        { duration: 6000 }
+      );
+      fetchBills(pagination.currentPage);
+    }
     if (event === 'payment_received') {
       playSound();
       toast.success(`Payment received from ${data.customerName} - ₹${data.amount}`);
