@@ -6,6 +6,7 @@ import { Order } from '@/services/orderService';
 import { orderService } from '@/services/orderService';
 import { useOrder } from '@/contexts/OrderContext';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { useNotificationSoundSettings } from '@/contexts/NotificationSoundContext';
 import { OrderApprovedPopup } from './OrderApprovedPopup';
 import { OrderTimeline } from './OrderTimeline';
 import { toast } from 'sonner';
@@ -18,6 +19,7 @@ export function UnbilledOrders({ shopId }: UnbilledOrdersProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const { deviceId } = useOrder();
+  const { playSound } = useNotificationSoundSettings();
 
   // Animated popup state
   const [approvedPopup, setApprovedPopup] = useState<{
@@ -28,6 +30,9 @@ export function UnbilledOrders({ shopId }: UnbilledOrdersProps) {
 
   const handleWebSocketEvent = useCallback((event: string, data: any) => {
     if (event === 'order_status_updated') {
+      // Play notification sound for any status change
+      playSound();
+
       // Update the order in state immediately
       setOrders(prev => prev.map(order =>
         order._id === data.orderId
@@ -50,9 +55,10 @@ export function UnbilledOrders({ shopId }: UnbilledOrdersProps) {
     }
 
     if (event === 'bill_generated') {
+      playSound();
       fetchUnbilledOrders(); // Refresh to remove billed orders
     }
-  }, []);
+  }, [playSound]);
 
   // WebSocket connection for real-time updates
   useWebSocket({
