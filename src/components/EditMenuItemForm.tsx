@@ -57,7 +57,7 @@ export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuI
         name: item.name,
         description: item.description || "",
         price: item.price,
-        categoryId: item.categoryId._id,
+        categoryId: item.categoryId?._id ?? item.categoryId ?? "",
         available: item.available,
         popular: item.popular,
         vegetarian: item.vegetarian,
@@ -68,6 +68,15 @@ export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuI
       setImagePreview(item.image || "");
     }
   }, [isOpen, item]);
+
+  // Re-apply categoryId once categories are loaded (fixes race condition where
+  // Select renders before options exist and drops the selected value)
+  useEffect(() => {
+    if (categories.length > 0 && item) {
+      const categoryId = item.categoryId?._id ?? item.categoryId ?? "";
+      setFormData((prev) => ({ ...prev, categoryId }));
+    }
+  }, [categories]);
 
   const fetchCategories = async () => {
     try {
