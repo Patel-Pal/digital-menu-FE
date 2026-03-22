@@ -31,7 +31,7 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    price: 0,
+    price: "",
     categoryId: "",
     available: true,
     popular: false,
@@ -115,6 +115,7 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
 
       const data: CreateMenuItemData = {
         ...formData,
+        price: parseFloat(formData.price) || 0,
         image: imageUrl,
         ingredients,
         shopId
@@ -136,7 +137,7 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
     setFormData({
       name: "",
       description: "",
-      price: 0,
+      price: "",
       categoryId: "",
       available: true,
       popular: false,
@@ -212,8 +213,9 @@ export function AddMenuItemForm({ isOpen, onClose, onSuccess }: AddMenuItemFormP
                       id="price"
                       type="number"
                       step="0.01"
+                      min="0"
                       value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       placeholder="0.00"
                       required
                     />

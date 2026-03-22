@@ -32,7 +32,7 @@ export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuI
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    price: 0,
+    price: "",
     categoryId: "",
     available: true,
     popular: false,
@@ -56,7 +56,7 @@ export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuI
       setFormData({
         name: item.name,
         description: item.description || "",
-        price: item.price,
+        price: item.price?.toString() || "",
         categoryId: item.categoryId?._id ?? item.categoryId ?? "",
         available: item.available,
         popular: item.popular,
@@ -140,6 +140,7 @@ export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuI
 
       const data: UpdateMenuItemData = {
         ...formData,
+        price: parseFloat(formData.price) || 0,
         image: imageUrl,
         ingredients
       };
@@ -217,8 +218,9 @@ export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuI
                       id="price"
                       type="number"
                       step="0.01"
+                      min="0"
                       value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       placeholder="0.00"
                       required
                     />

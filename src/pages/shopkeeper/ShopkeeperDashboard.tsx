@@ -26,9 +26,13 @@ export function ShopkeeperDashboard() {
   const { analytics } = useAnalytics();
   const [shop, setShop] = useState<Shop | null>(null);
   const [popularItems, setPopularItems] = useState<MenuItem[]>([]);
+  const [totalMenuItems, setTotalMenuItems] = useState(0);
   const [todayRevenue, setTodayRevenue] = useState(0);
+  const [yesterdayRevenue, setYesterdayRevenue] = useState(0);
   const [activeWaiterCount, setActiveWaiterCount] = useState(0);
+  const [totalWaiterCount, setTotalWaiterCount] = useState(0);
   const [activeChefCount, setActiveChefCount] = useState(0);
+  const [totalChefCount, setTotalChefCount] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,16 +43,20 @@ export function ShopkeeperDashboard() {
         // Use user.shopId to fetch menu items (this is how they're stored)
         if (user?.shopId) {
           const menuResponse = await menuItemService.getMenuItemsByShop(user.shopId);
-          setPopularItems(menuResponse.data?.slice(0, 3) || []);
+          const allItems = menuResponse.data || [];
+          setTotalMenuItems(allItems.length);
+          setPopularItems(allItems.slice(0, 3));
 
-          // Fetch today's revenue from paid bills
+          // Fetch today's and yesterday's revenue from paid bills
           try {
             const billsResponse = await billingService.getShopBills(user.shopId, 'paid', 1, 100);
             const today = new Date().toDateString();
-            const todayBills = (billsResponse.data || []).filter(
-              (b: any) => new Date(b.createdAt).toDateString() === today
-            );
+            const yesterday = new Date(Date.now() - 86400000).toDateString();
+            const bills = billsResponse.data || [];
+            const todayBills = bills.filter((b: any) => new Date(b.createdAt).toDateString() === today);
+            const yesterdayBills = bills.filter((b: any) => new Date(b.createdAt).toDateString() === yesterday);
             setTodayRevenue(todayBills.reduce((sum: number, b: any) => sum + b.totalAmount, 0));
+            setYesterdayRevenue(yesterdayBills.reduce((sum: number, b: any) => sum + b.totalAmount, 0));
           } catch (e) {
             // billing may not be available
           }
@@ -56,7 +64,9 @@ export function ShopkeeperDashboard() {
           // Fetch active waiter count
           try {
             const waiters = await waiterService.getShopWaiters(user.shopId);
-            setActiveWaiterCount(waiters.filter((w: any) => w.isActive).length);
+            const waiterList = Array.isArray(waiters) ? waiters : (waiters as any).data ?? [];
+            setTotalWaiterCount(waiterList.length);
+            setActiveWaiterCount(waiterList.filter((w: any) => w.isActive).length);
           } catch (e) {
             // waiter service may not be available
           }
@@ -65,6 +75,7 @@ export function ShopkeeperDashboard() {
           try {
             const chefs = await chefService.getShopChefs(user.shopId);
             const raw = Array.isArray(chefs) ? chefs : (chefs as any).data ?? [];
+            setTotalChefCount(raw.length);
             setActiveChefCount(raw.filter((c: any) => c.isActive).length);
           } catch (e) {
             // chef service may not be available
@@ -130,30 +141,32 @@ export function ShopkeeperDashboard() {
         />
         <StatCard
           title="Menu Items"
-          value={popularItems.length.toString()}
-          change={`${popularItems.length} items available`}
+          value={totalMenuItems.toString()}
+          change={`${totalMenuItems} items available`}
           changeType="neutral"
           icon={<TrendingUp className="h-5 w-5" />}
         />
         <StatCard
           title="Active Waiters"
           value={activeWaiterCount.toString()}
-          change={`${activeWaiterCount} on duty`}
+          change={`${activeWaiterCount} of ${totalWaiterCount} on duty`}
           changeType={activeWaiterCount > 0 ? "positive" : "neutral"}
           icon={<Users className="h-5 w-5" />}
         />
         <StatCard
           title="Active Chefs"
           value={activeChefCount.toString()}
-          change={`${activeChefCount} on duty`}
+          change={`${activeChefCount} of ${totalChefCount} on duty`}
           changeType={activeChefCount > 0 ? "positive" : "neutral"}
           icon={<ChefHat className="h-5 w-5" />}
         />
         <StatCard
           title="Today's Revenue"
           value={`₹${todayRevenue.toFixed(2)}`}
-          change="From paid bills today"
-          changeType={todayRevenue > 0 ? "positive" : "neutral"}
+          change={yesterdayRevenue > 0
+            ? `${todayRevenue >= yesterdayRevenue ? '+' : ''}${((todayRevenue - yesterdayRevenue) / yesterdayRevenue * 100).toFixed(1)}% vs yesterday`
+            : todayRevenue > 0 ? 'No revenue yesterday' : 'No revenue yet today'}
+          changeType={todayRevenue > yesterdayRevenue ? "positive" : todayRevenue < yesterdayRevenue ? "negative" : "neutral"}
           icon={<IndianRupee className="h-5 w-5" />}
           className="col-span-2 sm:col-span-4"
         />

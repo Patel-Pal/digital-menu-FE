@@ -155,6 +155,20 @@ export function BillingAnalyticsPage() {
 
   const formatCurrency = (amount: number) => `₹${amount.toFixed(2)}`;
 
+  /** Calculate % change comparing first half vs second half of chart data */
+  const calcTrend = (extractor: (d: BillingAnalytics['chartData'][0]) => number): { change: string; up: boolean } => {
+    if (!analytics || analytics.chartData.length < 2) return { change: '0.0%', up: true };
+    const data = analytics.chartData;
+    const mid = Math.floor(data.length / 2);
+    const firstHalf = data.slice(0, mid);
+    const secondHalf = data.slice(mid);
+    const firstSum = firstHalf.reduce((s, d) => s + extractor(d), 0);
+    const secondSum = secondHalf.reduce((s, d) => s + extractor(d), 0);
+    if (firstSum === 0) return { change: secondSum > 0 ? '+100%' : '0.0%', up: secondSum >= 0 };
+    const pct = ((secondSum - firstSum) / firstSum) * 100;
+    return { change: `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`, up: pct >= 0 };
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     if (period === 'daily') return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -194,6 +208,11 @@ export function BillingAnalyticsPage() {
   const revenueData = analytics.chartData.map((d) => d.revenue);
   const totalBillsData = analytics.chartData.map((d) => d.totalBills);
   const paidBillsData = analytics.chartData.map((d) => d.paidBills);
+
+  const revenueTrend = calcTrend((d) => d.revenue);
+  const billsTrend = calcTrend((d) => d.totalBills);
+  const avgTrend = calcTrend((d) => d.avgAmount);
+  const paymentRateTrend = calcTrend((d) => d.totalBills > 0 ? (d.paidBills / d.totalBills) * 100 : 0);
 
   return (
     <ThemeProvider theme={muiTheme}>
@@ -237,10 +256,10 @@ export function BillingAnalyticsPage() {
       {/* Summary Cards */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { icon: DollarSign, bg: 'bg-green-100', iconColor: 'text-green-600', label: 'Total Revenue', value: formatCurrency(analytics.summary.totalRevenue), change: '+12.5%', up: true },
-          { icon: Receipt, bg: 'bg-blue-100', iconColor: 'text-blue-600', label: 'Total Bills', value: analytics.summary.totalBills, change: '+8.2%', up: true },
-          { icon: BarChart3, bg: 'bg-purple-100', iconColor: 'text-purple-600', label: 'Avg Bill', value: formatCurrency(analytics.summary.avgBillAmount), change: '-2.1%', up: false },
-          { icon: CheckCircle, bg: 'bg-orange-100', iconColor: 'text-orange-600', label: 'Payment Rate', value: `${analytics.summary.paymentRate}%`, change: '+5.3%', up: true },
+          { icon: DollarSign, bg: 'bg-green-100', iconColor: 'text-green-600', label: 'Total Revenue', value: formatCurrency(analytics.summary.totalRevenue), ...revenueTrend },
+          { icon: Receipt, bg: 'bg-blue-100', iconColor: 'text-blue-600', label: 'Total Bills', value: analytics.summary.totalBills, ...billsTrend },
+          { icon: BarChart3, bg: 'bg-purple-100', iconColor: 'text-purple-600', label: 'Avg Bill', value: formatCurrency(analytics.summary.avgBillAmount), ...avgTrend },
+          { icon: CheckCircle, bg: 'bg-orange-100', iconColor: 'text-orange-600', label: 'Payment Rate', value: `${analytics.summary.paymentRate}%`, ...paymentRateTrend },
         ].map((card) => (
           <Card key={card.label} variant="elevated">
             <CardContent className="p-4">
