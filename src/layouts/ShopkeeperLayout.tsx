@@ -1,7 +1,7 @@
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, UtensilsCrossed, FolderOpen, QrCode, BarChart3, Settings, Menu, X, LogOut, ShoppingBag, Receipt, ChevronRight, PanelLeftClose, PanelLeft, Store, Phone, Mail, MapPin, Edit2, User, Building2, Home, Bell, Clock, CreditCard, Users, ChefHat } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, FolderOpen, QrCode, BarChart3, Settings, Menu, X, LogOut, ShoppingBag, Receipt, ChevronRight, PanelLeftClose, PanelLeft, Store, Phone, Mail, MapPin, Edit2, User, Building2, Home, Bell, Clock, CreditCard, Users, ChefHat, House, Armchair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { shopService, type Shop } from "@/services/shopService";
-import { orderService, type Order } from "@/services/orderService";
+import { orderService, type Order, type TableData } from "@/services/orderService";
 import { billingService, type Bill } from "@/services/billingService";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useNotificationSoundSettings } from "@/contexts/NotificationSoundContext";
@@ -21,11 +21,12 @@ import { OnboardingGuide } from "@/components/OnboardingGuide";
 import type { NavItem } from "@/types";
 
 const navItems: NavItem[] = [
-  { title: "Home", href: "/shop", icon: LayoutDashboard },
+  { title: "Home", href: "/shop", icon: House },
   { title: "QR Code", href: "/shop/qr", icon: QrCode },
   { title: "Categories", href: "/shop/categories", icon: FolderOpen },
   { title: "Menu", href: "/shop/menu", icon: UtensilsCrossed },
   { title: "Orders", href: "/shop/orders", icon: ShoppingBag },
+  { title: "Tables", href: "/shop/tables", icon: Armchair },
   { title: "Billing", href: "/shop/billing", icon: Receipt },
   { title: "Billing Analytics", href: "/shop/billing-analytics", icon: BarChart3 },
   { title: "Waiters", href: "/shop/waiters", icon: Users },
@@ -45,6 +46,7 @@ export function ShopkeeperLayout() {
   const { logout, user } = useAuth();
   const [pendingOrderCount, setPendingOrderCount] = useState(0);
   const [pendingBillCount, setPendingBillCount] = useState(0);
+  const [pendingTableCount, setPendingTableCount] = useState(0);
   const [recentPendingOrders, setRecentPendingOrders] = useState<Order[]>([]);
   const [recentPendingBills, setRecentPendingBills] = useState<Bill[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -55,12 +57,17 @@ export function ShopkeeperLayout() {
   const fetchPendingCount = useCallback(async () => {
     if (!user?.shopId) return;
     try {
-      const [orderRes, billRes] = await Promise.all([
+      const [orderRes, billRes, tableRes] = await Promise.all([
         orderService.getShopOrders(user.shopId, 'pending', 1, 5),
         billingService.getShopBills(user.shopId, 'pending', 1, 5),
+        orderService.getTableAggregation(user.shopId),
       ]);
       setPendingOrderCount(orderRes.counts?.pending || 0);
       setPendingBillCount(billRes.counts?.pending || 0);
+      const tablesWithPending = (tableRes.data || []).filter(
+        (t) => t.orders.some((o) => o.status === 'pending')
+      );
+      setPendingTableCount(tablesWithPending.length);
       setRecentPendingOrders(orderRes.data || []);
       setRecentPendingBills(billRes.data || []);
     } catch (error) {
@@ -150,6 +157,8 @@ export function ShopkeeperLayout() {
         return "Category Management";
       case "/shop/orders":
         return "Orders";
+      case "/shop/tables":
+        return "Table Management";
       case "/shop/billing":
         return "Billing";
       case "/shop/billing-analytics":
@@ -246,6 +255,11 @@ export function ShopkeeperLayout() {
                           {pendingBillCount}
                         </span>
                       )}
+                      {item.title === 'Tables' && pendingTableCount > 0 && sidebarCollapsed && (
+                        <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white">
+                          {pendingTableCount}
+                        </span>
+                      )}
                     </div>
                     {!sidebarCollapsed && (
                       <>
@@ -258,6 +272,11 @@ export function ShopkeeperLayout() {
                         {item.title === 'Billing' && pendingBillCount > 0 && (
                           <Badge className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-yellow-500 text-white hover:bg-yellow-500 rounded-full">
                             {pendingBillCount}
+                          </Badge>
+                        )}
+                        {item.title === 'Tables' && pendingTableCount > 0 && (
+                          <Badge className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-orange-500 text-white hover:bg-orange-500 rounded-full">
+                            {pendingTableCount}
                           </Badge>
                         )}
                         {isActive && (
@@ -414,6 +433,11 @@ export function ShopkeeperLayout() {
                         {item.title === 'Billing' && pendingBillCount > 0 && (
                           <Badge className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-yellow-500 text-white hover:bg-yellow-500 rounded-full">
                             {pendingBillCount}
+                          </Badge>
+                        )}
+                        {item.title === 'Tables' && pendingTableCount > 0 && (
+                          <Badge className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-orange-500 text-white hover:bg-orange-500 rounded-full">
+                            {pendingTableCount}
                           </Badge>
                         )}
                         {isActive && (

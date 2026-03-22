@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, Fragment } from "react";
 import {
   Table,
   TableHeader,
@@ -27,6 +27,9 @@ export function DataTable<T>(props: DataTableProps<T>) {
     loading = false,
     emptyState,
     className,
+    expandedRowId,
+    rowKey,
+    renderExpandedRow,
   } = props;
 
   const data = rawData ?? [];
@@ -173,17 +176,30 @@ export function DataTable<T>(props: DataTableProps<T>) {
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedData.map((row, rowIdx) => (
-                <TableRow key={rowIdx}>
-                  {columns.map((col) => (
-                    <TableCell key={col.id} className={col.cellClassName}>
-                      {col.cell
-                        ? col.cell(row)
-                        : String(col.accessorFn(row))}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              paginatedData.map((row, rowIdx) => {
+                const key = rowKey ? rowKey(row) : String(rowIdx);
+                const isExpanded = expandedRowId != null && key === expandedRowId;
+                return (
+                  <Fragment key={key}>
+                    <TableRow>
+                      {columns.map((col) => (
+                        <TableCell key={col.id} className={col.cellClassName}>
+                          {col.cell
+                            ? col.cell(row)
+                            : String(col.accessorFn(row))}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                    {isExpanded && renderExpandedRow && (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} className="p-0 border-t-0">
+                          {renderExpandedRow(row)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
+                );
+              })
             )}
           </TableBody>
         </Table>

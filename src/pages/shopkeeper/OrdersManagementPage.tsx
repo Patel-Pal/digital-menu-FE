@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Clock, CheckCircle, XCircle, RefreshCw, UtensilsCrossed, Eye, ChefHat, StickyNote, Timer, ChevronDown, ChevronUp } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, RefreshCw, UtensilsCrossed, Eye, ChefHat, StickyNote, Timer, ChevronDown, ChevronUp, Download, FileText, FileSpreadsheet, FileDown } from 'lucide-react';
 import { Order, orderService } from '@/services/orderService';
 import { OrderNotification } from '@/components/OrderNotification';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +15,10 @@ import { toast } from 'sonner';
 import { SkeletonCard } from '@/components/SkeletonCard';
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef, PaginationState } from '@/components/DataTable';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const PAGE_SIZE = 20;
 
@@ -106,6 +110,67 @@ export function OrdersManagementPage() {
   const formatTime = (dateString: string) =>
     new Date(dateString).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+  const exportToCSV = () => {
+    const headers = ['Order ID', 'Customer', 'Table', 'Items', 'Amount', 'Status', 'Date'];
+    const rows = orders.map(o => [
+      o._id.slice(-6), o.customerName, o.tableNumber,
+      o.items.map(i => `${i.quantity}x ${i.name}`).join('; '),
+      o.totalAmount.toFixed(2), o.status, new Date(o.createdAt).toLocaleString(),
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Orders exported to CSV');
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    let y = 18;
+    doc.setFontSize(18); doc.setFont('helvetica', 'bold'); doc.text('Orders Report', 14, y); y += 8;
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(120);
+    doc.text(`Generated on ${dateStr}`, 14, y); doc.setTextColor(0); y += 7;
+    doc.setFontSize(9);
+    doc.text(`Total: ${orders.length}  Pending: ${counts.pending}  Approved: ${counts.approved}  Completed: ${counts.completed}`, 14, y); y += 6;
+    autoTable(doc, {
+      startY: y,
+      head: [['Order ID', 'Customer', 'Table', 'Items', 'Amount (Rs.)', 'Status', 'Date']],
+      body: orders.map(o => [
+        `#${o._id.slice(-6)}`, o.customerName, o.tableNumber,
+        o.items.map(i => `${i.quantity}x ${i.name}`).join(', '),
+        o.totalAmount.toFixed(2), o.status.toUpperCase(),
+        new Date(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      ]),
+      headStyles: { fillColor: [234, 88, 12], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fontSize: 8.5 },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      columnStyles: { 4: { halign: 'right' }, 5: { halign: 'center' } },
+      margin: { left: 14, right: 14 },
+    });
+    doc.save(`orders-${new Date().toISOString().split('T')[0]}.pdf`);
+    toast.success('Orders exported to PDF');
+  };
+
+  const exportToExcel = () => {
+    const rows = orders.map(o => ({
+      'Order ID': `#${o._id.slice(-6)}`,
+      'Customer': o.customerName,
+      'Table': o.tableNumber,
+      'Items': o.items.map(i => `${i.quantity}x ${i.name}`).join(', '),
+      'Amount (Rs.)': parseFloat(o.totalAmount.toFixed(2)),
+      'Status': o.status,
+      'Date': new Date(o.createdAt).toLocaleString(),
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{ wch: 12 }, { wch: 20 }, { wch: 8 }, { wch: 35 }, { wch: 14 }, { wch: 12 }, { wch: 22 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Orders');
+    XLSX.writeFile(wb, `orders-${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Orders exported to Excel');
+  };
+
   const getStatusBadge = (status: string) => {
     const config: Record<string, { icon: React.ReactNode; className: string }> = {
       pending: { icon: <Clock className="h-3 w-3" />, className: 'bg-amber-500/15 text-amber-500 border-amber-500/30' },
@@ -173,8 +238,6 @@ export function OrdersManagementPage() {
     actionsColumn,
   ];
 
-  const expandedOrderData = expandedOrder ? orders.find(o => o._id === expandedOrder) : null;
-
   if (loading && orders.length === 0) {
     return (
       <div className="p-4 sm:p-6">
@@ -196,9 +259,29 @@ export function OrdersManagementPage() {
             <Checkbox checked={orders.length > 0 && selectedOrders.size === orders.length} onCheckedChange={toggleSelectAll} />
             <span className="text-sm text-muted-foreground hidden sm:inline">Select All</span>
           </div>
-          <Button onClick={() => fetchOrders(paginationRef.current.currentPage, false)} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Refresh</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={orders.length === 0}>
+                  <FileDown className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Export</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem onClick={exportToPDF} className="gap-2 cursor-pointer">
+                  <FileText className="h-4 w-4 text-red-500" /> Export as PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToExcel} className="gap-2 cursor-pointer">
+                  <FileSpreadsheet className="h-4 w-4 text-green-600" /> Export as Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToCSV} className="gap-2 cursor-pointer">
+                  <Download className="h-4 w-4 text-blue-500" /> Export as CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={() => fetchOrders(paginationRef.current.currentPage, false)} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Refresh</span>
+            </Button>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); setSelectedOrders(new Set()); setExpandedOrder(null); }} className="space-y-4">
@@ -329,66 +412,62 @@ export function OrdersManagementPage() {
                 mode="server" columns={orderColumns} data={orders}
                 pagination={pagination} onPageChange={handlePageChange} loading={tabLoading}
                 emptyState={{ icon: <UtensilsCrossed className="h-8 w-8" />, title: `No ${activeTab} orders`, description: 'Orders will appear here when received' }}
-              />
-
-              {/* Expanded Order Detail Panel */}
-              {expandedOrderData && (
-                <Card className="mt-4 border-primary/20">
-                  <CardContent className="p-0">
-                    <div className="px-6 py-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold">Order #{expandedOrderData._id.slice(-6)} — {expandedOrderData.customerName}</h3>
-                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setExpandedOrder(null)}>Close</Button>
-                      </div>
-                      <div className="rounded-lg border border-border/50 overflow-hidden">
-                        <div className="bg-muted/50 px-4 py-2"><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order Items</span></div>
-                        <table className="w-full text-sm">
-                          <thead><tr className="border-b border-border/30">
-                            <th className="text-left px-4 py-2 text-xs font-medium text-muted-foreground">Item</th>
-                            <th className="text-center px-4 py-2 text-xs font-medium text-muted-foreground">Qty</th>
-                            <th className="text-right px-4 py-2 text-xs font-medium text-muted-foreground">Price</th>
-                            <th className="text-right px-4 py-2 text-xs font-medium text-muted-foreground">Total</th>
-                          </tr></thead>
-                          <tbody className="divide-y divide-border/20">
-                            {expandedOrderData.items.map((item, idx) => (
-                              <tr key={idx}>
-                                <td className="px-4 py-2 font-medium">{item.name}</td>
-                                <td className="px-4 py-2 text-center"><span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-primary/10 text-primary text-xs font-bold">{item.quantity}</span></td>
-                                <td className="px-4 py-2 text-right text-muted-foreground">₹{item.price.toFixed(2)}</td>
-                                <td className="px-4 py-2 text-right font-semibold">₹{(item.price * item.quantity).toFixed(2)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                          <tfoot><tr className="border-t border-border/50">
-                            <td colSpan={3} className="px-4 py-2 text-right font-semibold">Total:</td>
-                            <td className="px-4 py-2 text-right font-bold text-primary text-base">₹{expandedOrderData.totalAmount.toFixed(2)}</td>
-                          </tr></tfoot>
-                        </table>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {expandedOrderData.orderNotes && (
-                          <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2 flex-1 min-w-[200px]">
-                            <StickyNote className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                            <div><p className="text-xs font-semibold text-amber-500 mb-0.5">Notes</p><p className="text-sm text-amber-600 dark:text-amber-400">{expandedOrderData.orderNotes}</p></div>
-                          </div>
-                        )}
-                        {expandedOrderData.status === 'approved' && expandedOrderData.estimatedReadyTime && (
-                          <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
-                            <Timer className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                            <div><p className="text-xs font-semibold text-emerald-500 mb-0.5">Estimated Ready</p><p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{expandedOrderData.estimatedReadyTime} minutes</p></div>
-                          </div>
-                        )}
-                        {expandedOrderData.status === 'rejected' && expandedOrderData.rejectionReason && (
-                          <div className="flex items-start gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 flex-1 min-w-[200px]">
-                            <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                            <div><p className="text-xs font-semibold text-red-500 mb-0.5">Rejection Reason</p><p className="text-sm text-red-600 dark:text-red-400">{expandedOrderData.rejectionReason}</p></div>
-                          </div>
-                        )}
-                      </div>
+                expandedRowId={expandedOrder}
+                rowKey={(row) => row._id}
+                renderExpandedRow={(order) => (
+                  <div className="px-6 py-4 space-y-3 bg-muted/30">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold">Order #{order._id.slice(-6)} — {order.customerName}</h3>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setExpandedOrder(null)}>Close</Button>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                    <div className="rounded-lg border border-border/50 overflow-hidden">
+                      <div className="bg-muted/50 px-4 py-2"><span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order Items</span></div>
+                      <table className="w-full text-sm">
+                        <thead><tr className="border-b border-border/30">
+                          <th className="text-left px-4 py-2 text-xs font-medium text-muted-foreground">Item</th>
+                          <th className="text-center px-4 py-2 text-xs font-medium text-muted-foreground">Qty</th>
+                          <th className="text-right px-4 py-2 text-xs font-medium text-muted-foreground">Price</th>
+                          <th className="text-right px-4 py-2 text-xs font-medium text-muted-foreground">Total</th>
+                        </tr></thead>
+                        <tbody className="divide-y divide-border/20">
+                          {order.items.map((item, idx) => (
+                            <tr key={idx}>
+                              <td className="px-4 py-2 font-medium">{item.name}</td>
+                              <td className="px-4 py-2 text-center"><span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-primary/10 text-primary text-xs font-bold">{item.quantity}</span></td>
+                              <td className="px-4 py-2 text-right text-muted-foreground">₹{item.price.toFixed(2)}</td>
+                              <td className="px-4 py-2 text-right font-semibold">₹{(item.price * item.quantity).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot><tr className="border-t border-border/50">
+                          <td colSpan={3} className="px-4 py-2 text-right font-semibold">Total:</td>
+                          <td className="px-4 py-2 text-right font-bold text-primary text-base">₹{order.totalAmount.toFixed(2)}</td>
+                        </tr></tfoot>
+                      </table>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {order.orderNotes && (
+                        <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2 flex-1 min-w-[200px]">
+                          <StickyNote className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                          <div><p className="text-xs font-semibold text-amber-500 mb-0.5">Notes</p><p className="text-sm text-amber-600 dark:text-amber-400">{order.orderNotes}</p></div>
+                        </div>
+                      )}
+                      {order.status === 'approved' && order.estimatedReadyTime && (
+                        <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
+                          <Timer className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                          <div><p className="text-xs font-semibold text-emerald-500 mb-0.5">Estimated Ready</p><p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{order.estimatedReadyTime} minutes</p></div>
+                        </div>
+                      )}
+                      {order.status === 'rejected' && order.rejectionReason && (
+                        <div className="flex items-start gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 flex-1 min-w-[200px]">
+                          <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                          <div><p className="text-xs font-semibold text-red-500 mb-0.5">Rejection Reason</p><p className="text-sm text-red-600 dark:text-red-400">{order.rejectionReason}</p></div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              />
             </div>
           </TabsContent>
         </Tabs>

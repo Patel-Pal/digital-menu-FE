@@ -82,4 +82,10 @@ export type DataTableProps<T> = {
   emptyState?: EmptyStateConfig;
   /** Optional className for the wrapping Card */
   className?: string;
+  /** ID of the currently expanded row (matched against row index or a key) */
+  expandedRowId?: string | null;
+  /** Function to get a unique key from a row for expansion matching */
+  rowKey?: (row: T) => string;
+  /** Render function for the expanded row content */
+  renderExpandedRow?: (row: T) => ReactNode;
 } & (ServerModeProps<T> | ClientModeProps<T>);

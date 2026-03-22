@@ -63,6 +63,34 @@ export interface UpdateOrderStatusData {
   rejectionReason?: string;
 }
 
+export interface TableBill {
+  _id: string;
+  billNumber: string;
+  items: Array<{ name: string; price: number; quantity: number; totalPrice: number }>;
+  subtotal: number;
+  taxAmount: number;
+  totalAmount: number;
+  paymentStatus: 'pending' | 'paid' | 'failed';
+  paymentMethod: 'cash' | 'card' | 'upi' | 'online';
+}
+
+export interface TableData {
+  tableNumber: string;
+  customerName: string;
+  orders: Order[];
+  totalAmount: number;
+  firstOrderTime: string;
+  bill: TableBill | null;
+}
+
+export interface TableAggregationResponse {
+  success: boolean;
+  data: TableData[];
+}
+
+export type TableFilterType = 'all' | 'pending' | 'approved';
+export type PaymentMethod = 'cash' | 'card' | 'upi' | 'online';
+
 class OrderService {
   private getAuthHeaders() {
     const token = localStorage.getItem('token');
@@ -105,6 +133,15 @@ class OrderService {
 
   async getOrder(orderId: string) {
     const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`);
+    return response.data;
+  }
+
+  async getTableAggregation(shopId: string, showAll = false): Promise<TableAggregationResponse> {
+    const params = showAll ? '?showAll=true' : '';
+    const response = await axios.get(
+      `${API_BASE_URL}/orders/shop/${shopId}/tables${params}`,
+      { headers: this.getAuthHeaders() }
+    );
     return response.data;
   }
 }
