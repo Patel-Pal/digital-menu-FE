@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,6 +7,10 @@ import { Separator } from '@/components/ui/separator';
 import { Receipt } from 'lucide-react';
 import { Bill, billingService } from '@/services/billingService';
 import { useOrder } from '@/contexts/OrderContext';
+import { discountService } from '@/services/discountService';
+import { CouponInput } from '@/components/discounts/CouponInput';
+import { RewardWallet } from '@/components/discounts/RewardWallet';
+import type { CouponValidation, ActiveDiscounts } from '@/types/discount';
 import { toast } from 'sonner';
 
 interface BillGenerationModalProps {
@@ -20,6 +24,22 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
   const [generatedBill, setGeneratedBill] = useState<Bill | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const { deviceId, customerName, clearCart } = useOrder();
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidation | null>(null);
+  const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
+  const [activeDiscounts, setActiveDiscounts] = useState<ActiveDiscounts | null>(null);
+
+  // Fetch active discounts when modal opens
+  useEffect(() => {
+    if (isOpen && shopId) {
+      discountService.getActiveDiscounts(shopId)
+        .then(data => setActiveDiscounts(data))
+        .catch(() => {});
+    }
+    if (!isOpen) {
+      setAppliedCoupon(null);
+      setSelectedRewardId(null);
+    }
+  }, [isOpen, shopId]);
 
   const handleGenerateBill = async () => {
     if (!customerName.trim()) {
@@ -33,8 +53,10 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
         customerName: customerName.trim(),
         deviceId,
         shopId,
-        tableNumber
-      });
+        tableNumber,
+        ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {}),
+        ...(selectedRewardId ? { rewardId: selectedRewardId } : {}),
+      } as any);
 
       setGeneratedBill(response.data);
       toast.success('Bill generated successfully!');
@@ -88,6 +110,28 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
                 </p>
               </div>
               <div className="px-2 pb-2">
+                {/* Coupon & Rewards */}
+                {!generatedBill && (activeDiscounts?.couponCode?.enabled || true) && (
+                  <div className="space-y-3 mb-4 text-left">
+                    {activeDiscounts?.couponCode?.enabled && !selectedRewardId && (
+                      <CouponInput
+                        shopId={shopId}
+                        orderAmount={0}
+                        applied={appliedCoupon}
+                        onApply={(c) => { setAppliedCoupon(c); setSelectedRewardId(null); }}
+                        onClear={() => setAppliedCoupon(null)}
+                      />
+                    )}
+                    {!appliedCoupon && (
+                      <RewardWallet
+                        shopId={shopId}
+                        deviceId={deviceId}
+                        selectedRewardId={selectedRewardId}
+                        onSelect={(id) => { setSelectedRewardId(id); setAppliedCoupon(null); }}
+                      />
+                    )}
+                  </div>
+                )}
                 <Button 
                   onClick={handleGenerateBill}
                   disabled={isGenerating}
@@ -150,6 +194,12 @@ export function BillGenerationModal({ isOpen, onClose, shopId, tableNumber }: Bi
                       <span>Subtotal:</span>
                       <span>₹{generatedBill.subtotal.toFixed(2)}</span>
                     </div>
+                    {(generatedBill as any).discountValue > 0 && (
+                      <div className="flex justify-between text-green-600 dark:text-green-400">
+                        <span>Discount ({(generatedBill as any).discountDescription || (generatedBill as any).discountType}):</span>
+                        <span>-₹{(generatedBill as any).discountValue.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>Tax (5%):</span>
                       <span>₹{generatedBill.taxAmount.toFixed(2)}</span>

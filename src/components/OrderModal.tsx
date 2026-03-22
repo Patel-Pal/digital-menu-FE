@@ -14,9 +14,10 @@ interface OrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   shopId: string;
+  onOrderSuccess?: () => void;
 }
 
-export function OrderModal({ isOpen, onClose, shopId }: OrderModalProps) {
+export function OrderModal({ isOpen, onClose, shopId, onOrderSuccess }: OrderModalProps) {
   const { cart, updateQuantity, removeFromCart, getTotalAmount, clearCart, deviceId, customerName, setCustomerName } = useOrder();
   const [tableNumber, setTableNumber] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
@@ -64,6 +65,7 @@ export function OrderModal({ isOpen, onClose, shopId }: OrderModalProps) {
         setTableNumber('');
         setOrderNotes('');
         toast.success('Order placed successfully!');
+        onOrderSuccess?.();
       }, 2000);
     } catch (error: any) {
       console.error('Order submission error:', error);

@@ -61,6 +61,7 @@ import { ChefOrdersPage } from "@/pages/chef/ChefOrdersPage";
 // Shopkeeper Chef Management Page
 import { ChefManagementPage } from "@/pages/shopkeeper/ChefManagementPage";
 import { TableManagementPage } from "@/pages/shopkeeper/TableManagementPage";
+import { DiscountManagementPage } from "@/pages/shopkeeper/DiscountManagementPage";
 
 import { Analytics } from "@vercel/analytics/react";
 import NotFound from "./pages/NotFound";
@@ -113,6 +114,7 @@ const App = () => (
                 <Route path="about" element={<ShopAboutFormPage />} />
                 <Route path="waiters" element={<WaiterManagementPage />} />
                 <Route path="chefs" element={<ChefManagementPage />} />
+                <Route path="discounts" element={<DiscountManagementPage />} />
               </Route>
 
               <Route element={<CustomerLayout />}>

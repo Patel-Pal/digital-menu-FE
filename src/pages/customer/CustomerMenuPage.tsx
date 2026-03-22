@@ -20,14 +20,20 @@ import { categoryService, type Category } from "@/services/categoryService";
 import { shopService, type Shop } from "@/services/shopService";
 import { reviewService } from "@/services/reviewService";
 import { orderService } from "@/services/orderService";
+import { discountService } from "@/services/discountService";
 import { useMenuTheme, menuThemes, MenuTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrder } from "@/contexts/OrderContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { type MenuItem } from "@/types";
+import type { ActiveDiscounts } from "@/types/discount";
 import { toast } from "sonner";
 import { PageLoader } from "@/components/PageLoader";
 import { WelcomeSplash } from "@/components/WelcomeSplash";
+import { SpinWheel } from "@/components/discounts/SpinWheel";
+import { ScratchCard } from "@/components/discounts/ScratchCard";
+import { HappyHourBanner } from "@/components/discounts/HappyHourBanner";
+import { LoyaltyProgress } from "@/components/discounts/LoyaltyProgress";
 
 type ViewTab = "menu" | "orders" | "about" | "digital-menu";
 
@@ -65,6 +71,9 @@ export function CustomerMenuPage() {
   const [averageRating, setAverageRating] = useState<number | undefined>(undefined);
   const [totalReviews, setTotalReviews] = useState<number | undefined>(undefined);
   const [hasUnbilledOrders, setHasUnbilledOrders] = useState(false);
+  const [activeDiscounts, setActiveDiscounts] = useState<ActiveDiscounts | null>(null);
+  const [showSpinWheel, setShowSpinWheel] = useState(false);
+  const [showScratchCard, setShowScratchCard] = useState(false);
 
   const setActiveTab = (tab: ViewTab) => {
     setActiveTabState(tab);
@@ -156,6 +165,10 @@ export function CustomerMenuPage() {
         shopService.incrementView(currentShopId).catch(err => 
           console.error('Failed to increment view count:', err)
         );
+        // Fetch active discounts
+        discountService.getActiveDiscounts(currentShopId)
+          .then(data => setActiveDiscounts(data))
+          .catch(() => {});
       }
       
       // Set first category as active if available
@@ -218,6 +231,27 @@ export function CustomerMenuPage() {
 
       <main className="px-4 py-4">{activeTab === "menu" ? (
         <div className="space-y-4">
+          {/* Happy Hour Banner */}
+          {activeDiscounts?.happyHour?.enabled && (
+            <HappyHourBanner
+              startTime={activeDiscounts.happyHour.startTime}
+              endTime={activeDiscounts.happyHour.endTime}
+              discountPercentage={activeDiscounts.happyHour.discountPercentage}
+              applicableDays={activeDiscounts.happyHour.applicableDays}
+            />
+          )}
+
+          {/* Loyalty Progress */}
+          {activeDiscounts?.loyaltyCard?.enabled && currentShopId && deviceId && (
+            <LoyaltyProgress
+              shopId={currentShopId}
+              deviceId={deviceId}
+              stampsRequired={activeDiscounts.loyaltyCard.stampsRequired}
+              rewardType={activeDiscounts.loyaltyCard.rewardType}
+              rewardValue={activeDiscounts.loyaltyCard.rewardValue}
+            />
+          )}
+
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -575,15 +609,41 @@ export function CustomerMenuPage() {
         isOpen={showOrderModal}
         onClose={() => setShowOrderModal(false)}
         shopId={currentShopId}
+        onOrderSuccess={() => {
+          if (activeDiscounts?.spinWheel?.enabled) setShowSpinWheel(true);
+        }}
       />
 
       {/* Bill Generation Modal */}
       <BillGenerationModal
         isOpen={showBillModal}
-        onClose={() => { setShowBillModal(false); checkUnbilledOrders(); }}
+        onClose={() => {
+          setShowBillModal(false);
+          checkUnbilledOrders();
+          if (activeDiscounts?.scratchCard?.enabled) setShowScratchCard(true);
+        }}
         shopId={currentShopId}
         tableNumber={shop?.name || "1"}
       />
+
+      {/* Discount Overlays */}
+      {activeDiscounts?.spinWheel?.enabled && (
+        <SpinWheel
+          shopId={currentShopId}
+          deviceId={deviceId}
+          segments={activeDiscounts.spinWheel.segments}
+          open={showSpinWheel}
+          onClose={() => setShowSpinWheel(false)}
+        />
+      )}
+      {activeDiscounts?.scratchCard?.enabled && (
+        <ScratchCard
+          shopId={currentShopId}
+          deviceId={deviceId}
+          open={showScratchCard}
+          onClose={() => setShowScratchCard(false)}
+        />
+      )}
     </div>
   );
 }
