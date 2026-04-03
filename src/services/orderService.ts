@@ -72,6 +72,9 @@ export interface TableBill {
   totalAmount: number;
   paymentStatus: 'pending' | 'paid' | 'failed';
   paymentMethod: 'cash' | 'card' | 'upi' | 'online';
+  createdAt?: string;
+  paidAt?: string;
+  orderIds?: string[];
 }
 
 export interface TableData {

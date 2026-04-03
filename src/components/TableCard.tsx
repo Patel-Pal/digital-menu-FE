@@ -7,9 +7,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import {
   Clock, CheckCircle, XCircle, Receipt, CreditCard, DollarSign, Timer, Users,
-  ShoppingBag, Banknote, Smartphone, Globe, X,
+  ShoppingBag, Banknote, Smartphone, Globe, X, Printer, Hash, Calendar,
 } from 'lucide-react';
 import { TableData, PaymentMethod } from '@/services/orderService';
+import { getElapsedTime, getCardAccent, getStatusTag } from '@/utils/tableUtils';
 
 export interface TableCardProps {
   table: TableData;
@@ -18,6 +19,7 @@ export interface TableCardProps {
   onCompleteOrder: (orderId: string) => Promise<void>;
   onGenerateBill: (table: TableData) => Promise<void>;
   onMarkPaid: (billId: string, method: PaymentMethod) => Promise<void>;
+  onMarkFailed?: (billId: string) => Promise<void>;
 }
 
 const STATUS_CFG: Record<string, { bg: string; text: string; label: string; dot: string }> = {
@@ -27,31 +29,7 @@ const STATUS_CFG: Record<string, { bg: string; text: string; label: string; dot:
   rejected: { bg: 'bg-red-50 dark:bg-red-500/10', text: 'text-red-600 dark:text-red-400', label: 'Rejected', dot: 'bg-red-500' },
 };
 
-function getElapsedTime(t: string): string {
-  const m = Math.floor((Date.now() - new Date(t).getTime()) / 60000);
-  if (m < 1) return 'Just now';
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  return m % 60 > 0 ? `${h}h ${m % 60}m` : `${h}h`;
-}
-
-function getCardAccent(table: TableData): string {
-  if (table.orders.some(o => o.status === 'pending')) return 'border-l-amber-500';
-  if (table.orders.some(o => o.status === 'approved')) return 'border-l-blue-500';
-  if (table.orders.some(o => o.status === 'completed' && o.billingStatus === 'unbilled')) return 'border-l-emerald-500';
-  if (table.bill?.paymentStatus === 'pending') return 'border-l-purple-500';
-  return 'border-l-gray-300';
-}
-
-function getStatusTag(table: TableData): { label: string; cls: string } {
-  if (table.orders.some(o => o.status === 'pending')) return { label: 'New Orders', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' };
-  if (table.orders.some(o => o.status === 'approved')) return { label: 'In Progress', cls: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400' };
-  if (table.orders.some(o => o.status === 'completed' && o.billingStatus === 'unbilled')) return { label: 'Ready to Bill', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' };
-  if (table.bill?.paymentStatus === 'pending') return { label: 'Awaiting Payment', cls: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400' };
-  return { label: 'Active', cls: 'bg-gray-100 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400' };
-}
-
-export function TableCard({ table, onApproveOrder, onRejectOrder, onCompleteOrder, onGenerateBill, onMarkPaid }: TableCardProps) {
+export function TableCard({ table, onApproveOrder, onRejectOrder, onCompleteOrder, onGenerateBill, onMarkPaid, onMarkFailed }: TableCardProps) {
   const [open, setOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectOrderId, setRejectOrderId] = useState<string | null>(null);
@@ -59,10 +37,16 @@ export function TableCard({ table, onApproveOrder, onRejectOrder, onCompleteOrde
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('');
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
-  const sortedOrders = useMemo(
-    () => [...table.orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-    [table.orders],
-  );
+  const activeOrders = useMemo(() => {
+    const statusPriority: Record<string, number> = { pending: 0, approved: 1 };
+    return table.orders
+      .filter(o => o.status === 'pending' || o.status === 'approved')
+      .sort((a, b) => {
+        const priorityDiff = (statusPriority[a.status] ?? 2) - (statusPriority[b.status] ?? 2);
+        if (priorityDiff !== 0) return priorityDiff;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+  }, [table.orders]);
   const pendingCount = table.orders.filter(o => o.status === 'pending').length;
   const hasCompletedUnbilled = table.orders.some(o => o.status === 'completed' && o.billingStatus === 'unbilled');
   const accent = getCardAccent(table);
@@ -79,6 +63,57 @@ export function TableCard({ table, onApproveOrder, onRejectOrder, onCompleteOrde
     setLoadingAction(`reject-${rejectOrderId}`);
     try { await onRejectOrder(rejectOrderId, rejectReason.trim()); }
     finally { setLoadingAction(null); setRejectDialogOpen(false); setRejectOrderId(null); setRejectReason(''); }
+  };
+
+  const handlePrintBill = (bill: NonNullable<TableData['bill']>) => {
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    if (!printWindow) return;
+    const itemsHtml = bill.items.map(item => `
+      <tr>
+        <td style="padding:4px 0;border-bottom:1px dashed #ddd">${item.name}</td>
+        <td style="padding:4px 8px;text-align:center;border-bottom:1px dashed #ddd">${item.quantity}</td>
+        <td style="padding:4px 0;text-align:right;border-bottom:1px dashed #ddd">₹${item.totalPrice.toFixed(2)}</td>
+      </tr>
+    `).join('');
+    const dateStr = new Date(bill.createdAt || Date.now()).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    printWindow.document.write(`
+      <html><head><title>Bill - ${bill.billNumber}</title>
+      <style>
+        body { font-family: 'Courier New', monospace; max-width: 300px; margin: 0 auto; padding: 20px; font-size: 12px; }
+        h2 { text-align: center; margin: 0 0 4px; }
+        .center { text-align: center; }
+        .line { border-top: 1px dashed #000; margin: 8px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        .total { font-weight: bold; font-size: 14px; }
+        @media print { body { margin: 0; padding: 10px; } }
+      </style></head><body>
+        <h2>BILL</h2>
+        <p class="center">${bill.billNumber}</p>
+        <div class="line"></div>
+        <p>Customer: ${table.customerName}</p>
+        <p>Table: ${table.tableNumber}</p>
+        <p>Date: ${dateStr}</p>
+        <div class="line"></div>
+        <table>
+          <tr><th style="text-align:left">Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount</th></tr>
+          ${itemsHtml}
+        </table>
+        <div class="line"></div>
+        <table>
+          <tr><td>Subtotal</td><td style="text-align:right">₹${bill.subtotal.toFixed(2)}</td></tr>
+          <tr><td>Tax (5%)</td><td style="text-align:right">₹${bill.taxAmount.toFixed(2)}</td></tr>
+        </table>
+        <div class="line"></div>
+        <table><tr class="total"><td>TOTAL</td><td style="text-align:right">₹${bill.totalAmount.toFixed(2)}</td></tr></table>
+        <div class="line"></div>
+        <p class="center">Status: ${bill.paymentStatus.toUpperCase()}</p>
+        <div class="line"></div>
+        <p class="center" style="margin-top:12px">Thank you!</p>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   };
 
   // ─── Compact Card (default) ───
@@ -154,10 +189,13 @@ export function TableCard({ table, onApproveOrder, onRejectOrder, onCompleteOrde
             {/* Orders */}
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Orders ({table.orders.length})
+                Active Orders ({activeOrders.length})
               </p>
+              {activeOrders.length === 0 && (
+                <p className="text-xs text-muted-foreground italic py-2">No active orders</p>
+              )}
               <div className="space-y-2">
-                {sortedOrders.map((order) => {
+                {activeOrders.map((order) => {
                   const c = STATUS_CFG[order.status] || STATUS_CFG.pending;
                   return (
                     <div key={order._id} className={`rounded-lg ${c.bg} p-3 space-y-2`}>
@@ -237,11 +275,28 @@ export function TableCard({ table, onApproveOrder, onRejectOrder, onCompleteOrde
                   </div>
                   {table.bill.paymentStatus === 'paid' ? (
                     <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 border-0">✓ Paid</Badge>
+                  ) : table.bill.paymentStatus === 'failed' ? (
+                    <Badge className="bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 text-[10px] font-bold px-2 py-0.5 border-0">✗ Failed</Badge>
                   ) : (
                     <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400 text-[10px] font-bold px-2 py-0.5 border-0">Unpaid</Badge>
                   )}
                 </div>
                 <div className="p-3 space-y-2">
+                  {/* Bill meta info */}
+                  <div className="space-y-1 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-3 w-3" />
+                      <span>{new Date(table.bill.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    {table.bill.paidAt && (
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle className="h-3 w-3 text-emerald-500" />
+                        <span>Paid {new Date(table.bill.paidAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Itemized charges */}
                   <div className="space-y-0.5">
                     {table.bill.items.map((item, i) => (
                       <div key={i} className="flex justify-between text-xs">
@@ -252,10 +307,25 @@ export function TableCard({ table, onApproveOrder, onRejectOrder, onCompleteOrde
                   </div>
                   <div className="border-t border-border/40 pt-2 space-y-0.5 text-xs">
                     <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span className="tabular-nums">₹{table.bill.subtotal.toFixed(2)}</span></div>
-                    <div className="flex justify-between text-muted-foreground"><span>Tax</span><span className="tabular-nums">₹{table.bill.taxAmount.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>Tax (5%)</span><span className="tabular-nums">₹{table.bill.taxAmount.toFixed(2)}</span></div>
                     <div className="flex justify-between font-bold text-sm pt-1"><span>Total</span><span className="text-primary tabular-nums">₹{table.bill.totalAmount.toFixed(2)}</span></div>
                   </div>
 
+                  {/* Related orders */}
+                  {table.bill.orderIds && table.bill.orderIds.length > 0 && (
+                    <div className="border-t border-border/40 pt-2">
+                      <p className="text-[10px] font-medium text-muted-foreground mb-1">Related Orders</p>
+                      <div className="flex flex-wrap gap-1">
+                        {table.bill.orderIds.map((oid, i) => (
+                          <Badge key={i} variant="outline" className="text-[10px] font-mono px-1.5 py-0">
+                            #{typeof oid === 'string' ? oid.slice(-6) : oid}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Payment section for pending bills */}
                   {table.bill.paymentStatus === 'pending' && (
                     <div className="border-t border-border/40 pt-3 space-y-2">
                       <p className="text-[11px] font-medium text-muted-foreground">Payment Method</p>
@@ -276,10 +346,73 @@ export function TableCard({ table, onApproveOrder, onRejectOrder, onCompleteOrde
                           </button>
                         ))}
                       </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="h-9 text-xs flex-shrink-0"
+                          onClick={() => handlePrintBill(table.bill!)}>
+                          <Printer className="h-3.5 w-3.5 mr-1" /> Print
+                        </Button>
+                        <Button className="flex-1 h-9 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+                          disabled={!paymentMethod || loadingAction === 'mark-paid'}
+                          onClick={() => paymentMethod && table.bill && act('mark-paid', () => onMarkPaid(table.bill!._id, paymentMethod as PaymentMethod))}>
+                          <DollarSign className="h-4 w-4 mr-1" /> Confirm Payment
+                        </Button>
+                      </div>
+                      {onMarkFailed && (
+                        <Button variant="destructive" size="sm" className="w-full h-8 text-xs"
+                          disabled={loadingAction === 'mark-failed'}
+                          onClick={() => table.bill && act('mark-failed', () => onMarkFailed!(table.bill!._id))}>
+                          <XCircle className="h-3.5 w-3.5 mr-1" /> Mark as Failed
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Paid state */}
+                  {table.bill.paymentStatus === 'paid' && (
+                    <div className="border-t border-border/40 pt-3">
+                      <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-lg p-3 text-center space-y-1">
+                        <CheckCircle className="h-5 w-5 text-emerald-600 mx-auto" />
+                        <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Payment Completed</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          via {table.bill.paymentMethod?.toUpperCase() || 'N/A'}
+                        </p>
+                      </div>
+                      <Button variant="ghost" size="sm" className="w-full h-8 text-xs mt-2"
+                        onClick={() => handlePrintBill(table.bill!)}>
+                        <Printer className="h-3.5 w-3.5 mr-1" /> Print Bill
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Failed state with retry */}
+                  {table.bill.paymentStatus === 'failed' && (
+                    <div className="border-t border-border/40 pt-3 space-y-2">
+                      <div className="bg-red-50 dark:bg-red-500/10 rounded-lg p-3 text-center space-y-1">
+                        <XCircle className="h-5 w-5 text-red-600 mx-auto" />
+                        <p className="text-xs font-medium text-red-700 dark:text-red-400">Payment Failed</p>
+                      </div>
+                      <p className="text-[11px] font-medium text-muted-foreground">Retry with payment method</p>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {([
+                          { value: 'cash' as PaymentMethod, icon: <Banknote className="h-4 w-4" />, label: 'Cash' },
+                          { value: 'card' as PaymentMethod, icon: <CreditCard className="h-4 w-4" />, label: 'Card' },
+                          { value: 'upi' as PaymentMethod, icon: <Smartphone className="h-4 w-4" />, label: 'UPI' },
+                          { value: 'online' as PaymentMethod, icon: <Globe className="h-4 w-4" />, label: 'Online' },
+                        ]).map((m) => (
+                          <button key={m.value} onClick={() => setPaymentMethod(m.value)}
+                            className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-[10px] font-medium transition-all ${
+                              paymentMethod === m.value
+                                ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                                : 'border-border/60 text-muted-foreground hover:border-primary/40 hover:bg-muted/50'
+                            }`}>
+                            {m.icon}{m.label}
+                          </button>
+                        ))}
+                      </div>
                       <Button className="w-full h-9 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
                         disabled={!paymentMethod || loadingAction === 'mark-paid'}
                         onClick={() => paymentMethod && table.bill && act('mark-paid', () => onMarkPaid(table.bill!._id, paymentMethod as PaymentMethod))}>
-                        <DollarSign className="h-4 w-4 mr-1" /> Mark as Paid
+                        <CheckCircle className="h-4 w-4 mr-1" /> Retry Payment
                       </Button>
                     </div>
                   )}

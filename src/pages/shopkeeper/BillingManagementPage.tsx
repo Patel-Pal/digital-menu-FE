@@ -24,7 +24,7 @@ export function BillingManagementPage() {
   const [loading, setLoading] = useState(true);
   const [tabLoading, setTabLoading] = useState(false);
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('pending');
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileSearch, setMobileSearch] = useState('');
   const [counts, setCounts] = useState({ pending: 0, paid: 0, failed: 0, all: 0 });

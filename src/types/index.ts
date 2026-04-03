@@ -123,3 +123,6 @@ export interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   badge?: number;
 }
+
+// Table Filter Types
+export type TableFilterType = 'all' | 'pending' | 'approved';
