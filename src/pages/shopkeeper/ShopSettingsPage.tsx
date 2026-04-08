@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Store, Phone, Mail, MapPin, Save, Upload, X, User, Edit, Eye, EyeOff, Palette, Sun, Volume2, VolumeX, Play } from "lucide-react";
+import { Store, Phone, Mail, MapPin, Save, Upload, X, User, Edit, Eye, EyeOff, Palette, Sun, Volume2, VolumeX, Play, CheckCircle, Lock, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -21,11 +22,39 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { PageLoader } from "@/components/PageLoader";
 import { SetupBanner } from "@/components/SetupBanner";
+import { useFeatureAccess } from "@/contexts/FeatureAccessContext";
+import { FEATURE_KEYS, FEATURE_MATRIX, type FeatureKey, type SubscriptionPlan } from "@/config/featureMatrix";
+
+const PLAN_ORDER: SubscriptionPlan[] = ['free', 'basic', 'premium', 'enterprise'];
+
+const PLAN_BADGE_VARIANT: Record<SubscriptionPlan, "secondary" | "info" | "warning" | "success"> = {
+  free: "secondary",
+  basic: "info",
+  premium: "warning",
+  enterprise: "success",
+};
+
+function getMinimumPlan(featureKey: FeatureKey): SubscriptionPlan {
+  for (const plan of PLAN_ORDER) {
+    if (FEATURE_MATRIX[plan].includes(featureKey)) {
+      return plan;
+    }
+  }
+  return 'enterprise';
+}
+
+function humanizeFeature(key: string): string {
+  return key
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
 
 export function ShopSettingsPage() {
   const { menuTheme, setMenuTheme } = useMenuTheme();
   const { user, updateProfile } = useAuth();
   const { settings: soundSettings, updateSettings: updateSoundSettings } = useNotificationSoundSettings();
+  const { features, subscription, hasFeature } = useFeatureAccess();
   
   const [profileData, setProfileData] = useState<ShopProfileData>({
     description: "",
@@ -302,6 +331,59 @@ export function ShopSettingsPage() {
 
       {/* Setup completion banner */}
       <SetupBanner />
+
+      {/* Subscription & Features */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5" />
+              Subscription &amp; Features
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-muted-foreground">Current Plan</span>
+              <Badge variant={PLAN_BADGE_VARIANT[subscription]} className="capitalize text-sm">
+                {subscription}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {FEATURE_KEYS.map((key) => {
+                const enabled = hasFeature(key);
+                const minPlan = getMinimumPlan(key);
+                return (
+                  <div
+                    key={key}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                      enabled
+                        ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                        : "bg-muted/50 text-muted-foreground"
+                    }`}
+                  >
+                    {enabled ? (
+                      <CheckCircle className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+                    ) : (
+                      <Lock className="h-4 w-4 shrink-0" />
+                    )}
+                    <span className="truncate">{humanizeFeature(key)}</span>
+                    {!enabled && (
+                      <Badge variant="outline" className="ml-auto shrink-0 text-[10px] px-1.5 py-0 capitalize">
+                        {minPlan}
+                      </Badge>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Shop Profile */}
       <motion.div

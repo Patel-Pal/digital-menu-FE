@@ -1,3 +1,15 @@
+import { type FeatureKey, type SubscriptionPlan } from '@/config/featureMatrix';
+
+export type { FeatureKey, SubscriptionPlan };
+
+export type FeatureOverrides = Partial<Record<FeatureKey, boolean>>;
+
+export interface ShopFeatureResponse {
+  subscription: SubscriptionPlan;
+  featureOverrides: FeatureOverrides;
+  resolvedFeatures: FeatureKey[];
+}
+
 // Menu Types
 export interface MenuItem {
   id: string;
@@ -44,8 +56,6 @@ export interface Shop {
   rating?: number;
   reviewCount?: number;
 }
-
-export type SubscriptionPlan = 'free' | 'basic' | 'premium' | 'enterprise';
 
 export interface Subscription {
   id: string;

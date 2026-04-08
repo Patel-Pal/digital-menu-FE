@@ -18,7 +18,9 @@ import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { ShopSetupProvider } from "@/contexts/ShopSetupContext";
 import { ShopSetupGuard } from "@/components/ShopSetupGuard";
 import { OnboardingGuide } from "@/components/OnboardingGuide";
+import { FeatureAccessProvider, useFeatureAccess } from "@/contexts/FeatureAccessContext";
 import type { NavItem } from "@/types";
+import type { FeatureKey } from "@/config/featureMatrix";
 
 const navItems: NavItem[] = [
   { title: "Home", href: "/shop", icon: House },
@@ -35,7 +37,29 @@ const navItems: NavItem[] = [
   { title: "Settings", href: "/shop/settings", icon: Settings },
 ];
 
+const NAV_FEATURE_MAP: Record<string, FeatureKey> = {
+  "QR Code": "qr_code",
+  "Categories": "categories",
+  "Menu": "menu_items",
+  "Orders": "orders",
+  "Tables": "tables",
+  "Billing": "billing",
+  "Billing Analytics": "billing_analytics",
+  "Waiters": "waiters",
+  "Chefs": "chefs",
+  "Analytics": "analytics",
+  "Settings": "shop_settings",
+};
+
 export function ShopkeeperLayout() {
+  return (
+    <FeatureAccessProvider>
+      <ShopkeeperLayoutInner />
+    </FeatureAccessProvider>
+  );
+}
+
+function ShopkeeperLayoutInner() {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -44,6 +68,7 @@ export function ShopkeeperLayout() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [shop, setShop] = useState<Shop | null>(null);
   const { logout, user } = useAuth();
+  const { hasFeature, loading: featuresLoading } = useFeatureAccess();
   const [pendingOrderCount, setPendingOrderCount] = useState(0);
   const [pendingBillCount, setPendingBillCount] = useState(0);
   const [pendingTableCount, setPendingTableCount] = useState(0);
@@ -53,6 +78,15 @@ export function ShopkeeperLayout() {
   const notifRef = useRef<HTMLDivElement>(null);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { playSound } = useNotificationSoundSettings();
+
+  // Filter nav items based on feature access
+  const filteredNavItems = featuresLoading
+    ? navItems
+    : navItems.filter((item) => {
+        const featureKey = NAV_FEATURE_MAP[item.title];
+        // Items without a feature mapping (e.g. "Home") are always visible
+        return !featureKey || hasFeature(featureKey);
+      });
 
   const fetchPendingCount = useCallback(async () => {
     if (!user?.shopId) return;
@@ -227,7 +261,7 @@ export function ShopkeeperLayout() {
 
             {/* Navigation - scrollable */}
             <nav className="flex-1 overflow-y-auto scrollbar-hide space-y-1 px-3 py-4">
-              {navItems.map((item) => {
+              {filteredNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
                 
@@ -408,7 +442,7 @@ export function ShopkeeperLayout() {
                   </Button>
                 </div>
                 <nav className="flex-1 overflow-y-auto scrollbar-hide space-y-1 px-3 py-4">
-                  {navItems.map((item) => {
+                  {filteredNavItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.href;
                     return (

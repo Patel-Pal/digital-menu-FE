@@ -1,12 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye, Trash2, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { adminService } from "@/services/adminService";
 import { toast } from "sonner";
 import { PageLoader } from "@/components/PageLoader";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef, FilterConfig, PaginationState } from "@/components/DataTable";
+import { ShopFeaturePanel } from "@/components/admin/ShopFeaturePanel";
 
 interface Shop {
   _id: string;
@@ -129,6 +137,8 @@ export function AdminShopsPage() {
   const queryParamsRef = useRef(queryParams);
   queryParamsRef.current = queryParams;
 
+  const [featurePanelShopId, setFeaturePanelShopId] = useState<string | null>(null);
+
   const fetchShops = useCallback(
     async (params: { search?: string; status?: string; subscription?: string; page?: number }) => {
       try {
@@ -219,6 +229,14 @@ export function AdminShopsPage() {
         <Button
           variant="ghost"
           size="icon-sm"
+          onClick={() => setFeaturePanelShopId(row._id)}
+          title="Manage features"
+        >
+          <Settings2 className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={() => handleStatusToggle(row._id, row.isActive)}
         >
           <Eye className="h-4 w-4" />
@@ -268,6 +286,29 @@ export function AdminShopsPage() {
           description: "Try adjusting your search or filter criteria.",
         }}
       />
+
+      {/* Feature Panel Dialog */}
+      <Dialog
+        open={featurePanelShopId !== null}
+        onOpenChange={(open) => {
+          if (!open) setFeaturePanelShopId(null);
+        }}
+      >
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Features</DialogTitle>
+            <DialogDescription>
+              Update subscription plan and feature overrides for this shop.
+            </DialogDescription>
+          </DialogHeader>
+          {featurePanelShopId && (
+            <ShopFeaturePanel
+              shopId={featurePanelShopId}
+              onClose={() => setFeaturePanelShopId(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -46,6 +46,21 @@ export const adminService = {
     return response.data;
   },
 
+  updateShopSubscription: async (shopId: string, plan: string) => {
+    const response = await api.put(`/admin/shops/${shopId}/subscription`, { plan });
+    return response.data;
+  },
+
+  toggleFeatureOverride: async (shopId: string, featureKey: string, value: boolean | null) => {
+    const response = await api.put(`/admin/shops/${shopId}/features`, { featureKey, value });
+    return response.data;
+  },
+
+  getShopFeatures: async (shopId: string) => {
+    const response = await api.get(`/admin/shops/${shopId}/features`);
+    return response.data;
+  },
+
   // Contact Info
   getContactInfo: async () => {
     const response = await api.get('/admin/contact');

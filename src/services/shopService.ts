@@ -132,6 +132,17 @@ export const shopService = {
       console.error('Detailed analytics error:', error.response?.data || error.message);
       throw error;
     }
+  },
+
+  // Get resolved features for the authenticated shopkeeper's shop
+  getMyFeatures: async () => {
+    try {
+      const response = await api.get('/shops/my/features');
+      return response.data;
+    } catch (error: any) {
+      console.error('Get my features error:', error.response?.data || error.message);
+      throw error;
+    }
   }
 };
 

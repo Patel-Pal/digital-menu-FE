@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { PageLoader } from "@/components/PageLoader";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@/components/DataTable";
+import { FeatureMatrixTable } from "@/components/admin/FeatureMatrixTable";
 
 interface Subscription {
   _id: string;
@@ -216,6 +217,9 @@ export function AdminSubscriptionsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Feature Matrix */}
+      <FeatureMatrixTable />
 
       {/* Subscriptions Table */}
       <DataTable<Subscription>

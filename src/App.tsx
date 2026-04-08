@@ -10,6 +10,7 @@ import { NotificationSoundProvider } from "@/contexts/NotificationSoundContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { FeatureGate } from "@/components/FeatureGate";
 
 // Layouts
 import { AuthLayout } from "@/layouts/AuthLayout";
@@ -100,19 +101,19 @@ const App = () => (
 
               <Route path="/shop" element={<ShopkeeperLayout />}>
                 <Route index element={<ShopkeeperDashboard />} />
-                <Route path="menu" element={<MenuManagementPage />} />
-                <Route path="categories" element={<CategoryManagementPage />} />
-                <Route path="qr" element={<QRCodePage />} />
-                <Route path="orders" element={<OrdersManagementPage />} />
-                <Route path="tables" element={<TableManagementPage />} />
-                <Route path="analytics" element={<ShopkeeperAnalyticsPage />} />
-                <Route path="billing" element={<BillingManagementPage />} />
-                <Route path="billing-analytics" element={<BillingAnalyticsPage />} />
-                <Route path="settings" element={<ShopSettingsPage />} />
-                <Route path="details" element={<ShopDetailsFormPage />} />
-                <Route path="about" element={<ShopAboutFormPage />} />
-                <Route path="waiters" element={<WaiterManagementPage />} />
-                <Route path="chefs" element={<ChefManagementPage />} />
+                <Route path="menu" element={<FeatureGate featureKey="menu_items"><MenuManagementPage /></FeatureGate>} />
+                <Route path="categories" element={<FeatureGate featureKey="categories"><CategoryManagementPage /></FeatureGate>} />
+                <Route path="qr" element={<FeatureGate featureKey="qr_code"><QRCodePage /></FeatureGate>} />
+                <Route path="orders" element={<FeatureGate featureKey="orders"><OrdersManagementPage /></FeatureGate>} />
+                <Route path="tables" element={<FeatureGate featureKey="tables"><TableManagementPage /></FeatureGate>} />
+                <Route path="analytics" element={<FeatureGate featureKey="analytics"><ShopkeeperAnalyticsPage /></FeatureGate>} />
+                <Route path="billing" element={<FeatureGate featureKey="billing"><BillingManagementPage /></FeatureGate>} />
+                <Route path="billing-analytics" element={<FeatureGate featureKey="billing_analytics"><BillingAnalyticsPage /></FeatureGate>} />
+                <Route path="settings" element={<FeatureGate featureKey="shop_settings"><ShopSettingsPage /></FeatureGate>} />
+                <Route path="details" element={<FeatureGate featureKey="shop_settings"><ShopDetailsFormPage /></FeatureGate>} />
+                <Route path="about" element={<FeatureGate featureKey="shop_settings"><ShopAboutFormPage /></FeatureGate>} />
+                <Route path="waiters" element={<FeatureGate featureKey="waiters"><WaiterManagementPage /></FeatureGate>} />
+                <Route path="chefs" element={<FeatureGate featureKey="chefs"><ChefManagementPage /></FeatureGate>} />
               </Route>
 
               <Route element={<CustomerLayout />}>
