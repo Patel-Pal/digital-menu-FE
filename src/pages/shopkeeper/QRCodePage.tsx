@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { StatCard } from "@/components/StatCard";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFeatureAccess } from "@/contexts/FeatureAccessContext";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { shopService } from "@/services/shopService";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
@@ -108,6 +109,7 @@ function getQRModules(data: string, errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H')
 
 export function QRCodePage() {
   const { user } = useAuth();
+  const { hasFeature } = useFeatureAccess();
   const { analytics, refreshAnalytics } = useAnalytics();
   const displayCanvasRef = useRef<HTMLCanvasElement>(null);
   const [ownerId, setOwnerId] = useState("");
@@ -328,6 +330,7 @@ export function QRCodePage() {
         </motion.div>
 
         {/* Right: Customization Panel */}
+        {hasFeature('qr_customization') && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex">
           <Card className="flex flex-col w-full">
             <CardHeader className="flex flex-row items-center justify-between pb-4">
@@ -512,9 +515,8 @@ export function QRCodePage() {
             </CardContent>
           </Card>
         </motion.div>
+        )}
       </div>
-
-      {/* Stats */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium text-muted-foreground">Statistics</h3>
