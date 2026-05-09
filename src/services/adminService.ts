@@ -19,7 +19,7 @@ export const adminService = {
   },
 
   // Shops
-  getAllShops: async (params?: { search?: string; status?: string; subscription?: string; page?: number; limit?: number }) => {
+  getAllShops: async (params?: { search?: string; status?: string; subscription?: string; profileStatus?: string; page?: number; limit?: number }) => {
     const response = await api.get('/admin/shops', { params });
     return response.data;
   },

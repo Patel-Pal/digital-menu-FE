@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { shopService } from '@/services/shopService';
-import type { FeatureKey, SubscriptionPlan } from '@/config/featureMatrix';
+import { getDefaultFeatures, type FeatureKey, type SubscriptionPlan } from '@/config/featureMatrix';
 
 interface FeatureAccessContextType {
   features: FeatureKey[];
@@ -39,7 +39,11 @@ export const FeatureAccessProvider = ({ children }: FeatureAccessProviderProps) 
       setFeatures(data.resolvedFeatures);
       setSubscription(data.subscription);
     } catch (error) {
-      console.error('Failed to fetch features:', error);
+      // No shop profile yet (new shopkeeper) — fall back to free plan defaults
+      // so they can still access Settings and other free-tier pages
+      console.error('Failed to fetch features, falling back to free plan:', error);
+      setFeatures(getDefaultFeatures('free'));
+      setSubscription('free');
     } finally {
       setLoading(false);
     }

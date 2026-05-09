@@ -19,12 +19,14 @@ import { ShopFeaturePanel } from "@/components/admin/ShopFeaturePanel";
 interface Shop {
   _id: string;
   name: string;
-  ownerId?: { name?: string; email?: string };
+  ownerId?: { _id?: string; name?: string; email?: string };
   type?: string;
   subscription: string;
   qrScans?: number;
   isActive: boolean;
   createdAt: string;
+  _profileComplete?: boolean;
+  _isStub?: boolean;
 }
 
 const filterConfigs: FilterConfig[] = [
@@ -48,6 +50,15 @@ const filterConfigs: FilterConfig[] = [
     ],
     accessorFn: (row: Shop) => row.subscription,
   },
+  {
+    id: "profileStatus",
+    label: "Profile",
+    options: [
+      { label: "Complete", value: "complete" },
+      { label: "Incomplete", value: "incomplete" },
+    ],
+    accessorFn: (row: Shop) => (row._profileComplete ? "complete" : "incomplete"),
+  },
 ];
 
 const columns: ColumnDef<Shop>[] = [
@@ -61,7 +72,14 @@ const columns: ColumnDef<Shop>[] = [
           {row.name.charAt(0)}
         </div>
         <div>
-          <p className="font-medium">{row.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-medium">{row.name}</p>
+            {!row._profileComplete && (
+              <Badge variant="outline" className="text-xs text-orange-500 border-orange-300">
+                Profile Incomplete
+              </Badge>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">{row.ownerId?.email}</p>
         </div>
       </div>
@@ -70,8 +88,8 @@ const columns: ColumnDef<Shop>[] = [
   {
     id: "type",
     header: "Type",
-    accessorFn: (row) => row.type || "restaurant",
-    cell: (row) => <span className="capitalize">{row.type || "restaurant"}</span>,
+    accessorFn: (row) => row.type || "—",
+    cell: (row) => <span className="capitalize">{row.type || "—"}</span>,
   },
   {
     id: "subscription",
@@ -133,6 +151,7 @@ export function AdminShopsPage() {
     search?: string;
     status?: string;
     subscription?: string;
+    profileStatus?: string;
   }>({});
   const queryParamsRef = useRef(queryParams);
   queryParamsRef.current = queryParams;
@@ -140,13 +159,14 @@ export function AdminShopsPage() {
   const [featurePanelShopId, setFeaturePanelShopId] = useState<string | null>(null);
 
   const fetchShops = useCallback(
-    async (params: { search?: string; status?: string; subscription?: string; page?: number }) => {
+    async (params: { search?: string; status?: string; subscription?: string; profileStatus?: string; page?: number }) => {
       try {
         setLoading(true);
         const response = await adminService.getAllShops({
           search: params.search || undefined,
           status: params.status || undefined,
           subscription: params.subscription || undefined,
+          profileStatus: params.profileStatus || undefined,
           page: params.page ?? 1,
           limit: 10,
         });
@@ -229,8 +249,9 @@ export function AdminShopsPage() {
         <Button
           variant="ghost"
           size="icon-sm"
-          onClick={() => setFeaturePanelShopId(row._id)}
-          title="Manage features"
+          onClick={() => !row._isStub && setFeaturePanelShopId(row._id)}
+          title={row._isStub ? "No shop profile yet" : "Manage features"}
+          disabled={!!row._isStub}
         >
           <Settings2 className="h-4 w-4" />
         </Button>
@@ -245,7 +266,9 @@ export function AdminShopsPage() {
           variant="ghost"
           size="icon-sm"
           className="text-destructive"
-          onClick={() => handleDeleteShop(row._id)}
+          onClick={() => !row._isStub && handleDeleteShop(row._id)}
+          disabled={!!row._isStub}
+          title={row._isStub ? "No shop to delete" : "Delete shop"}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
