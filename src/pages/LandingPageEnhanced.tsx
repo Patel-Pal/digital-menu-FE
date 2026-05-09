@@ -27,6 +27,7 @@ import { ContactPopup } from "@/components/ContactPopup";
 import { Simple3DPhone } from "@/components/3d/Simple3D";
 import { HeroMockup } from "@/components/HeroMockup";
 import { AboutSection } from "@/components/AboutSection";
+import { DemoCredentials } from "@/components/DemoCredentials";
 import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 import {
   FadeInSection,
@@ -395,6 +396,9 @@ export function LandingPage() {
           </div>
         </motion.div>
       </section>
+
+      {/* ─── Demo Credentials Section ─── */}
+      <DemoCredentials />
 
       {/* ─── Features Section ─── */}
       <section id="features" className="pt-32 pb-14 px-4 bg-muted/30 relative overflow-hidden">
