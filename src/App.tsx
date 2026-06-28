@@ -86,7 +86,11 @@ const App = () => (
 
               <Route element={<AuthLayout />}>
                 <Route path="/auth/login" element={<LoginPage />} />
-                <Route path="/auth/register" element={<RegisterPage />} />
+                <Route path="/auth/register" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <RegisterPage />
+                  </ProtectedRoute>
+                } />
                 <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
               </Route>
 
@@ -139,6 +143,7 @@ const App = () => (
                 <Route index element={<ChefOrdersPage />} />
               </Route>
 
+              <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
