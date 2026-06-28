@@ -13,6 +13,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState, useEffect, useRef } from "react";
 import { adminService } from "@/services/adminService";
 import { ContactPopup } from "@/components/ContactPopup";
+import { FreeTrialPopup } from "@/components/FreeTrialPopup";
 import { DemoCredentials } from "@/components/DemoCredentials";
 import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 import {
@@ -27,6 +28,7 @@ gsap.registerPlugin(ScrollTrigger);
 export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactPopupOpen, setContactPopupOpen] = useState(false);
+  const [freeTrialPopupOpen, setFreeTrialPopupOpen] = useState(false);
   const [contactInfo, setContactInfo] = useState({
     email: "[email]", phone: "[phone]", address: "[address]",
   });
@@ -150,11 +152,9 @@ export function LandingPage() {
                 <Button variant="ghost" size="sm">Login</Button>
               </Link>
               <AnimatedButton>
-                <Link to="/auth/register">
-                  <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-500/20">
+                <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-500/20" onClick={() => setFreeTrialPopupOpen(true)}>
                     Start Free
                   </Button>
-                </Link>
               </AnimatedButton>
             </div>
 
@@ -181,7 +181,7 @@ export function LandingPage() {
               </div>
               <div className="flex gap-2 pt-3">
                 <Link to="/auth/login" className="flex-1"><Button variant="outline" className="w-full">Login</Button></Link>
-                <Link to="/auth/register" className="flex-1"><Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600">Start Free</Button></Link>
+                <Button className="flex-1 w-full bg-gradient-to-r from-blue-600 to-purple-600" onClick={() => { setMobileMenuOpen(false); setFreeTrialPopupOpen(true); }}>Start Free</Button>
               </div>
             </motion.div>
           )}
@@ -225,11 +225,9 @@ export function LandingPage() {
 
               <motion.div variants={heroItem} className="flex flex-col sm:flex-row gap-4">
                 <AnimatedButton>
-                  <Link to="/auth/register">
-                    <Button size="lg" className="text-base px-8 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-xl shadow-blue-500/25 transition-all hover:shadow-blue-500/40">
+                    <Button size="lg" className="text-base px-8 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-xl shadow-blue-500/25 transition-all hover:shadow-blue-500/40" onClick={() => setFreeTrialPopupOpen(true)}>
                       Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
-                  </Link>
                 </AnimatedButton>
                 <Button size="lg" variant="outline" className="text-base px-8 h-12 group" onClick={() => { const el = document.getElementById('how-it-works'); el?.scrollIntoView({ behavior: 'smooth' }); }}>
                   <Play className="mr-2 h-4 w-4 group-hover:text-blue-600 transition-colors" /> See How It Works
@@ -469,11 +467,9 @@ export function LandingPage() {
             <div className="text-center mt-10">
               <p className="text-sm text-muted-foreground mb-4">Every theme is fully responsive, supports dark mode, and updates instantly.</p>
               <AnimatedButton>
-                <Link to="/auth/register">
-                  <Button variant="outline" className="group">
+                  <Button variant="outline" className="group" onClick={() => setFreeTrialPopupOpen(true)}>
                     Try All Themes Free <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
-                </Link>
               </AnimatedButton>
             </div>
           </FadeInSection>
@@ -648,11 +644,9 @@ export function LandingPage() {
                         ))}
                       </ul>
                       <AnimatedButton>
-                        <Link to="/auth/register" className="w-full">
-                          <Button className={`w-full ${plan.popular ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" : ""}`} variant={plan.popular ? "default" : "outline"}>
-                            {plan.price === "Custom" ? "Contact Us" : "Get Started"}
+                          <Button className={`w-full ${plan.popular ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" : ""}`} variant={plan.popular ? "default" : "outline"} onClick={() => setFreeTrialPopupOpen(true)}>
+                            Get Started
                           </Button>
-                        </Link>
                       </AnimatedButton>
                     </CardContent>
                   </Card>
@@ -720,11 +714,9 @@ export function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <AnimatedButton>
-                <Link to="/auth/register">
-                  <Button size="lg" className="text-base px-8 h-12 bg-white text-blue-700 hover:bg-gray-100 shadow-xl">
+                  <Button size="lg" className="text-base px-8 h-12 bg-white text-blue-700 hover:bg-gray-100 shadow-xl" onClick={() => setFreeTrialPopupOpen(true)}>
                     Start Free Now <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
-                </Link>
               </AnimatedButton>
               <Button size="lg" variant="outline" className="text-base px-8 h-12 border-white/30 text-white hover:bg-white/10" onClick={() => setContactPopupOpen(true)}>
                 <Phone className="mr-2 h-4 w-4" /> Talk to Us
@@ -811,7 +803,7 @@ export function LandingPage() {
                 <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
                 <li><a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a></li>
                 <li><a href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</a></li>
-                <li><Link to="/auth/register" className="hover:text-foreground transition-colors">Get Started</Link></li>
+                <li><button onClick={() => setFreeTrialPopupOpen(true)} className="hover:text-foreground transition-colors">Get Started</button></li>
               </ul>
             </div>
 
@@ -845,6 +837,7 @@ export function LandingPage() {
       </footer>
 
       <ContactPopup isOpen={contactPopupOpen} onClose={() => setContactPopupOpen(false)} contactInfo={contactInfo} />
+      <FreeTrialPopup isOpen={freeTrialPopupOpen} onClose={() => setFreeTrialPopupOpen(false)} />
     </div>
   );
 }
