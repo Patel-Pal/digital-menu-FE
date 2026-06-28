@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { QrCode, Eye, TrendingUp, Star, ArrowRight, Plus, BarChart3, ShoppingBag, Receipt, UtensilsCrossed, IndianRupee, Users, ChefHat } from "lucide-react";
+import { QrCode, Eye, TrendingUp, Star, ArrowRight, Plus, BarChart3, ShoppingBag, Receipt, UtensilsCrossed, IndianRupee, Users, ChefHat, FolderOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,7 +138,7 @@ export function ShopkeeperDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+        className="grid grid-cols-2 gap-3"
       >
         <StatCard
           title="Menu Views"
@@ -181,7 +181,7 @@ export function ShopkeeperDashboard() {
             : todayRevenue > 0 ? 'No revenue yesterday' : 'No revenue yet today'}
           changeType={todayRevenue > yesterdayRevenue ? "positive" : todayRevenue < yesterdayRevenue ? "negative" : "neutral"}
           icon={<IndianRupee className="h-5 w-5" />}
-          className="col-span-2 sm:col-span-4"
+          className="col-span-2"
         />
         )}
       </motion.div>
@@ -191,12 +191,24 @@ export function ShopkeeperDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25 }}
-        className="grid grid-cols-2 sm:grid-cols-3 gap-3"
+        className="grid grid-cols-3 gap-3"
       >
         <Link to="/shop/menu">
           <Card className="p-3 text-center hover:shadow-md transition-shadow cursor-pointer">
             <UtensilsCrossed className="h-5 w-5 mx-auto mb-1 text-primary" />
             <p className="text-xs font-medium">Add Item</p>
+          </Card>
+        </Link>
+        <Link to="/shop/categories">
+          <Card className="p-3 text-center hover:shadow-md transition-shadow cursor-pointer">
+            <FolderOpen className="h-5 w-5 mx-auto mb-1 text-primary" />
+            <p className="text-xs font-medium">Categories</p>
+          </Card>
+        </Link>
+        <Link to="/shop/qr">
+          <Card className="p-3 text-center hover:shadow-md transition-shadow cursor-pointer">
+            <QrCode className="h-5 w-5 mx-auto mb-1 text-primary" />
+            <p className="text-xs font-medium">QR Code</p>
           </Card>
         </Link>
         {hasFeature('orders') && (
@@ -223,23 +235,47 @@ export function ShopkeeperDashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <Card variant="elevated" className="bg-gradient-to-r from-primary to-accent text-primary-foreground border-0">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Badge className="bg-primary-foreground/20 text-primary-foreground border-0">
-                  {shop?.subscription?.charAt(0).toUpperCase() + shop?.subscription?.slice(1) || "Free"} Plan
-                </Badge>
-                <p className="text-sm opacity-90">Manage your subscription</p>
+        {shop?.subscription === 'free' ? (
+          <Card className="border-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-6 -translate-x-6" />
+            <CardContent className="p-5 relative">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-2 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-white/20 text-white border-0 text-[10px]">Free Plan</Badge>
+                    <span className="text-white/60 text-xs">•</span>
+                    <span className="text-white/80 text-xs">Upgrade for ₹599/mo</span>
+                  </div>
+                  <p className="text-sm text-white/90 font-medium">Unlock orders, billing, tables, staff apps & analytics</p>
+                </div>
+                <Link to="/shop/settings">
+                  <Button size="sm" className="bg-white text-blue-700 hover:bg-white/90 shadow-lg text-xs flex-shrink-0">
+                    Upgrade
+                  </Button>
+                </Link>
               </div>
-              <Link to="/shop/settings">
-                <Button variant="secondary" size="sm">
-                  Settings
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card variant="elevated" className="bg-gradient-to-r from-primary to-accent text-primary-foreground border-0">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Badge className="bg-primary-foreground/20 text-primary-foreground border-0">
+                    {shop?.subscription?.charAt(0).toUpperCase() + shop?.subscription?.slice(1) || "Free"} Plan
+                  </Badge>
+                  <p className="text-sm opacity-90">Manage your subscription</p>
+                </div>
+                <Link to="/shop/settings">
+                  <Button variant="secondary" size="sm">
+                    Settings
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </motion.div>
 
       {/* Popular Items */}
