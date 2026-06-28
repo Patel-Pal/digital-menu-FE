@@ -13,6 +13,7 @@ import { billingService } from "@/services/billingService";
 import { waiterService } from "@/services/waiterService";
 import { chefService } from "@/services/chefService";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { useFeatureAccess } from "@/contexts/FeatureAccessContext";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -24,6 +25,7 @@ function getGreeting() {
 export function ShopkeeperDashboard() {
   const { user } = useAuth();
   const { analytics } = useAnalytics();
+  const { hasFeature } = useFeatureAccess();
   const [shop, setShop] = useState<Shop | null>(null);
   const [popularItems, setPopularItems] = useState<MenuItem[]>([]);
   const [totalMenuItems, setTotalMenuItems] = useState(0);
@@ -48,37 +50,43 @@ export function ShopkeeperDashboard() {
           setPopularItems(allItems.slice(0, 3));
 
           // Fetch today's and yesterday's revenue from paid bills
-          try {
-            const billsResponse = await billingService.getShopBills(user.shopId, 'paid', 1, 100);
-            const today = new Date().toDateString();
-            const yesterday = new Date(Date.now() - 86400000).toDateString();
-            const bills = billsResponse.data || [];
-            const todayBills = bills.filter((b: any) => new Date(b.createdAt).toDateString() === today);
-            const yesterdayBills = bills.filter((b: any) => new Date(b.createdAt).toDateString() === yesterday);
-            setTodayRevenue(todayBills.reduce((sum: number, b: any) => sum + b.totalAmount, 0));
-            setYesterdayRevenue(yesterdayBills.reduce((sum: number, b: any) => sum + b.totalAmount, 0));
-          } catch (e) {
-            // billing may not be available
+          if (hasFeature('billing')) {
+            try {
+              const billsResponse = await billingService.getShopBills(user.shopId, 'paid', 1, 100);
+              const today = new Date().toDateString();
+              const yesterday = new Date(Date.now() - 86400000).toDateString();
+              const bills = billsResponse.data || [];
+              const todayBills = bills.filter((b: any) => new Date(b.createdAt).toDateString() === today);
+              const yesterdayBills = bills.filter((b: any) => new Date(b.createdAt).toDateString() === yesterday);
+              setTodayRevenue(todayBills.reduce((sum: number, b: any) => sum + b.totalAmount, 0));
+              setYesterdayRevenue(yesterdayBills.reduce((sum: number, b: any) => sum + b.totalAmount, 0));
+            } catch (e) {
+              // billing may not be available
+            }
           }
 
           // Fetch active waiter count
-          try {
-            const waiters = await waiterService.getShopWaiters(user.shopId);
-            const waiterList = Array.isArray(waiters) ? waiters : (waiters as any).data ?? [];
-            setTotalWaiterCount(waiterList.length);
-            setActiveWaiterCount(waiterList.filter((w: any) => w.isActive).length);
-          } catch (e) {
-            // waiter service may not be available
+          if (hasFeature('waiters')) {
+            try {
+              const waiters = await waiterService.getShopWaiters(user.shopId);
+              const waiterList = Array.isArray(waiters) ? waiters : (waiters as any).data ?? [];
+              setTotalWaiterCount(waiterList.length);
+              setActiveWaiterCount(waiterList.filter((w: any) => w.isActive).length);
+            } catch (e) {
+              // waiter service may not be available
+            }
           }
 
           // Fetch active chef count
-          try {
-            const chefs = await chefService.getShopChefs(user.shopId);
-            const raw = Array.isArray(chefs) ? chefs : (chefs as any).data ?? [];
-            setTotalChefCount(raw.length);
-            setActiveChefCount(raw.filter((c: any) => c.isActive).length);
-          } catch (e) {
-            // chef service may not be available
+          if (hasFeature('chefs')) {
+            try {
+              const chefs = await chefService.getShopChefs(user.shopId);
+              const raw = Array.isArray(chefs) ? chefs : (chefs as any).data ?? [];
+              setTotalChefCount(raw.length);
+              setActiveChefCount(raw.filter((c: any) => c.isActive).length);
+            } catch (e) {
+              // chef service may not be available
+            }
           }
         }
       } catch (error) {
@@ -89,7 +97,7 @@ export function ShopkeeperDashboard() {
     if (user) {
       fetchData();
     }
-  }, [user]);
+  }, [user, hasFeature]);
 
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
@@ -146,6 +154,7 @@ export function ShopkeeperDashboard() {
           changeType="neutral"
           icon={<TrendingUp className="h-5 w-5" />}
         />
+        {hasFeature('waiters') && (
         <StatCard
           title="Active Waiters"
           value={activeWaiterCount.toString()}
@@ -153,6 +162,8 @@ export function ShopkeeperDashboard() {
           changeType={activeWaiterCount > 0 ? "positive" : "neutral"}
           icon={<Users className="h-5 w-5" />}
         />
+        )}
+        {hasFeature('chefs') && (
         <StatCard
           title="Active Chefs"
           value={activeChefCount.toString()}
@@ -160,6 +171,8 @@ export function ShopkeeperDashboard() {
           changeType={activeChefCount > 0 ? "positive" : "neutral"}
           icon={<ChefHat className="h-5 w-5" />}
         />
+        )}
+        {hasFeature('billing') && (
         <StatCard
           title="Today's Revenue"
           value={`₹${todayRevenue.toFixed(2)}`}
@@ -170,6 +183,7 @@ export function ShopkeeperDashboard() {
           icon={<IndianRupee className="h-5 w-5" />}
           className="col-span-2 sm:col-span-4"
         />
+        )}
       </motion.div>
 
       {/* Quick Actions Row */}
@@ -177,7 +191,7 @@ export function ShopkeeperDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25 }}
-        className="grid grid-cols-3 gap-3"
+        className="grid grid-cols-2 sm:grid-cols-3 gap-3"
       >
         <Link to="/shop/menu">
           <Card className="p-3 text-center hover:shadow-md transition-shadow cursor-pointer">
@@ -185,18 +199,22 @@ export function ShopkeeperDashboard() {
             <p className="text-xs font-medium">Add Item</p>
           </Card>
         </Link>
+        {hasFeature('orders') && (
         <Link to="/shop/orders">
           <Card className="p-3 text-center hover:shadow-md transition-shadow cursor-pointer">
             <ShoppingBag className="h-5 w-5 mx-auto mb-1 text-primary" />
             <p className="text-xs font-medium">View Orders</p>
           </Card>
         </Link>
+        )}
+        {hasFeature('billing') && (
         <Link to="/shop/billing">
           <Card className="p-3 text-center hover:shadow-md transition-shadow cursor-pointer">
             <Receipt className="h-5 w-5 mx-auto mb-1 text-primary" />
             <p className="text-xs font-medium">Generate Bill</p>
           </Card>
         </Link>
+        )}
       </motion.div>
 
       {/* Subscription Banner */}

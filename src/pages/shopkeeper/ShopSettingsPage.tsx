@@ -191,8 +191,9 @@ export function ShopSettingsPage() {
     try {
       const response = await uploadService.uploadImage(file);
       return response.data.url;
-    } catch (error) {
-      toast.error("Failed to upload image");
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Failed to upload image";
+      toast.error(message);
       return null;
     } finally {
       setUploading(false);

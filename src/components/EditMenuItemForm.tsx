@@ -115,8 +115,9 @@ export function EditMenuItemForm({ isOpen, onClose, onSuccess, item }: EditMenuI
     try {
       const response = await uploadService.uploadImage(imageFile);
       return response.data.url;
-    } catch (error) {
-      toast.error("Failed to upload image");
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Failed to upload image";
+      toast.error(message);
       return null;
     } finally {
       setUploadingImage(false);

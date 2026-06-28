@@ -91,23 +91,46 @@ function ShopkeeperLayoutInner() {
   const fetchPendingCount = useCallback(async () => {
     if (!user?.shopId) return;
     try {
-      const [orderRes, billRes, tableRes] = await Promise.all([
-        orderService.getShopOrders(user.shopId, 'pending', 1, 5),
-        billingService.getShopBills(user.shopId, 'pending', 1, 5),
-        orderService.getTableAggregation(user.shopId),
-      ]);
-      setPendingOrderCount(orderRes.counts?.pending || 0);
-      setPendingBillCount(billRes.counts?.pending || 0);
-      const tablesWithPending = (tableRes.data || []).filter(
-        (t) => t.orders.some((o) => o.status === 'pending')
-      );
-      setPendingTableCount(tablesWithPending.length);
-      setRecentPendingOrders(orderRes.data || []);
-      setRecentPendingBills(billRes.data || []);
+      const promises: Promise<any>[] = [];
+      const promiseKeys: string[] = [];
+
+      if (hasFeature('orders')) {
+        promises.push(orderService.getShopOrders(user.shopId, 'pending', 1, 5));
+        promiseKeys.push('orders');
+      }
+      if (hasFeature('billing')) {
+        promises.push(billingService.getShopBills(user.shopId, 'pending', 1, 5));
+        promiseKeys.push('billing');
+      }
+      if (hasFeature('tables')) {
+        promises.push(orderService.getTableAggregation(user.shopId));
+        promiseKeys.push('tables');
+      }
+
+      const results = await Promise.all(promises);
+
+      let idx = 0;
+      if (promiseKeys.includes('orders')) {
+        const orderRes = results[idx++];
+        setPendingOrderCount(orderRes.counts?.pending || 0);
+        setRecentPendingOrders(orderRes.data || []);
+      }
+      if (promiseKeys.includes('billing')) {
+        const billRes = results[idx++];
+        setPendingBillCount(billRes.counts?.pending || 0);
+        setRecentPendingBills(billRes.data || []);
+      }
+      if (promiseKeys.includes('tables')) {
+        const tableRes = results[idx++];
+        const tablesWithPending = (tableRes.data || []).filter(
+          (t: TableData) => t.orders.some((o) => o.status === 'pending')
+        );
+        setPendingTableCount(tablesWithPending.length);
+      }
     } catch (error) {
       console.error('Failed to fetch pending counts:', error);
     }
-  }, [user?.shopId]);
+  }, [user?.shopId, hasFeature]);
 
   // Close notification panel on outside click
   useEffect(() => {
@@ -148,13 +171,15 @@ function ShopkeeperLayoutInner() {
     
     if (user) {
       fetchShop();
-      fetchPendingCount();
+      if (!featuresLoading) {
+        fetchPendingCount();
+      }
       // Show onboarding guide on first visit
       if (!localStorage.getItem("onboarding_seen")) {
         setShowOnboarding(true);
       }
     }
-  }, [user]);
+  }, [user, featuresLoading]);
 
   // Listen for profile updates to refresh shop data
   useEffect(() => {

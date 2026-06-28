@@ -20,6 +20,7 @@ import { categoryService, type Category } from "@/services/categoryService";
 import { shopService, type Shop } from "@/services/shopService";
 import { reviewService } from "@/services/reviewService";
 import { orderService } from "@/services/orderService";
+import { FEATURE_MATRIX, type SubscriptionPlan } from "@/config/featureMatrix";
 import { useMenuTheme, menuThemes, MenuTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrder } from "@/contexts/OrderContext";
@@ -84,6 +85,11 @@ export function CustomerMenuPage() {
   
   // For demo, use current user's shopId or a default
   const currentShopId = shopId || user?.shopId || "";
+
+  // Check if the shop's plan includes the 'orders' feature
+  const orderingEnabled = shop?.subscription
+    ? (FEATURE_MATRIX[shop.subscription as SubscriptionPlan] ?? []).includes('orders')
+    : true; // default to true while loading
 
   useEffect(() => {
     if (currentShopId) {
@@ -342,6 +348,7 @@ export function CustomerMenuPage() {
                             {item.spicy && <Badge className="text-xs h-5 bg-red-100 text-red-600 border-red-200">🌶️</Badge>}
                           </div>
                           
+                          {orderingEnabled && (
                           <Button
                             size="sm"
                             className="h-8 w-8 p-0 rounded-full shadow-md relative"
@@ -359,6 +366,7 @@ export function CustomerMenuPage() {
                               </span>
                             )}
                           </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -493,6 +501,7 @@ export function CustomerMenuPage() {
             <UtensilsCrossed className="h-5 w-5 mb-1" />
             <span className="text-xs font-medium">Menu</span>
           </button>
+          {orderingEnabled && (
           <button
             onClick={() => setActiveTab("orders")}
             className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all relative ${
@@ -511,6 +520,7 @@ export function CustomerMenuPage() {
             </div>
             <span className="text-xs font-medium">Orders</span>
           </button>
+          )}
           <button
             onClick={() => setActiveTab("about")}
             className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all ${
@@ -537,7 +547,7 @@ export function CustomerMenuPage() {
       </div>
 
       {/* Floating Order Button — draggable */}
-      {getTotalItems() > 0 && (
+      {orderingEnabled && getTotalItems() > 0 && (
         <motion.div
           drag
           dragConstraints={{ top: -window.innerHeight + 140, bottom: 0, left: -window.innerWidth + 80, right: 0 }}

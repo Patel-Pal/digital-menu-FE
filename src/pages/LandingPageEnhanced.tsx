@@ -85,10 +85,8 @@ export function LandingPage() {
   ];
 
   const pricing = [
-    { name: "Free", price: "₹0", period: "/month", description: "Perfect to get started", features: ["QR code menu", "Order management", "Basic settings", "Up to 20 menu items"], popular: false },
-    { name: "Basic", price: "₹599", period: "/month", description: "Great for small restaurants", features: ["Everything in Free", "Categories", "Billing with tax", "Analytics dashboard", "Unlimited menu items"], popular: true },
-    { name: "Premium", price: "₹1199", period: "/month", description: "For busy restaurants with staff", features: ["Everything in Basic", "Waiter & Chef apps", "Table management", "Billing analytics", "Data export", "QR customization"], popular: false },
-    { name: "Enterprise", price: "Custom", period: "", description: "Multi-location operations", features: ["Everything in Premium", "Priority support", "Custom features", "Dedicated account manager", "SLA guarantee"], popular: false },
+    { name: "Free", price: "₹0", period: "/month", description: "Perfect to get started", features: ["Digital menu with QR code", "Custom QR code styling", "Categories & menu items", "Shop settings & theme", "Customers can view menu"], popular: false },
+    { name: "Pro", price: "₹599", period: "/month", description: "Everything unlocked for your restaurant", features: ["Everything in Free", "Order management", "Table management", "Billing with auto tax", "Waiter & Chef apps", "Analytics & billing analytics", "Data export"], popular: true },
   ];
 
   const testimonials = [
@@ -618,7 +616,7 @@ export function LandingPage() {
             </FadeInSection>
           </div>
 
-          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto" staggerDelay={0.1}>
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto" staggerDelay={0.1}>
             {pricing.map((plan, index) => (
               <StaggerItem key={index}>
                 <AnimatedCard className="h-full" hoverLift={plan.popular ? 12 : 6} hoverScale={1.02}>
