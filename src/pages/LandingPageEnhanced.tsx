@@ -189,11 +189,11 @@ export function LandingPage() {
       </motion.nav>
 
       {/* ─── Hero Section ─── */}
-      <section ref={heroRef} className="relative pt-28 sm:pt-32 pb-16 sm:pb-24 px-4 overflow-hidden min-h-[90vh] flex items-center">
+      <section ref={heroRef} className="relative pt-20 sm:pt-32 pb-10 sm:pb-24 px-4 overflow-hidden min-h-[auto] sm:min-h-[90vh] flex items-center">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50/50 to-cyan-50 dark:from-blue-950/30 dark:via-purple-950/20 dark:to-cyan-950/30" />
-        <div className="parallax-orb absolute top-20 left-[10%] w-96 h-96 bg-blue-400/10 rounded-full blur-[100px]" />
-        <div className="parallax-orb absolute bottom-20 right-[10%] w-[500px] h-[500px] bg-purple-400/10 rounded-full blur-[120px]" />
-        <div className="parallax-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan-400/8 rounded-full blur-[80px]" />
+        <div className="parallax-orb absolute top-20 left-[10%] w-48 sm:w-96 h-48 sm:h-96 bg-blue-400/10 rounded-full blur-[60px] sm:blur-[100px]" />
+        <div className="parallax-orb absolute bottom-20 right-[10%] w-64 sm:w-[500px] h-64 sm:h-[500px] bg-purple-400/10 rounded-full blur-[80px] sm:blur-[120px]" />
+        <div className="hidden sm:block parallax-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan-400/8 rounded-full blur-[80px]" />
 
         <motion.div className="relative z-20 max-w-7xl mx-auto w-full" style={{ y: heroY, opacity: heroOpacity }}>
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -205,7 +205,7 @@ export function LandingPage() {
                 </Badge>
               </motion.div>
 
-              <motion.h1 variants={heroItem} className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight">
+              <motion.h1 variants={heroItem} className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.15] tracking-tight">
                 Your Restaurant,{" "}
                 <span className="relative inline-block">
                   <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
@@ -219,30 +219,30 @@ export function LandingPage() {
                 </span>
               </motion.h1>
 
-              <motion.p variants={heroItem} className="text-lg sm:text-xl text-muted-foreground max-w-xl leading-relaxed">
+              <motion.p variants={heroItem} className="text-base sm:text-xl text-muted-foreground max-w-xl leading-relaxed">
                 From QR code menus to real-time orders, table management, and automatic billing — run your entire dine-in operation from one platform.
               </motion.p>
 
-              <motion.div variants={heroItem} className="flex flex-col sm:flex-row gap-4">
+              <motion.div variants={heroItem} className="flex flex-col sm:flex-row gap-3">
                 <AnimatedButton>
-                    <Button size="lg" className="text-base px-8 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-xl shadow-blue-500/25 transition-all hover:shadow-blue-500/40" onClick={() => setFreeTrialPopupOpen(true)}>
-                      Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
+                    <Button size="lg" className="w-full sm:w-auto text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-xl shadow-blue-500/25 transition-all hover:shadow-blue-500/40" onClick={() => setFreeTrialPopupOpen(true)}>
+                      Get Started Free <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                     </Button>
                 </AnimatedButton>
-                <Button size="lg" variant="outline" className="text-base px-8 h-12 group" onClick={() => { const el = document.getElementById('how-it-works'); el?.scrollIntoView({ behavior: 'smooth' }); }}>
+                <Button size="lg" variant="outline" className="w-full sm:w-auto text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 group" onClick={() => { const el = document.getElementById('how-it-works'); el?.scrollIntoView({ behavior: 'smooth' }); }}>
                   <Play className="mr-2 h-4 w-4 group-hover:text-blue-600 transition-colors" /> See How It Works
                 </Button>
               </motion.div>
 
-              <motion.div variants={heroItem} className="flex items-center gap-6 sm:gap-10 pt-6">
+              <motion.div variants={heroItem} className="flex items-center justify-between sm:justify-start gap-4 sm:gap-10 pt-4 sm:pt-6">
                 {[
                   { value: "1000+", label: "Restaurants" },
                   { value: "50K+", label: "Orders/Month" },
                   { value: "4.9★", label: "Rating" },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
-                    <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{stat.value}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground mt-0.5">{stat.label}</div>
+                    <div className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{stat.value}</div>
+                    <div className="text-[10px] sm:text-sm text-muted-foreground mt-0.5">{stat.label}</div>
                   </div>
                 ))}
               </motion.div>
@@ -348,13 +348,13 @@ export function LandingPage() {
       </section>
 
       {/* ─── Trusted By Banner ─── */}
-      <section className="py-12 px-4 border-y border-border/50 bg-muted/20">
+      <section className="py-8 sm:py-12 px-4 border-y border-border/50 bg-muted/20">
         <div className="max-w-5xl mx-auto">
           <FadeInSection>
-            <p className="text-center text-sm text-muted-foreground mb-6">Trusted by restaurants across India</p>
-            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14 opacity-60">
+            <p className="text-center text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">Trusted by restaurants across India</p>
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-14 opacity-60">
               {["Spice Garden", "Cafe Bloom", "The Food Hub", "Royal Kitchen", "Urban Bites"].map((name) => (
-                <span key={name} className="text-lg font-bold text-muted-foreground/60">{name}</span>
+                <span key={name} className="text-sm sm:text-lg font-bold text-muted-foreground/60">{name}</span>
               ))}
             </div>
           </FadeInSection>
@@ -365,36 +365,40 @@ export function LandingPage() {
       <DemoCredentials />
 
       {/* ─── Features Section ─── */}
-      <section id="features" className="py-20 sm:py-28 px-4 relative overflow-hidden">
-        <div className="parallax-orb absolute top-0 right-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px]" />
+      <section id="features" className="py-14 sm:py-28 px-4 relative overflow-hidden">
+        <div className="hidden sm:block parallax-orb absolute top-0 right-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px]" />
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 sm:mb-14">
             <FadeInSection>
               <Badge className="mb-4 bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20">Features</Badge>
             </FadeInSection>
-            <TextReveal as="h2" className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+            <TextReveal as="h2" className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">
               Everything to Run Your{" "}
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Dine-In Business</span>
             </TextReveal>
             <FadeInSection delay={0.2}>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto">
                 Replace paper menus, manual order-taking, and messy billing with one platform. Set up in 30 minutes.
               </p>
             </FadeInSection>
           </div>
 
-          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" staggerDelay={0.08}>
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5" staggerDelay={0.08}>
             {features.map((feature, index) => (
               <StaggerItem key={index}>
                 <AnimatedCard className="h-full" hoverLift={8} hoverScale={1.02}>
                   <Card className="h-full border-0 bg-gradient-to-br from-background to-muted/30 shadow-sm hover:shadow-lg transition-shadow duration-300 group">
-                    <CardContent className="p-6 relative overflow-hidden">
+                    <CardContent className="p-4 sm:p-6 relative overflow-hidden">
                       <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500`} />
-                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center text-white mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                        {feature.icon}
+                      <div className="flex items-center gap-3 sm:block">
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center text-white sm:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0`}>
+                          {feature.icon}
+                        </div>
+                        <div className="flex-1 sm:flex-none">
+                          <h3 className="text-base sm:text-lg font-semibold mb-0.5 sm:mb-2">{feature.title}</h3>
+                          <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">{feature.description}</p>
+                        </div>
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                      <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
                     </CardContent>
                   </Card>
                 </AnimatedCard>
@@ -405,19 +409,19 @@ export function LandingPage() {
       </section>
 
       {/* ─── Beautiful Menus for Every Concept ─── */}
-      <section className="py-20 sm:py-28 px-4 bg-muted/30 relative overflow-hidden">
-        <div className="parallax-orb absolute top-20 left-[20%] w-[400px] h-[400px] bg-pink-500/5 rounded-full blur-[100px]" />
+      <section className="py-14 sm:py-28 px-4 bg-muted/30 relative overflow-hidden">
+        <div className="hidden sm:block parallax-orb absolute top-20 left-[20%] w-[400px] h-[400px] bg-pink-500/5 rounded-full blur-[100px]" />
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 sm:mb-14">
             <FadeInSection>
               <Badge className="mb-4 bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20">Themes</Badge>
             </FadeInSection>
-            <TextReveal as="h2" className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+            <TextReveal as="h2" className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">
               Beautiful Menus for{" "}
               <span className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">Every Concept</span>
             </TextReveal>
             <FadeInSection delay={0.2}>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto">
                 Choose from 6 stunning themes that match your restaurant's personality. Each theme adapts to your brand colors and style.
               </p>
             </FadeInSection>
@@ -477,25 +481,25 @@ export function LandingPage() {
       </section>
 
       {/* ─── How It Works ─── */}
-      <section id="how-it-works" className="py-20 sm:py-28 px-4 relative overflow-hidden">
-        <div className="parallax-orb absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-[120px]" />
+      <section id="how-it-works" className="py-14 sm:py-28 px-4 relative overflow-hidden">
+        <div className="hidden sm:block parallax-orb absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-[120px]" />
         <div className="max-w-6xl mx-auto relative z-10">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 sm:mb-14">
             <FadeInSection>
               <Badge className="mb-4 bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">How It Works</Badge>
             </FadeInSection>
-            <TextReveal as="h2" className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+            <TextReveal as="h2" className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">
               Go Live in{" "}
               <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">4 Simple Steps</span>
             </TextReveal>
             <FadeInSection delay={0.2}>
-              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              <p className="text-sm sm:text-lg text-muted-foreground max-w-xl mx-auto">
                 From signup to your first customer order in under 30 minutes.
               </p>
             </FadeInSection>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {howItWorks.map((step, index) => (
               <motion.div
                 key={index}
@@ -510,16 +514,16 @@ export function LandingPage() {
                   <div className="hidden lg:block absolute top-12 left-[calc(50%+40px)] w-[calc(100%-40px)] h-[2px] bg-gradient-to-r from-border to-transparent" />
                 )}
                 <div className="text-center group">
-                  <div className="relative inline-block mb-5">
-                    <div className={`w-20 h-20 rounded-3xl bg-gradient-to-br ${step.color} flex items-center justify-center text-white shadow-xl group-hover:scale-110 transition-transform duration-300`}>
-                      <step.icon className="w-8 h-8" />
+                  <div className="relative inline-block mb-3 sm:mb-5">
+                    <div className={`w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-gradient-to-br ${step.color} flex items-center justify-center text-white shadow-xl group-hover:scale-110 transition-transform duration-300`}>
+                      <step.icon className="w-6 h-6 sm:w-8 sm:h-8" />
                     </div>
-                    <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-background border-2 border-border flex items-center justify-center">
-                      <span className="text-[10px] font-bold text-muted-foreground">{step.step}</span>
+                    <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-background border-2 border-border flex items-center justify-center">
+                      <span className="text-[8px] sm:text-[10px] font-bold text-muted-foreground">{step.step}</span>
                     </div>
                   </div>
-                  <h3 className="text-base font-semibold mb-2">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
+                  <h3 className="text-xs sm:text-base font-semibold mb-1 sm:mb-2">{step.title}</h3>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                 </div>
               </motion.div>
             ))}
@@ -528,17 +532,17 @@ export function LandingPage() {
       </section>
 
       {/* ─── Why Choose Us ─── */}
-      <section className="py-20 sm:py-28 px-4 relative overflow-hidden">
+      <section className="py-14 sm:py-28 px-4 relative overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <FadeInSection>
               <div className="space-y-6">
                 <Badge className="bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20">Why Digital Menu?</Badge>
-                <h2 className="text-3xl sm:text-4xl font-bold leading-tight">
+                <h2 className="text-2xl sm:text-4xl font-bold leading-tight">
                   Not a Delivery App.{" "}
                   <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">No Commission.</span>
                 </h2>
-                <p className="text-muted-foreground text-lg leading-relaxed">
+                <p className="text-muted-foreground text-sm sm:text-lg leading-relaxed">
                   Unlike Zomato or Swiggy that take 20-30% of every order, Digital Menu is for dine-in management. 
                   Your customers are already in your restaurant. You keep 100% of the revenue.
                 </p>
@@ -594,19 +598,19 @@ export function LandingPage() {
       </section>
 
       {/* ─── Pricing Section ─── */}
-      <section id="pricing" className="py-20 sm:py-28 px-4 bg-muted/30 relative overflow-hidden">
-        <div className="parallax-orb absolute top-10 right-10 w-64 h-64 bg-green-400/5 rounded-full blur-[80px]" />
+      <section id="pricing" className="py-14 sm:py-28 px-4 bg-muted/30 relative overflow-hidden">
+        <div className="hidden sm:block parallax-orb absolute top-10 right-10 w-64 h-64 bg-green-400/5 rounded-full blur-[80px]" />
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 sm:mb-14">
             <FadeInSection>
               <Badge className="mb-4 bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">Pricing</Badge>
             </FadeInSection>
-            <TextReveal as="h2" className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+            <TextReveal as="h2" className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">
               Start Free,{" "}
               <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">Scale as You Grow</span>
             </TextReveal>
             <FadeInSection delay={0.2}>
-              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              <p className="text-sm sm:text-lg text-muted-foreground max-w-xl mx-auto">
                 No credit card required. No contracts. Upgrade or cancel anytime.
               </p>
             </FadeInSection>
@@ -658,13 +662,13 @@ export function LandingPage() {
       </section>
 
       {/* ─── Testimonials ─── */}
-      <section id="testimonials" className="py-20 sm:py-28 px-4 relative overflow-hidden">
+      <section id="testimonials" className="py-14 sm:py-28 px-4 relative overflow-hidden">
         <div className="max-w-6xl mx-auto relative z-10">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 sm:mb-14">
             <FadeInSection>
               <Badge className="mb-4 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">Testimonials</Badge>
             </FadeInSection>
-            <TextReveal as="h2" className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+            <TextReveal as="h2" className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">
               Loved by{" "}
               <span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">Restaurant Owners</span>
             </TextReveal>
@@ -701,24 +705,24 @@ export function LandingPage() {
       </section>
 
       {/* ─── CTA Section ─── */}
-      <section className="py-20 sm:py-28 px-4 relative overflow-hidden">
+      <section className="py-14 sm:py-28 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_60%)]" />
         <div className="max-w-4xl mx-auto relative z-10 text-center">
           <FadeInSection>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
               Ready to Go Digital?
             </h2>
-            <p className="text-lg sm:text-xl text-white/80 mb-8 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-xl text-white/80 mb-6 sm:mb-8 max-w-2xl mx-auto">
               Join 1000+ restaurants already using Digital Menu. Start free today — your customers can order within 30 minutes.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <AnimatedButton>
-                  <Button size="lg" className="text-base px-8 h-12 bg-white text-blue-700 hover:bg-gray-100 shadow-xl" onClick={() => setFreeTrialPopupOpen(true)}>
-                    Start Free Now <ArrowRight className="ml-2 h-5 w-5" />
+                  <Button size="lg" className="w-full sm:w-auto text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 bg-white text-blue-700 hover:bg-gray-100 shadow-xl" onClick={() => setFreeTrialPopupOpen(true)}>
+                    Start Free Now <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
               </AnimatedButton>
-              <Button size="lg" variant="outline" className="text-base px-8 h-12 border-white/30 text-white hover:bg-white/10" onClick={() => setContactPopupOpen(true)}>
+              <Button size="lg" variant="outline" className="w-full sm:w-auto text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 border-white/30 text-white hover:bg-white/10" onClick={() => setContactPopupOpen(true)}>
                 <Phone className="mr-2 h-4 w-4" /> Talk to Us
               </Button>
             </div>
@@ -728,18 +732,18 @@ export function LandingPage() {
       </section>
 
       {/* ─── Contact Section ─── */}
-      <section id="contact" className="py-20 sm:py-28 px-4 bg-muted/30">
+      <section id="contact" className="py-14 sm:py-28 px-4 bg-muted/30">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 sm:mb-14">
             <FadeInSection>
               <Badge className="mb-4 bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20">Contact</Badge>
             </FadeInSection>
-            <TextReveal as="h2" className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+            <TextReveal as="h2" className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">
               Get in{" "}
               <span className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">Touch</span>
             </TextReveal>
             <FadeInSection delay={0.2}>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-sm sm:text-lg text-muted-foreground">
                 Have questions? We'd love to help you get started.
               </p>
             </FadeInSection>
