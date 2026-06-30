@@ -135,7 +135,7 @@ export function LandingPage() {
             </motion.div>
 
             <div className="hidden md:flex items-center gap-8">
-              {["features", "how-it-works", "pricing", "testimonials", "contact"].map((item, i) => (
+              {["features", "how-it-works", "pricing", "contact"].map((item, i) => (
                 <motion.a
                   key={item}
                   href={`#${item}`}
@@ -170,7 +170,7 @@ export function LandingPage() {
               animate={{ opacity: 1, height: "auto" }}
               transition={{ duration: 0.3 }}
             >
-              {["features", "how-it-works", "pricing", "testimonials", "contact"].map((item) => (
+              {["features", "how-it-works", "pricing", "contact"].map((item) => (
                 <a key={item} href={`#${item}`} className="block text-muted-foreground hover:text-foreground capitalize py-1" onClick={() => setMobileMenuOpen(false)}>
                   {item.replace("-", " ")}
                 </a>
@@ -189,7 +189,7 @@ export function LandingPage() {
       </motion.nav>
 
       {/* ─── Hero Section ─── */}
-      <section ref={heroRef} className="relative pt-20 sm:pt-32 pb-10 sm:pb-24 px-4 overflow-hidden min-h-[auto] sm:min-h-[90vh] flex items-center">
+      <section ref={heroRef} className="relative pt-20 sm:pt-32 pb-6 sm:pb-24 px-4 overflow-hidden min-h-screen sm:min-h-[90vh] flex items-center">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50/50 to-cyan-50 dark:from-blue-950/30 dark:via-purple-950/20 dark:to-cyan-950/30" />
         <div className="parallax-orb absolute top-20 left-[10%] w-48 sm:w-96 h-48 sm:h-96 bg-blue-400/10 rounded-full blur-[60px] sm:blur-[100px]" />
         <div className="parallax-orb absolute bottom-20 right-[10%] w-64 sm:w-[500px] h-64 sm:h-[500px] bg-purple-400/10 rounded-full blur-[80px] sm:blur-[120px]" />
@@ -198,14 +198,14 @@ export function LandingPage() {
         <motion.div className="relative z-20 max-w-7xl mx-auto w-full" style={{ y: heroY, opacity: heroOpacity }}>
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left Content */}
-            <motion.div className="space-y-8" variants={heroContainer} initial="hidden" animate="visible">
+            <motion.div className="space-y-6 sm:space-y-8" variants={heroContainer} initial="hidden" animate="visible">
               <motion.div variants={heroItem}>
-                <Badge className="px-4 py-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/10">
-                  <Zap className="h-3 w-3 mr-1.5" /> No commission. No middleman.
+                <Badge className="px-3 py-1 sm:px-4 sm:py-1.5 text-xs bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/10">
+                  <Zap className="h-3 w-3 mr-1" /> No commission. No middleman.
                 </Badge>
               </motion.div>
 
-              <motion.h1 variants={heroItem} className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.15] tracking-tight">
+              <motion.h1 variants={heroItem} className="text-[28px] sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.2] sm:leading-[1.15] tracking-tight">
                 Your Restaurant,{" "}
                 <span className="relative inline-block">
                   <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
@@ -219,33 +219,35 @@ export function LandingPage() {
                 </span>
               </motion.h1>
 
-              <motion.p variants={heroItem} className="text-base sm:text-xl text-muted-foreground max-w-xl leading-relaxed">
+              <motion.p variants={heroItem} className="text-sm sm:text-xl text-muted-foreground max-w-xl leading-relaxed">
                 From QR code menus to real-time orders, table management, and automatic billing — run your entire dine-in operation from one platform.
               </motion.p>
 
-              <motion.div variants={heroItem} className="flex flex-col sm:flex-row gap-3">
+              <motion.div variants={heroItem} className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
                 <AnimatedButton>
-                    <Button size="lg" className="w-full sm:w-auto text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-xl shadow-blue-500/25 transition-all hover:shadow-blue-500/40" onClick={() => setFreeTrialPopupOpen(true)}>
-                      Get Started Free <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                    <Button className="w-full sm:w-auto text-sm px-6 h-10 sm:h-12 sm:text-base sm:px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-xl shadow-blue-500/25 transition-all hover:shadow-blue-500/40" onClick={() => setFreeTrialPopupOpen(true)}>
+                      Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                 </AnimatedButton>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 group" onClick={() => { const el = document.getElementById('how-it-works'); el?.scrollIntoView({ behavior: 'smooth' }); }}>
-                  <Play className="mr-2 h-4 w-4 group-hover:text-blue-600 transition-colors" /> See How It Works
+                <Button variant="outline" className="w-full sm:w-auto text-sm px-6 h-10 sm:h-12 sm:text-base sm:px-8 group" onClick={() => { const el = document.getElementById('how-it-works'); el?.scrollIntoView({ behavior: 'smooth' }); }}>
+                  <Play className="mr-2 h-3.5 w-3.5 group-hover:text-blue-600 transition-colors" /> See How It Works
                 </Button>
               </motion.div>
 
-              <motion.div variants={heroItem} className="flex items-center justify-between sm:justify-start gap-4 sm:gap-10 pt-4 sm:pt-6">
+              {/* Stats commented out - static data
+              <motion.div variants={heroItem} className="flex items-center justify-between pt-4 sm:justify-start sm:gap-10 sm:pt-6">
                 {[
                   { value: "1000+", label: "Restaurants" },
                   { value: "50K+", label: "Orders/Month" },
                   { value: "4.9★", label: "Rating" },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
-                    <div className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{stat.value}</div>
-                    <div className="text-[10px] sm:text-sm text-muted-foreground mt-0.5">{stat.label}</div>
+                    <div className="text-lg sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{stat.value}</div>
+                    <div className="text-[10px] sm:text-sm text-muted-foreground">{stat.label}</div>
                   </div>
                 ))}
               </motion.div>
+              */}
             </motion.div>
 
             {/* Right — Dashboard Preview */}
@@ -347,7 +349,8 @@ export function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ─── Trusted By Banner ─── */}
+      {/* ─── Trusted By Banner (commented out - static data) ─── */}
+      {/*
       <section className="py-8 sm:py-12 px-4 border-y border-border/50 bg-muted/20">
         <div className="max-w-5xl mx-auto">
           <FadeInSection>
@@ -360,6 +363,7 @@ export function LandingPage() {
           </FadeInSection>
         </div>
       </section>
+      */}
 
       {/* ─── Demo Credentials Section ─── */}
       <DemoCredentials />
@@ -661,7 +665,8 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Testimonials ─── */}
+      {/* ─── Testimonials (commented out - static data) ─── */}
+      {/*
       <section id="testimonials" className="py-14 sm:py-28 px-4 relative overflow-hidden">
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="text-center mb-10 sm:mb-14">
@@ -703,6 +708,7 @@ export function LandingPage() {
           </StaggerContainer>
         </div>
       </section>
+      */}
 
       {/* ─── CTA Section ─── */}
       <section className="py-14 sm:py-28 px-4 relative overflow-hidden">
@@ -772,9 +778,9 @@ export function LandingPage() {
           </StaggerContainer>
 
           <FadeInSection delay={0.3}>
-            <div className="text-center mt-8">
+            <div className="text-center mt-8 mb-4 sm:mb-0">
               <AnimatedButton>
-                <Button size="lg" onClick={() => setContactPopupOpen(true)} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                <Button size="lg" onClick={() => setContactPopupOpen(true)} className="w-full sm:w-auto px-8 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                   Send a Message <Mail className="ml-2 h-4 w-4" />
                 </Button>
               </AnimatedButton>
@@ -814,7 +820,6 @@ export function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4 text-sm">Company</h4>
               <ul className="space-y-2.5 text-sm text-muted-foreground">
-                <li><a href="#testimonials" className="hover:text-foreground transition-colors">Testimonials</a></li>
                 <li><a href="#contact" className="hover:text-foreground transition-colors">Contact</a></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Support</a></li>
               </ul>

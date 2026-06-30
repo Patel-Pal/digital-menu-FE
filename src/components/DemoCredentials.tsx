@@ -36,11 +36,11 @@ export function DemoCredentials() {
   }
 
   return (
-    <section className="py-16 sm:py-24 px-4 relative overflow-hidden">
+    <section className="py-10 sm:py-24 px-4 relative overflow-hidden">
       <div className="max-w-3xl mx-auto relative z-10">
-        <div className="text-center mb-10">
+        <div className="text-center mb-6 sm:mb-10">
           <FadeInSection>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">
               Try the{" "}
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Demo
@@ -54,7 +54,7 @@ export function DemoCredentials() {
           </FadeInSection>
         </div>
 
-        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8" staggerDelay={0.1}>
+        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 mb-6 sm:mb-8" staggerDelay={0.1}>
           {DEMO_CREDENTIALS.map((cred) => (
             <StaggerItem key={cred.label}>
               <AnimatedCard hoverLift={6} hoverScale={1.02}>
